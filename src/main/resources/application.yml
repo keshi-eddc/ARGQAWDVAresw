@@ -1,0 +1,39 @@
+server:
+  port: 8090
+spring:
+  mvc:
+    view:
+      prefix: /WEB-INF/views/
+      suffix: .jsp
+  datasource:
+    url: jdbc:mysql://ec2-18-216-242-223.us-east-2.compute.amazonaws.com:3306/ico?characterEncoding=utf8&useSSL=true
+    username: root
+    password: Earlydata168!
+    driverClassName: com.mysql.cj.jdbc.Driver
+    initialSize: 10
+    minIdle: 10
+    maxActive: 20
+    maxWait: 60000 # 配置获取连接等待超时的时间
+    timeBetweenEvictionRunsMillis: 60000 # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+    minEvictableIdleTimeMillis: 300000 # 配置一个连接在池中最小生存的时间，单位是毫秒
+    validationQuery: SELECT 1 FROM ico_etherscan_io_blocks
+    testWhileIdle: true
+    testOnBorrow: false
+    testOnReturn: false
+    filters: stat,wall,log4j # 配置监控统计拦截的filters，去掉后监控界面sql无法统计，'wall'用于防火墙
+    logSlowSql: true
+  jpa:
+    database: mysql
+      #  show-sql: true
+      #    hibernate:
+      #      ddl-auto : update
+      #      naming-strategy : org.hibernate.cfg.ImprovedNamingStrategy
+      #    properties:
+      #      hibernate:
+      #        dialect : org.hibernate.dialect
+  task:
+    pool:
+      corePoolSize : 50
+      maxPoolSize : 60
+      keepAliveSeconds : 60
+      queueCapacity : 50
