@@ -10,7 +10,7 @@ import java.util.List;
 public interface ICO_Etherscan_IO_Blocks_TxsRepository extends JpaRepository<ICO_Etherscan_IO_Blocks_Txs,Long> {
 
      ICO_Etherscan_IO_Blocks_Txs findICO_Etherscan_IO_Blocks_TxsByTxhash(String txhash);
-     List<ICO_Etherscan_IO_Blocks_Txs> findTop30ByStatus(String status);
+     List<ICO_Etherscan_IO_Blocks_Txs> findTop50ByStatus(String status);
 
 
 }

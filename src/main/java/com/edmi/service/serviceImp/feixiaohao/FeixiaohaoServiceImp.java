@@ -56,7 +56,7 @@ public class FeixiaohaoServiceImp implements FeixiaohaoService {
         if(200 ==code){
             String content = response.getResponseText(); //response text
             Document doc = Jsoup.parse(content);
-            Elements plantList = doc.getElementsByClass("plantList");//获取页面数据
+            Elements plantList = doc.getElementsByClass("exchange-table");//获取页面数据
             Elements pageList = doc.getElementsByAttributeValue("class","pageList");
             int page_total = 1;
             int current_page = 1;

@@ -88,7 +88,7 @@ public class ManageApplicationTests {
 	@Autowired
 	private ICO_Feixiaohao_ExchangeRepository exchangeDao;
 	@Autowired
-	private ICO_Feixiaohao_Exchange_DetailsRepository exchange_detailsRepository;
+	private ICO_Feixiaohao_Exchange_DetailsRepository exchange_detailsDao;
 
 	@Autowired
 	private ICO_Feixiaohao_Exchange_CurrenciesRepository currenciesDao;
@@ -194,7 +194,7 @@ public class ManageApplicationTests {
 	}
 	@Test
     public void getICO_Feixiaohao_Exchange_Counter_Party_Details() throws MethodNotSupportException {
-		List<String> links = exchange_detailsRepository.getICO_Feixiaohao_Exchange();
+		List<String> links = exchange_detailsDao.getICO_Feixiaohao_Exchange();
 		for(String link:links){
 			feixiaohaoService.getICO_Feixiaohao_Exchange_Counter_Party_Details(link);
 		}
@@ -294,14 +294,14 @@ public class ManageApplicationTests {
 	public void getICO_Etherscan_IO_Blocks_Txs_Page_List() throws Exception {
 		List<ICO_Etherscan_IO_Blocks> blocks = blocksDao.findTop50ByPagestatusAndServer("ini",1);
 		for(ICO_Etherscan_IO_Blocks block:blocks){
-			etherscanService.ICO_Etherscan_IO_Blocks_TxsPages(block);
+			etherscanService.getICO_Etherscan_IO_Blocks_TxsPages(block);
 		}
 		Thread.sleep(60*1000);
 	}
 	@Test
 	public void getICO_Etherscan_IO_Blocks_Txs() throws Exception {
 
-		List<ICO_Etherscan_IO_Blocks_Txs_Page_List> page_list = txs_page_listDao.findTop20ByStatus("ini");
+		List<ICO_Etherscan_IO_Blocks_Txs_Page_List> page_list = txs_page_listDao.findTop50ByStatus("ini");
 
         for(ICO_Etherscan_IO_Blocks_Txs_Page_List page:page_list){
         	etherscanService.getICO_Etherscan_IO_Blocks_Txs(page);
@@ -309,7 +309,7 @@ public class ManageApplicationTests {
 	}
 	@Test
 	public void getICO_Etherscan_IO_Blocks_Txs_Info() throws Exception {
-		List<ICO_Etherscan_IO_Blocks_Txs> txs = txsDao.findTop30ByStatus("ini");
+		List<ICO_Etherscan_IO_Blocks_Txs> txs = txsDao.findTop50ByStatus("ini");
 		for(ICO_Etherscan_IO_Blocks_Txs tx:txs){
 			etherscanService.getICO_Etherscan_IO_Blocks_Txs_Info(tx);
 		}
