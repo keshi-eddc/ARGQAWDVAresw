@@ -77,7 +77,7 @@ public class FeixiaohaoServiceImp implements FeixiaohaoService {
             }
             if(null!=plantList&&plantList.size()>0){
                 Element plant = plantList.first();
-                Elements exchanges = plant.getElementsByTag("li");//数据列表总集
+                Elements exchanges = plant.getElementsByTag("tbody");//数据列表总集
 
                 while (current_page<page_total){
                     current_page+=1;
@@ -89,10 +89,10 @@ public class FeixiaohaoServiceImp implements FeixiaohaoService {
                     if(200 ==code) {
                         content = response.getResponseText(); //response text
                         doc = Jsoup.parse(content);
-                        Elements plantList_next = doc.getElementsByClass("plantList");//获取页面数据
+                        Elements plantList_next = doc.getElementsByClass("exchange-table");//获取页面数据
                         if(null!=plantList_next&&plantList_next.size()>0) {
                             Element plant_next = plantList_next.first();
-                            Elements exchanges_next = plant_next.getElementsByTag("li");
+                            Elements exchanges_next = plant_next.getElementsByTag("tbody");
                             exchanges.addAll(exchanges_next);
                             try {
                                 Thread.sleep(1000*5);
