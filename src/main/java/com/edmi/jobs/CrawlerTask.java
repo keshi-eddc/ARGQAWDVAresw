@@ -186,9 +186,7 @@ public class CrawlerTask {
     // <===================== 下面是Feixiaohao的相关job ===================================>
     @Scheduled(cron = "0 16/10 * * * ?")
     public void getICO_Feixiaohao_Exchange() throws Exception {
-        System.out.println("1111111111111");
         feixiaohaoService.getICO_Feixiaohao_Exchange();
-        System.out.println("2222222222222");
     }
     /*@Scheduled(cron = "0/30 * * * * ?")*/
     public void getICO_Feixiaohao_Exchange_Details() throws Exception {
