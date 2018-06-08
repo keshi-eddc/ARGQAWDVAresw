@@ -201,55 +201,6 @@ public class ManageApplicationTests {
 	}
 
 	@Test
-	public void test() throws MethodNotSupportException {
-		List<ICO_Feixiaohao_Exchange> all = exchangeDao.findAll();
-		for(ICO_Feixiaohao_Exchange a:all){
-			String desc = a.getDes();
-			if(StringUtils.isNotEmpty(desc)){
-				String year = StringUtils.substring(desc, StringUtils.indexOf(desc,"年")-4, StringUtils.indexOf(desc,"年"));
-				int year_index = StringUtils.indexOf(desc,"年");
-				if(NumberUtils.isDigits(year)){
-					String date_str = StringUtils.substring(desc,year_index-4,year_index+6);
-					if(StringUtils.contains(date_str,"月")&&StringUtils.contains(date_str,"日")){
-						date_str = StringUtils.substringBeforeLast(date_str,"日")+"日";
-					}else if (StringUtils.contains(date_str,"月")){
-						date_str = StringUtils.substringBeforeLast(date_str,"月")+"月";
-					}else{
-						date_str = year+"年";
-					}
-					a.setFounding_time(date_str);
-				}
-				exchangeDao.save(a);
-			}
-
-		}
-	}
-	@Test
-	public void taskExecutePoolTest(){
-		Map<String,String> stateCodes = StateCodeConfig.getStateCode();
-
-		List<ICO_Feixiaohao_Exchange> list = exchangeDao.findAll();
-		for(ICO_Feixiaohao_Exchange l:list){
-			String state = l.getState();
-			if(org.apache.commons.lang3.StringUtils.isNotEmpty(state)) {
-				if (org.apache.commons.lang3.StringUtils.contains(state, "中国")) {
-					state = "中国";
-				} else if (org.apache.commons.lang3.StringUtils.contains(state, "蒙古")) {
-					state = "蒙古";
-				} else if (org.apache.commons.lang3.StringUtils.equalsIgnoreCase("俄罗斯", state)) {
-					state = "俄罗斯联邦";
-				} else if (org.apache.commons.lang3.StringUtils.equalsIgnoreCase("澳洲", state)) {
-					state = "澳大利亚";
-				}
-				if (null != stateCodes.get(state)) {
-					l.setState_code(stateCodes.get(state));
-					exchangeDao.save(l);
-				}
-
-			}
-		}
-	}
-	@Test
 	public void importICO_Feixiaohao_Exchange_Currencies(){
 		feixiaohaoService.importICO_Feixiaohao_Exchange_Currencies();
 	}
@@ -301,7 +252,7 @@ public class ManageApplicationTests {
 	@Test
 	public void getICO_Etherscan_IO_Blocks_Txs() throws Exception {
 
-		List<ICO_Etherscan_IO_Blocks_Txs_Page_List> page_list = txs_page_listDao.findTop50ByStatus("ini");
+		List<ICO_Etherscan_IO_Blocks_Txs_Page_List> page_list = txs_page_listDao.findTop30ByStatus("ini");
 
         for(ICO_Etherscan_IO_Blocks_Txs_Page_List page:page_list){
         	etherscanService.getICO_Etherscan_IO_Blocks_Txs(page);
@@ -309,7 +260,7 @@ public class ManageApplicationTests {
 	}
 	@Test
 	public void getICO_Etherscan_IO_Blocks_Txs_Info() throws Exception {
-		List<ICO_Etherscan_IO_Blocks_Txs> txs = txsDao.findTop50ByStatus("ini");
+		List<ICO_Etherscan_IO_Blocks_Txs> txs = txsDao.findTop30ByStatus("ini");
 		for(ICO_Etherscan_IO_Blocks_Txs tx:txs){
 			etherscanService.getICO_Etherscan_IO_Blocks_Txs_Info(tx);
 		}

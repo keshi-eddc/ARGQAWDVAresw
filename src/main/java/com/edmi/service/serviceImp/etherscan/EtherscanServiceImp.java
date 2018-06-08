@@ -513,7 +513,7 @@ public class EtherscanServiceImp implements EtherscanService {
         String link = "https://etherscan.io/tx/"+txs.getTxhash();
         log.info("正在获取tx 详情信息，link："+link);
         Request request = new Request(link, RequestMethod.GET);
-        request.addHeader("Cookie","__cfduid=d781ca5b0a8a6427876fcf981ea5b29761525230016; _ga=GA1.2.1820036799.1525230024; etherscan_cookieconsent=True; showfavourite0x829bd824b016326a401d083b33d092293333a830=0; etherscan_userid=yinzhida; etherscan_pwd=yinzhida; etherscan_autologin=True; ASP.NET_SessionId=gc4w3owz41jyewzic0vuugre; __cflb=2482413123; _gid=GA1.2.1353010658.1527658357");
+        request.addHeader("Cookie","__cfduid=d781ca5b0a8a6427876fcf981ea5b29761525230016; _ga=GA1.2.1820036799.1525230024; etherscan_cookieconsent=True; showfavourite0x829bd824b016326a401d083b33d092293333a830=0; etherscan_userid=yinzhida; etherscan_pwd=yinzhida; etherscan_autologin=True; ASP.NET_SessionId=gc4w3owz41jyewzic0vuugre; __cflb=3866738502; _gid=GA1.2.1464166203.1528165707; _gat_gtag_UA_46998878_6=1");
         Response response = HttpClientUtil.doRequest(request);
         int code = response.getCode(); //response code
         if (200 == code) {

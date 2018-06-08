@@ -2,9 +2,11 @@ package com.edmi.jobs;
 
 import com.edmi.dao.etherscan.*;
 import com.edmi.dao.feixiaohao.ICO_Feixiaohao_ExchangeRepository;
+import com.edmi.dao.feixiaohao.ICO_Feixiaohao_Exchange_CurrenciesRepository;
 import com.edmi.dao.feixiaohao.ICO_Feixiaohao_Exchange_DetailsRepository;
 import com.edmi.entity.etherscan.*;
 import com.edmi.entity.feixiaohao.ICO_Feixiaohao_Exchange;
+import com.edmi.entity.feixiaohao.ICO_Feixiaohao_Exchange_Currencies;
 import com.edmi.service.service.EtherscanService;
 import com.edmi.service.service.FeixiaohaoService;
 import com.edmi.utils.http.exception.MethodNotSupportException;
@@ -46,6 +48,9 @@ public class CrawlerTask {
 
     @Autowired
     private ICO_Feixiaohao_ExchangeRepository exchangeDao;
+
+    @Autowired
+    private ICO_Feixiaohao_Exchange_CurrenciesRepository currenciesDao;
 
     @Autowired
     private ICO_Feixiaohao_Exchange_DetailsRepository exchange_detailsDao;
@@ -95,10 +100,10 @@ public class CrawlerTask {
         }
 
     }
-//    @Scheduled(cron = "0 */1 * * * ?")
+    //@Scheduled(cron = "0 */1 * * * ?")
     public void getICO_Etherscan_IO_Blocks_Txs() throws Exception {
 
-        List<ICO_Etherscan_IO_Blocks_Txs_Page_List> page_list = txs_page_listDao.findTop50ByStatus("ini");
+        List<ICO_Etherscan_IO_Blocks_Txs_Page_List> page_list = txs_page_listDao.findTop30ByStatus("ini");
 
         for(ICO_Etherscan_IO_Blocks_Txs_Page_List page:page_list){
             etherscanService.getICO_Etherscan_IO_Blocks_Txs(page);
@@ -107,10 +112,10 @@ public class CrawlerTask {
     }
 
 
-//   @Scheduled(cron = "30 */1 * * * ?")
+   //@Scheduled(cron = "30 */1 * * * ?")
     public void getICO_Etherscan_IO_Blocks_Txs_Info() throws Exception {
 
-        List<ICO_Etherscan_IO_Blocks_Txs> txs = txsDao.findTop50ByStatus("ini");
+        List<ICO_Etherscan_IO_Blocks_Txs> txs = txsDao.findTop30ByStatus("ini");
         for(ICO_Etherscan_IO_Blocks_Txs tx:txs){
             etherscanService.getICO_Etherscan_IO_Blocks_Txs_Info(tx);
             Thread.sleep(5*100);
@@ -174,7 +179,7 @@ public class CrawlerTask {
             Thread.sleep(5*100);
         }
     }
-    //@Scheduled(cron = "0/30 * * * * ?")
+    @Scheduled(cron = "0/30 * * * * ?")
     public void getICO_Etherscan_IO_Blocks_Forked_Txs_Info() throws Exception {
 
         List<ICO_Etherscan_IO_Blocks_Forked_Txs> txs = forked_txsDao.findTop50ByStatus("ini");
@@ -184,22 +189,42 @@ public class CrawlerTask {
         }
     }
     // <===================== 下面是Feixiaohao的相关job ===================================>
-    @Scheduled(cron = "0 16/10 * * * ?")
+    //@Scheduled(cron = "0 10 10 * * ?")
     public void getICO_Feixiaohao_Exchange() throws Exception {
         feixiaohaoService.getICO_Feixiaohao_Exchange();
     }
-    /*@Scheduled(cron = "0/30 * * * * ?")*/
+    //@Scheduled(cron = "0 30 10 * * ?")
     public void getICO_Feixiaohao_Exchange_Details() throws Exception {
         List<ICO_Feixiaohao_Exchange> exchanges = exchangeDao.getICO_Feixiaohao_ExchangeByStatus("ini");
         for(ICO_Feixiaohao_Exchange exchange:exchanges){
             feixiaohaoService.getICO_Feixiaohao_Exchange_Details(exchange);
         }
     }
-    /*@Scheduled(cron = "0/30 * * * * ?")*/
+    //@Scheduled(cron = "0 30 02 * * ?")
     public void getICO_Feixiaohao_Exchange_Counter_Party_Details() throws MethodNotSupportException {
         List<String> links = exchange_detailsDao.getICO_Feixiaohao_Exchange();
         for(String link:links){
             feixiaohaoService.getICO_Feixiaohao_Exchange_Counter_Party_Details(link);
+        }
+    }
+    //@Scheduled(cron = "0 54 02 * * ?")
+    public void importICO_Feixiaohao_Exchange_Currencies(){
+        feixiaohaoService.importICO_Feixiaohao_Exchange_Currencies();
+    }
+    @Scheduled(cron = "0 30 03 * * ?")
+    public void getICO_Feixiaohao_Exchange_Currenciesdtl() throws MethodNotSupportException {
+        List<ICO_Feixiaohao_Exchange_Currencies> currencies = currenciesDao.getICO_Feixiaohao_Exchange_CurrenciesByDetails_status("ini");
+        int i = 0;
+        for(ICO_Feixiaohao_Exchange_Currencies currency:currencies){
+            feixiaohaoService.getICO_Feixiaohao_Exchange_Currenciesdtl(currency);
+            i++;
+            try {
+                if(i%10==0){
+                    Thread.sleep(5*1000);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

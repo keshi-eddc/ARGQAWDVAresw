@@ -78,7 +78,24 @@ public class FeixiaohaoServiceImp implements FeixiaohaoService {
             if(null!=plantList&&plantList.size()>0){
                 Element plant = plantList.first();
                 Elements exchanges = plant.getElementsByTag("tbody");//数据列表总集
-
+                Elements ths = plant.getElementsByTag("thead").first().getElementsByTag("th");
+                Map<Integer,String> ths_map = new HashMap<Integer,String>();
+                for(int i=0;i<ths.size();i++){
+                    Element th = ths.get(i);
+                    if(StringUtils.equalsIgnoreCase("名称",th.text().trim())){
+                        ths_map.put(i,"名称");
+                    }else if(StringUtils.equalsIgnoreCase("成交额（24h）",th.text().trim())){
+                        ths_map.put(i,"成交额（24h）");
+                    }else if(StringUtils.equalsIgnoreCase("交易对",th.text().trim())){
+                        ths_map.put(i,"交易对");
+                    }else if(StringUtils.equalsIgnoreCase("国家",th.text().trim())){
+                        ths_map.put(i,"国家");
+                    }else if(StringUtils.equalsIgnoreCase("交易类型",th.text().trim())){
+                        ths_map.put(i,"交易类型");
+                    }else if(StringUtils.equalsIgnoreCase("星级",th.text().trim())){
+                        ths_map.put(i,"星级");
+                    }
+                }
                 while (current_page<page_total){
                     current_page+=1;
                     log.info("正在获取第"+current_page+"-"+page_total+"页");
@@ -110,90 +127,89 @@ public class FeixiaohaoServiceImp implements FeixiaohaoService {
                     List<ICO_Feixiaohao_Exchange> ico_feixiaohao_exchanges = new ArrayList<ICO_Feixiaohao_Exchange>();
                     long serial_number = Calendar.getInstance().getTime().getTime();
                     for(Element exchange:exchanges){
-                        Elements infos = exchange.getElementsByClass("info");
-                        ICO_Feixiaohao_Exchange ico_feixiaohao_exchange = new ICO_Feixiaohao_Exchange();
-                        if(null!=infos&&infos.size()>0){
-                            Element info = infos.first();
-                            Elements tits = info.getElementsByClass("tit");//名字
-                            Elements dess = info.getElementsByClass("des");//描述
-                            Elements detals = info.getElementsByClass("detal");//描述
+                        Elements trs = exchange.getElementsByTag("tr");//table所有行的记录数
+                        if(null!=trs&&trs.size()>0){
+                            for(Element tr:trs){
+                                ICO_Feixiaohao_Exchange ico_feixiaohao_exchange = new ICO_Feixiaohao_Exchange();
+                                Elements tds = tr.getElementsByTag("td");
+                                for(Map.Entry<Integer, String> entry:ths_map.entrySet()) {
+                                    int key = entry.getKey();
+                                    String value = entry.getValue();
 
-                            if(null!=tits&&tits.size()>0){
-                               Element tit = tits.first();
-                               Elements tit_a = tit.getElementsByTag("a");
-                               Elements stars = tit.getElementsByClass("star");
-                               if(null!=tit_a&&tit_a.size()>0){
-                                   String name = tit_a.first().text();
-                                   String name_link = "https://www.feixiaohao.com"+tit_a.attr("href");
-                                   ico_feixiaohao_exchange.setName(StringUtils.defaultIfEmpty(name,""));
-                                   ico_feixiaohao_exchange.setName_link(StringUtils.defaultIfEmpty(name_link,""));
-                               }
-                               if(null!=stars&&stars.size()>0){
-                                   String star = stars.first().attr("class");
-                                   star = StringUtils.substringAfterLast(star,"star");
-                                   if(NumberUtils.isDigits(star)){
-                                       ico_feixiaohao_exchange.setStar(NumberUtils.createInteger(star));
-                                   }
-
-                               }
-                            }
-                            if(null!=dess&&dess.size()>0){
-                                String des = dess.first().text();
-                                ico_feixiaohao_exchange.setDes(StringUtils.defaultIfEmpty(des,""));
-                                if(StringUtils.isNotEmpty(des)){//提取公司成立时间
-                                    String year = StringUtils.substring(des, StringUtils.indexOf(des,"年")-4, StringUtils.indexOf(des,"年"));
-                                    int year_index = StringUtils.indexOf(des,"年");
-                                    if(NumberUtils.isDigits(year)){
-                                        String date_str = StringUtils.substring(des,year_index-4,year_index+6);
-                                        if(StringUtils.contains(date_str,"月")&& StringUtils.contains(date_str,"日")){
-                                            date_str = StringUtils.substringBeforeLast(date_str,"日")+"日";
-                                        }else if (StringUtils.contains(date_str,"月")){
-                                            date_str = StringUtils.substringBeforeLast(date_str,"月")+"月";
-                                        }else{
-                                            date_str = year+"年";
+                                    Element column = tds.get(key);
+                                    if (value.equals("名称")) {
+                                        Elements tit_a = column.getElementsByTag("a");
+                                        if(null!=tit_a&&tit_a.size()>0){
+                                            String name = tit_a.first().text();
+                                            String name_link = "https://www.feixiaohao.com"+tit_a.attr("href");
+                                            ico_feixiaohao_exchange.setName(StringUtils.defaultIfEmpty(name,""));
+                                            ico_feixiaohao_exchange.setName_link(StringUtils.defaultIfEmpty(name_link,""));
                                         }
-                                        ico_feixiaohao_exchange.setFounding_time(date_str);
-                                    }
-                                }
-                            }
-                            if(null!=detals&&detals.size()>0){
-                                String detal = detals.first().text();
-                                String counter_party = StringUtils.substringBetween(detal,"交易对:","国家:").trim();
-                                String state = StringUtils.substringBetween(detal,"国家:","成交额").trim();
-                                String transaction_amount = StringUtils.substringBetween(detal,"成交额(24h):","支持：");
-                                if(NumberUtils.isDigits(counter_party)){
-                                    ico_feixiaohao_exchange.setCounter_party(NumberUtils.createInteger(counter_party));
-                                }
-                                if(StringUtils.isNotEmpty(state)){
-                                    if(StringUtils.contains(state,"中国")){
-                                        state = "中国";
-                                    }else if(StringUtils.contains(state,"蒙古")){
-                                        state = "蒙古";
-                                    }else if(StringUtils.equalsIgnoreCase("俄罗斯",state)){
-                                        state = "俄罗斯联邦";
-                                    }else if(StringUtils.equalsIgnoreCase("澳洲",state)){
-                                        state = "澳大利亚";
-                                    }
-                                    if(null!=stateCodes.get(state)){
-                                        ico_feixiaohao_exchange.setState_code(stateCodes.get(state));
+                                    }else if(value.equals("成交额（24h）")){
+                                        Elements transaction_amount_a = column.getElementsByTag("a");
+                                        if(null!=transaction_amount_a&&transaction_amount_a.size()>0){
+                                            String transaction_amount = transaction_amount_a.first().text();
+                                            ico_feixiaohao_exchange.setTransaction_amount(StringUtils.defaultIfEmpty(transaction_amount,""));
+                                        }
+                                    }else if(value.equals("交易对")) {
+                                        Elements counter_party_a = column.getElementsByTag("a");
+                                        if(null!=counter_party_a&&counter_party_a.size()>0){
+                                            String counter_party = counter_party_a.first().text().trim();
+                                            if(NumberUtils.isDigits(counter_party)){
+                                                ico_feixiaohao_exchange.setCounter_party(NumberUtils.createInteger(counter_party));
+                                            }
+                                        }
+                                    }else if(value.equals("国家")) {
+                                        Elements state_a = column.getElementsByTag("a");
+                                        if(null!=state_a&&state_a.size()>0){
+                                            String state = state_a.first().text().trim();
+                                            if(StringUtils.isNotEmpty(state)){
+                                                if(StringUtils.contains(state,"中国")){
+                                                    state = "中国";
+                                                }else if(StringUtils.contains(state,"蒙古")){
+                                                    state = "蒙古";
+                                                }else if(StringUtils.equalsIgnoreCase("俄罗斯",state)){
+                                                    state = "俄罗斯联邦";
+                                                }else if(StringUtils.equalsIgnoreCase("澳洲",state)){
+                                                    state = "澳大利亚";
+                                                }
+                                                if(null!=stateCodes.get(state)){
+                                                    ico_feixiaohao_exchange.setState_code(stateCodes.get(state));
+                                                }
+                                                ico_feixiaohao_exchange.setState(state);
+                                            }
+                                        }
+                                    }else if(value.equals("交易类型")) {
+
+                                    }else if(value.equals("星级")) {
+                                        Elements stars = column.getElementsByAttributeValueStarting("class", "star star");
+                                        if(null!=stars&&stars.size()>0){
+                                            String star = stars.first().attr("class");
+                                            star = StringUtils.substringAfterLast(star,"star");
+                                            if(NumberUtils.isDigits(star)){
+                                                ico_feixiaohao_exchange.setStar(NumberUtils.createInteger(star));
+                                            }
+
+                                        }
                                     }
                                 }
                                 ico_feixiaohao_exchange.setStatus("ini");
                                 ico_feixiaohao_exchange.setSerial_number(serial_number);
-                                ico_feixiaohao_exchange.setState(StringUtils.defaultIfEmpty(state,""));
-                                ico_feixiaohao_exchange.setTransaction_amount(StringUtils.defaultIfEmpty(transaction_amount,""));
                                 ico_feixiaohao_exchange.setInsert_time(new Timestamp(Calendar.getInstance().getTime().getTime()));
                                 ico_feixiaohao_exchange.setModify_time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                ico_feixiaohao_exchanges.add(ico_feixiaohao_exchange);
                             }
                         }
-                        ico_feixiaohao_exchanges.add(ico_feixiaohao_exchange);
+
                     }
                     ico_feixiaohao_exchanges = exchangeDao.saveAll(ico_feixiaohao_exchanges);
                     if(null!=ico_feixiaohao_exchanges){
-                        log.info("exchange列表抓取成功，共计："+exchanges.size());
+                        log.info("exchange列表抓取成功，共计："+ico_feixiaohao_exchanges.size());
                     }else{
                         log.info("exchange列表抓取失败!");
                     }
+                }else{
+                    log.info("没有获取到exchange列表！");
                 }
             }
         }
@@ -297,13 +313,14 @@ public class FeixiaohaoServiceImp implements FeixiaohaoService {
                     exchangeDao.save(exchange);
                 }
             }
-            Elements marketinfos = doc.getElementsByClass("marketinfo");//获取官网地址
+            Elements marketinfos = doc.getElementsByClass("marketinfo");//官网信息
             if(null!=marketinfos&&marketinfos.size()>0){
                 Element marketinfo = marketinfos.first();
                 Elements infos = marketinfo.getElementsByClass("info");
                 if(null!=infos&&infos.size()>0){
                     Element info = infos.first();
-                    Elements webs = info.getElementsByClass("web");
+
+                    Elements webs = info.getElementsByClass("web");//官网地址
                     if(null!=webs&&webs.size()>0){
                         Element web = webs.first();
                         Elements websites = web.getElementsContainingOwnText("官网地址");
@@ -311,14 +328,35 @@ public class FeixiaohaoServiceImp implements FeixiaohaoService {
                             String web_text = websites.first().text();
                             web_text = StringUtils.substringAfterLast(web_text,"官网地址：");
                             exchange.setWebsite(web_text);
-                            exchange = exchangeDao.save(exchange);
-                            if (null != exchange) {
-                                log.info("exchange官网地址更新成功：" + exchange.getPk_id());
-                            } else {
-                                log.info("exchange官网地址更新失败：" + exchange.getPk_id());
+                        }
+                    }
+
+                    Elements dess = info.getElementsByClass("text");//官网描述解析
+                    if(null!=dess&&dess.size()>0){
+                        String des = dess.first().text();
+                        exchange.setDes(StringUtils.defaultIfEmpty(des,""));
+                        if(StringUtils.isNotEmpty(des)){//提取公司成立时间
+                            String year = StringUtils.substring(des, StringUtils.indexOf(des,"年")-4, StringUtils.indexOf(des,"年"));
+                            int year_index = StringUtils.indexOf(des,"年");
+                            if(NumberUtils.isDigits(year)){
+                                String date_str = StringUtils.substring(des,year_index-4,year_index+6);
+                                if(StringUtils.contains(date_str,"月")&& StringUtils.contains(date_str,"日")){
+                                    date_str = StringUtils.substringBeforeLast(date_str,"日")+"日";
+                                }else if (StringUtils.contains(date_str,"月")){
+                                    date_str = StringUtils.substringBeforeLast(date_str,"月")+"月";
+                                }else{
+                                    date_str = year+"年";
+                                }
+                                exchange.setFounding_time(date_str);
                             }
                         }
+                    }
 
+                    exchange = exchangeDao.save(exchange);
+                    if (null != exchange) {
+                        log.info("exchange信息更新成功：" + exchange.getPk_id());
+                    } else {
+                        log.info("exchange信息更新失败：" + exchange.getPk_id());
                     }
                 }
             }
@@ -602,6 +640,9 @@ public class FeixiaohaoServiceImp implements FeixiaohaoService {
                 log.info("页面找不到交易币信息pk_id："+currency.getPk_id());
             }
         }else{
+            currency.setDetails_status(String.valueOf(code));
+            currency.setModify_time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+            currenciesDao.save(currency);
             log.info("请求错误，交易币信息pk_id："+currency.getPk_id());
         }
 
