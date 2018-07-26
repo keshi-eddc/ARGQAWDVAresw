@@ -3,7 +3,6 @@ package com.edmi;
 import com.edmi.configs.StateCodeConfig;
 import com.edmi.configs.TaskExecutePoolTest;
 import com.edmi.dao.Edmi_userRepository;
-import com.edmi.dao.dlzb.DLZB_Project_ListRepository;
 import com.edmi.dao.etherscan.ICO_Etherscan_IO_BlocksRepository;
 import com.edmi.dao.etherscan.ICO_Etherscan_IO_Blocks_TxsRepository;
 import com.edmi.dao.etherscan.ICO_Etherscan_IO_Blocks_Txs_Page_ListRepository;
@@ -12,11 +11,7 @@ import com.edmi.dao.feixiaohao.ICO_Feixiaohao_Exchange_CurrenciesRepository;
 import com.edmi.dao.feixiaohao.ICO_Feixiaohao_Exchange_DetailsRepository;
 import com.edmi.dao.github.ICO_Github_OrganizationRepository;
 import com.edmi.dao.github.ICO_Github_RepositoriesRepository;
-import com.edmi.dao.linkedin.Linkedin_memberRepository;
-import com.edmi.dao.linkedin.Linkedin_membereducationexperienceRepository;
-import com.edmi.dao.linkedin.Linkedin_memberselectionskillsRepository;
-import com.edmi.dao.linkedin.Linkedin_memberworkexperienceRepository;
-import com.edmi.entity.dlzb.DLZB_Project_List;
+import com.edmi.dao.linkedin.*;
 import com.edmi.entity.etherscan.ICO_Etherscan_IO_Blocks;
 import com.edmi.entity.etherscan.ICO_Etherscan_IO_Blocks_Txs;
 import com.edmi.entity.etherscan.ICO_Etherscan_IO_Blocks_Txs_Page_List;
@@ -25,6 +20,7 @@ import com.edmi.entity.feixiaohao.ICO_Feixiaohao_Exchange_Currencies;
 import com.edmi.entity.feixiaohao.ICO_Feixiaohao_Exchange_Details;
 import com.edmi.entity.github.ICO_Github_Organization;
 import com.edmi.entity.github.ICO_Github_Repositories;
+import com.edmi.entity.linkedin.ICO_Linkedin_Link;
 import com.edmi.entity.linkedin.ICO_Linkedin_Member;
 import com.edmi.entity.linkedin.ICO_Linkedin_Memberselectionskills;
 import com.edmi.service.service.*;
@@ -67,12 +63,11 @@ public class ManageApplicationTests {
     @Autowired
     private EtherscanService etherscanService;
 
-    @Autowired
-    private  DLZBService dlzbServic;
 
 	@Autowired
 	private WebDriverService webDriverService;
-
+	@Autowired
+	private Linkedin_linkRepository linkDao;
 	@Autowired
 	private Linkedin_memberRepository memberDao;
 	@Autowired
@@ -98,8 +93,6 @@ public class ManageApplicationTests {
 	@Autowired
 	private ICO_Etherscan_IO_Blocks_TxsRepository txsDao;
 
-    @Autowired
-    private DLZB_Project_ListRepository project_listDao;
 
 	@Autowired
 	private ICO_Etherscan_IO_Blocks_Txs_Page_ListRepository txs_page_listDao;
@@ -266,18 +259,27 @@ public class ManageApplicationTests {
 		}
 	}
 
-    @Test
-    public void getDLZB_Project_List() throws MethodNotSupportException {
-	    dlzbServic.getDLZB_Project_List("变压器");
-    }
+
 
     @Test
-    public void getDLZB_Project_List_Basic_Info() throws Exception {
+	public void getStandard_link(){
+		List<ICO_Linkedin_Link> links = linkDao.getICO_Linkedin_Link();
+		for(ICO_Linkedin_Link link:links){
+			String link_text = link.getLink();
+			int start = StringUtils.indexOfIgnoreCase(link_text,"linkedin.com/in/")+15;//加15代表本字符串最后一个/的位置
+			int end = StringUtils.indexOfIgnoreCase(link_text,"/",start+1);//查找start后面的/的位置
+			if(end==-1){
+				link_text = "https://www.linkedin.com/in/" + StringUtils.substring(link_text,start+1) + "/";
+			}else if(start<end){
+				link_text = "https://www.linkedin.com/in/" + StringUtils.substring(link_text,start+1,end) + "/";
+			}else{
+				link_text = "illegal";
+			}
+			link.setStandard_link(link_text);
+			int i = linkDao.updateICO_Linkedin_LinkById(link.getStandard_link(),link.getId());
+			System.out.println(i);
+		}
+	}
 
-        List<DLZB_Project_List> projects = project_listDao.findTop5000ByStatus("ini");
-        for(DLZB_Project_List project:projects){
-            dlzbServic.getDLZB_Project_List_Basic_Info(project);
-            Thread.sleep(10*1000);
-        }
-    }
+
 }

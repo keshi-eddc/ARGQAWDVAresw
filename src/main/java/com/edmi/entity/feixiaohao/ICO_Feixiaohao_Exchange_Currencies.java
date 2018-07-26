@@ -23,11 +23,11 @@ public class ICO_Feixiaohao_Exchange_Currencies {
     @Column(nullable = false)
     private Timestamp modify_time;
 
-    @OneToMany(cascade=CascadeType.ALL,mappedBy="currencies")
+/*    @OneToMany(cascade=CascadeType.PERSIST,mappedBy="currencies")
     private List<ICO_Feixiaohao_Exchange_Currencies_Page_Link> pageLinks;
 
-    @OneToOne(cascade=CascadeType.ALL,mappedBy = "currencies")
-    private ICO_Feixiaohao_Exchange_Currenciesdtl currenciesdtl;
+    @OneToOne(cascade=CascadeType.PERSIST,mappedBy = "currencies")
+    private ICO_Feixiaohao_Exchange_Currenciesdtl currenciesdtl;*/
 
 
 
@@ -79,7 +79,7 @@ public class ICO_Feixiaohao_Exchange_Currencies {
         this.insert_time = insert_time;
     }
 
-    public List<ICO_Feixiaohao_Exchange_Currencies_Page_Link> getPageLinks() {
+/*    public List<ICO_Feixiaohao_Exchange_Currencies_Page_Link> getPageLinks() {
         return pageLinks;
     }
 
@@ -93,7 +93,7 @@ public class ICO_Feixiaohao_Exchange_Currencies {
 
     public void setCurrenciesdtl(ICO_Feixiaohao_Exchange_Currenciesdtl currenciesdtl) {
         this.currenciesdtl = currenciesdtl;
-    }
+    }*/
 
     public Timestamp getModify_time() {
         return modify_time;

@@ -19,6 +19,8 @@ public class ICO_Linkedin_Link {
     private String member_info_server;
     @Column(nullable = true)
     private Timestamp insert_time;
+    @Column(nullable = true)
+    private String standard_link;
 
     public Long getId() {
         return id;
@@ -66,5 +68,13 @@ public class ICO_Linkedin_Link {
 
     public void setInsert_time(Timestamp insert_time) {
         this.insert_time = insert_time;
+    }
+
+    public String getStandard_link() {
+        return standard_link;
+    }
+
+    public void setStandard_link(String standard_link) {
+        this.standard_link = standard_link;
     }
 }

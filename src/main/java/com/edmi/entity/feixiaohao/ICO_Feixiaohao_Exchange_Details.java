@@ -40,7 +40,7 @@ public class ICO_Feixiaohao_Exchange_Details {
     private Timestamp insert_time;
     @Column(nullable = false)
     private Timestamp modify_time;
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name="exchange_id")
     private ICO_Feixiaohao_Exchange ico_feixiaohao_exchange ;
 

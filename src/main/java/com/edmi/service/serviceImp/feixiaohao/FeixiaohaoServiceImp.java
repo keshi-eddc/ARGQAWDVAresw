@@ -1,5 +1,6 @@
 package com.edmi.service.serviceImp.feixiaohao;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.edmi.configs.StateCodeConfig;
@@ -20,6 +21,9 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -44,7 +48,8 @@ public class FeixiaohaoServiceImp implements FeixiaohaoService {
     private ICO_Feixiaohao_Exchange_CurrenciesdtlRepository currenciesdtlDao;
     @Autowired
     private ICO_Feixiaohao_Exchange_Currencies_PageLinkRepository pageLinkDao;
-
+    @Autowired
+    private ICO_Data_ProcessRepository processDao;
 
     @Override
     public void getICO_Feixiaohao_Exchange() throws MethodNotSupportException {
@@ -200,14 +205,22 @@ public class FeixiaohaoServiceImp implements FeixiaohaoService {
                                 ico_feixiaohao_exchanges.add(ico_feixiaohao_exchange);
                             }
                         }
-
                     }
-                    ico_feixiaohao_exchanges = exchangeDao.saveAll(ico_feixiaohao_exchanges);
+                    for(ICO_Feixiaohao_Exchange exchange:ico_feixiaohao_exchanges){
+                        ICO_Feixiaohao_Exchange exchange_find = exchangeDao.getICO_Feixiaohao_ExchangeByName_link(exchange.getName_link());
+                        if(null==exchange_find){
+                            exchange = exchangeDao.save(exchange);
+                            log.info("新增的exchange："+exchange.getName_link()+"保存成功！");
+                        }else{
+                            log.info("已存在的exchange："+exchange.getName_link());
+                        }
+                    }
+                    /*ico_feixiaohao_exchanges = exchangeDao.saveAll(ico_feixiaohao_exchanges);
                     if(null!=ico_feixiaohao_exchanges){
                         log.info("exchange列表抓取成功，共计："+ico_feixiaohao_exchanges.size());
                     }else{
                         log.info("exchange列表抓取失败!");
-                    }
+                    }*/
                 }else{
                     log.info("没有获取到exchange列表！");
                 }
@@ -351,7 +364,6 @@ public class FeixiaohaoServiceImp implements FeixiaohaoService {
                             }
                         }
                     }
-
                     exchange = exchangeDao.save(exchange);
                     if (null != exchange) {
                         log.info("exchange信息更新成功：" + exchange.getPk_id());
@@ -627,10 +639,11 @@ public class FeixiaohaoServiceImp implements FeixiaohaoService {
 
                 currency.setDetails_status(String.valueOf(code));
                 currency.setCurrency_name(currenciesdtl.getEn());
-                currency.setCurrenciesdtl(currenciesdtl);
-                currency.setPageLinks(pageLinks);
-                currency.setCurrenciesdtl(currenciesdtl);
+                /*currency.setPageLinks(pageLinks);
+                currency.setCurrenciesdtl(currenciesdtl);*/
                 currency.setModify_time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                pageLinkDao.saveAll(pageLinks);
+                currenciesdtlDao.save(currenciesdtl);
                 currenciesDao.save(currency);
                 /*pageLinkDao.saveAll(pageLinks);
                 currenciesdtlDao.save(currenciesdtl).getCurrencies();*/
@@ -646,5 +659,69 @@ public class FeixiaohaoServiceImp implements FeixiaohaoService {
             log.info("请求错误，交易币信息pk_id："+currency.getPk_id());
         }
 
+    }
+
+    public JSONObject getICO_Feixiaohao_Exchange_Pageable(int pageNum, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNum,pageSize);
+        Page<ICO_Feixiaohao_Exchange> page = exchangeDao.getICO_Feixiaohao_Exchange(pageable);
+        JSONObject result = new JSONObject();
+        result.put("totalPages",page.getTotalPages());
+        result.put("recordCount",page.getTotalElements());
+        result.put("datas",JSONObject.toJSON(page.getContent()));
+        return result;
+    }
+
+    @Override
+    public JSONObject getICO_Feixiaohao_Exchange_details(long exchange_pk_id) {
+        List<ICO_Feixiaohao_Exchange_Details> exchange = exchange_detailsRepository.getICO_Feixiaohao_Exchange_Details(exchange_pk_id);
+        JSONObject result = new JSONObject();
+        result.put("datas", JSON.toJSON(exchange));
+        return result;
+    }
+
+    @Override
+    public JSONObject getICO_Feixiaohao_Exchange_Counter_Party_Details(int pageNum, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNum,pageSize);
+        Page<ICO_Feixiaohao_Exchange_Counter_Party_Details> page = counter_party_detailsRepository.getICO_Feixiaohao_Exchange_Counter_Party_Details(pageable);
+        JSONObject result = new JSONObject();
+        result.put("totalPages",page.getTotalPages());
+        result.put("recordCount",page.getTotalElements());
+        result.put("datas",JSONObject.toJSON(page.getContent()));
+        return result;
+    }
+
+    @Override
+    public JSONObject getICO_Feixiaohao_Exchange_Currencies(int pageNum, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNum,pageSize);
+        Page<ICO_Feixiaohao_Exchange_Currencies> page = currenciesDao.getICO_Feixiaohao_Exchange_Currencies(pageable);
+        JSONObject result = new JSONObject();
+        result.put("totalPages",page.getTotalPages());
+        result.put("recordCount",page.getTotalElements());
+        result.put("datas",JSONObject.toJSON(page.getContent()));
+        return result;
+    }
+
+    @Override
+    public JSONObject getICO_Feixiaohao_Exchange_Currencies_Page_Link(long currencies_pk_id) {
+        List<ICO_Feixiaohao_Exchange_Currencies_Page_Link> page = pageLinkDao.getICO_Feixiaohao_Exchange_Currencies_Page_Link(currencies_pk_id);
+        JSONObject result = new JSONObject();
+        result.put("datas",JSONObject.toJSON(page));
+        return result;
+    }
+
+    @Override
+    public JSONObject getICO_Feixiaohao_Exchange_Currenciesdtl(long currencies_pk_id) {
+        ICO_Feixiaohao_Exchange_Currenciesdtl page = currenciesdtlDao.getICO_Feixiaohao_Exchange_Currenciesdtl(currencies_pk_id);
+        JSONObject result = new JSONObject();
+        result.put("datas",JSONObject.toJSON(page));
+        return result;
+    }
+
+    @Override
+    public JSONObject getICO_Data_Process(String api_category) {
+        List<ICO_Data_Process> page = processDao.getICO_Data_ProcessByApi_category(api_category);
+        JSONObject result = new JSONObject();
+        result.put("datas",JSONObject.toJSON(page));
+        return result;
     }
 }

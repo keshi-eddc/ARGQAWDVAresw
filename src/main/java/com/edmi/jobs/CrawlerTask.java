@@ -11,6 +11,7 @@ import com.edmi.service.service.EtherscanService;
 import com.edmi.service.service.FeixiaohaoService;
 import com.edmi.utils.http.exception.MethodNotSupportException;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.log4j.Logger;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -19,8 +20,10 @@ import org.springframework.stereotype.Component;
 import java.util.Calendar;
 import java.util.List;
 
-@Component
+/*@Component*/
 public class CrawlerTask {
+
+    Logger log = Logger.getLogger(CrawlerTask.class);
 
     @Autowired
     private EtherscanService etherscanService;
@@ -179,7 +182,7 @@ public class CrawlerTask {
             Thread.sleep(5*100);
         }
     }
-    @Scheduled(cron = "0/30 * * * * ?")
+    /*@Scheduled(cron = "0/30 * * * * ?")*/
     public void getICO_Etherscan_IO_Blocks_Forked_Txs_Info() throws Exception {
 
         List<ICO_Etherscan_IO_Blocks_Forked_Txs> txs = forked_txsDao.findTop50ByStatus("ini");
@@ -189,29 +192,31 @@ public class CrawlerTask {
         }
     }
     // <===================== 下面是Feixiaohao的相关job ===================================>
-    //@Scheduled(cron = "0 10 10 * * ?")
+    //@Scheduled(cron = "0 55 14 * * ?")
     public void getICO_Feixiaohao_Exchange() throws Exception {
         feixiaohaoService.getICO_Feixiaohao_Exchange();
     }
-    //@Scheduled(cron = "0 30 10 * * ?")
+    //@Scheduled(cron = "0 28 15 * * ?")
     public void getICO_Feixiaohao_Exchange_Details() throws Exception {
         List<ICO_Feixiaohao_Exchange> exchanges = exchangeDao.getICO_Feixiaohao_ExchangeByStatus("ini");
         for(ICO_Feixiaohao_Exchange exchange:exchanges){
             feixiaohaoService.getICO_Feixiaohao_Exchange_Details(exchange);
         }
     }
-    //@Scheduled(cron = "0 30 02 * * ?")
+    /*@Scheduled(cron = "0 50 06 * * ?")*/
     public void getICO_Feixiaohao_Exchange_Counter_Party_Details() throws MethodNotSupportException {
         List<String> links = exchange_detailsDao.getICO_Feixiaohao_Exchange();
-        for(String link:links){
+        for(int i=0;i<links.size();i++){
+            String link = links.get(i);
+            log.info("正在抓取"+links.size()+"-"+(i+1)+"个交易对详情，link："+link);
             feixiaohaoService.getICO_Feixiaohao_Exchange_Counter_Party_Details(link);
         }
     }
-    //@Scheduled(cron = "0 54 02 * * ?")
+    //@Scheduled(cron = "0 0 14 * * ?")
     public void importICO_Feixiaohao_Exchange_Currencies(){
         feixiaohaoService.importICO_Feixiaohao_Exchange_Currencies();
     }
-    @Scheduled(cron = "0 30 03 * * ?")
+   // @Scheduled(cron = "0 07 14 * * ?")
     public void getICO_Feixiaohao_Exchange_Currenciesdtl() throws MethodNotSupportException {
         List<ICO_Feixiaohao_Exchange_Currencies> currencies = currenciesDao.getICO_Feixiaohao_Exchange_CurrenciesByDetails_status("ini");
         int i = 0;
