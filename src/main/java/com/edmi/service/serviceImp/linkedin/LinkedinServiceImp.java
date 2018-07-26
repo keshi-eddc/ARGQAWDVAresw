@@ -1,10 +1,16 @@
 package com.edmi.service.serviceImp.linkedin;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.edmi.dao.linkedin.*;
+import com.edmi.dto.linkedin.ICO_Linkedin_MemberDto;
+import com.edmi.dto.linkedin.ICO_Linkedin_MembereducationexperienceDto;
+import com.edmi.dto.linkedin.ICO_Linkedin_MemberselectionskillsDto;
+import com.edmi.dto.linkedin.ICO_Linkedin_MemberworkexperienceDto;
 import com.edmi.entity.linkedin.*;
 import com.edmi.service.service.LinkedinService;
+import com.edmi.utils.ExcelUtilForPOI;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -15,6 +21,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -42,37 +49,55 @@ public class LinkedinServiceImp implements LinkedinService {
     private Linkedin_memberselectionskillsRepository skillsDao;
     @Autowired
     private Linkedin_memberworkexperienceRepository workDao;
-
+    @Autowired
+    private ExcelUtilForPOI excelUtilForPOI;
 
 
 
 
     public void importLinkedInLinks(){
-        String content = null;
-        try {
-            content = FileUtils.readFileToString(new File("C:\\Users\\EDDC\\Desktop\\linkedin.txt"),"utf-8");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        String[] links = StringUtils.substringsBetween(content,"https://","~");
-        List<String> unique_links = new ArrayList<String>();
-        for(String link:links){
-            if(null!=link&&unique_links.contains(link)){
-                continue;
+        List<String[]> datas = excelUtilForPOI.getData("C:\\Users\\EDDC\\Desktop\\linkedin links.xlsx");
+        for(String[] data:datas){
+            String link = StringUtils.trim(data[3]);
+            if(!StringUtils.containsIgnoreCase(link,"linkedin.com")){
+                log.info("非法的linkedin链接："+link);
+            }else{
+                log.info(link);
+                String org_link = link;
+                int start = StringUtils.indexOfIgnoreCase(link,"linkedin.com/in/")+15;//加15代表本字符串最后一个/的位置
+                int end = StringUtils.indexOfIgnoreCase(link,"/",start+1);//查找start后面的/的位置
+                if(end==-1){
+                    link = "https://www.linkedin.com/in/" + StringUtils.substring(link,start+1) + "/";
+                }else if(start<end){
+                    link = "https://www.linkedin.com/in/" + StringUtils.substring(link,start+1,end) + "/";
+                }else{
+                    link = "illegal";
+                }
+                if(!StringUtils.equals("illegal",link)){
+                    ICO_Linkedin_Link linkedin_link = linkDao.getICO_Linkedin_LinkBystandard_link(link);
+                    if(null==linkedin_link){
+                        log.info("新会员:"+link);
+                        ICO_Linkedin_Link ico_linkedin_link = new ICO_Linkedin_Link();
+                        ico_linkedin_link.setLink(org_link);
+                        ico_linkedin_link.setStandard_link(link);
+                        ico_linkedin_link.setLink_status("ini");
+                        ico_linkedin_link.setMember_info_status("ini");
+                        ico_linkedin_link.setInsert_time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                        ICO_Linkedin_Link flag = linkDao.save(ico_linkedin_link);
+                        if(null!=flag){
+                           log.info("新增会员成功："+link);
+                        }else{
+                            log.info("新增会员失败："+link);
+                        }
+                    }else{
+                        log.info("老会员:"+link);
+                    }
+                }else{
+                   log.info("Linkedin链接不合法！");
+                }
             }
-            unique_links.add(link);
+
         }
-        ArrayList<ICO_Linkedin_Link> linkedin_links = new ArrayList<ICO_Linkedin_Link>();
-        for(String link:unique_links){
-            ICO_Linkedin_Link linkedinLink = new ICO_Linkedin_Link();
-            linkedinLink.setLink(link);
-            linkedinLink.setLink_status("ini");
-            linkedinLink.setMember_info_status("ini");
-            linkedinLink.setMember_info_server("00");
-            linkedinLink.setInsert_time(new Timestamp(Calendar.getInstance().getTime().getTime()));
-            linkedin_links.add(linkedinLink);
-        }
-        linkDao.saveAll(linkedin_links);
     }
 
     public boolean analysisMembersToBase(Document doc, long link_id) {
@@ -441,4 +466,72 @@ public class LinkedinServiceImp implements LinkedinService {
         }
     }
 
+    @Override
+    public JSONObject get_ico_linkedin_member_info(String link) {
+        JSONObject json = new JSONObject();
+        json.put("link",link);
+        int start = StringUtils.indexOfIgnoreCase(link,"linkedin.com/in/")+15;//加15代表本字符串最后一个/的位置
+        int end = StringUtils.indexOfIgnoreCase(link,"/",start+1);//查找start后面的/的位置
+        if(null==link||!StringUtils.contains(link,"linkedin.com")||start==14){
+            link = "illegal";
+        }else if(end==-1){
+            link = "https://www.linkedin.com/in/" + org.apache.commons.lang.StringUtils.substring(link,start+1) + "/";
+        }else if(start<end){
+            link = "https://www.linkedin.com/in/" + org.apache.commons.lang.StringUtils.substring(link,start+1,end) + "/";
+        }else{
+            link = "illegal";
+        }
+        if("illegal".equals(link)){
+            json.put("standard_link","illegal");
+             return json;
+        }else{
+            json.put("standard_link",link);
+            ICO_Linkedin_Link linkedin_link = linkDao.getICO_Linkedin_LinkBystandard_link(link);
+            if(null!=linkedin_link){
+                ICO_Linkedin_Member member = memberDao.getICO_Linkedin_MemberByLinkId(linkedin_link.getId());
+
+                if(null!=member){
+                    ICO_Linkedin_MemberDto memberdto = new ICO_Linkedin_MemberDto();
+                    BeanUtils.copyProperties(member,memberdto);
+                    json.put("member", JSON.toJSON(memberdto));
+                }
+
+                List<ICO_Linkedin_Membereducationexperience> educationexperiences = member.getEducationexperiences();
+                if(null!=educationexperiences&&educationexperiences.size()>0){
+                    List<ICO_Linkedin_MembereducationexperienceDto> educationexperiencesdto = new ArrayList<>();
+                    for(ICO_Linkedin_Membereducationexperience educationexperience:educationexperiences){
+                        ICO_Linkedin_MembereducationexperienceDto experienceDto = new ICO_Linkedin_MembereducationexperienceDto();
+                        BeanUtils.copyProperties(educationexperience,experienceDto);
+                        educationexperiencesdto.add(experienceDto);
+                    }
+                    json.put("educationexperiences", JSON.toJSON(educationexperiencesdto));
+                }
+
+                List<ICO_Linkedin_Memberselectionskills> ico_linkedin_memberselectionskills = member.getSelectionskills();
+                if(null!=ico_linkedin_memberselectionskills&&ico_linkedin_memberselectionskills.size()>0){
+                    List<ICO_Linkedin_MemberselectionskillsDto> memberselectionskillsDtos = new ArrayList<>();
+                    for(ICO_Linkedin_Memberselectionskills icoLinkedinMemberselectionskill:ico_linkedin_memberselectionskills){
+                        ICO_Linkedin_MemberselectionskillsDto memberselectionskillsDto = new ICO_Linkedin_MemberselectionskillsDto();
+                        BeanUtils.copyProperties(icoLinkedinMemberselectionskill,memberselectionskillsDto);
+                        memberselectionskillsDtos.add(memberselectionskillsDto);
+                    }
+                    json.put("selectionskills",memberselectionskillsDtos);
+                }
+
+                List<ICO_Linkedin_Memberworkexperience> ico_linkedin_memberworkexperiences = member.getWorkexperiences();
+                if(null!=ico_linkedin_memberworkexperiences&&ico_linkedin_memberworkexperiences.size()>0){
+                    List<ICO_Linkedin_MemberworkexperienceDto> memberworkexperienceDtos = new ArrayList<>();
+                    for(ICO_Linkedin_Memberworkexperience ico_linkedin_memberworkexperience:ico_linkedin_memberworkexperiences){
+                        ICO_Linkedin_MemberworkexperienceDto memberworkexperienceDto = new ICO_Linkedin_MemberworkexperienceDto();
+                        BeanUtils.copyProperties(ico_linkedin_memberworkexperience,memberworkexperienceDto);
+                        memberworkexperienceDtos.add(memberworkexperienceDto);
+                    }
+                    json.put("workexperiences",memberworkexperienceDtos);
+                }
+            }else{
+                json.put("member", "new");
+            }
+            return json;
+        }
+    }
 }
