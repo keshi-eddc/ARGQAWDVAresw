@@ -34,6 +34,16 @@ public class ICO_trackico_item {
 	private Timestamp updateTime;
 	@Column(nullable = false, name = "pagenum")
 	private int pagenum;
+	@Column(nullable = false, name = "status")
+	private String status;
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
 
 	public int getPagenum() {
 		return pagenum;
@@ -86,7 +96,8 @@ public class ICO_trackico_item {
 	@Override
 	public String toString() {
 		String str = "ICO_trackico_item[" + "pk_id=" + pk_id + ",pagenum=" + pagenum + ",itemName=" + itemName
-				+ ",itemUrl=" + itemUrl + ",insertTime=" + insertTime + ",updateTime=" + updateTime + "]";
+				+ ",status=" + status + ",itemUrl=" + itemUrl + ",insertTime=" + insertTime + ",updateTime="
+				+ updateTime + "]";
 		return str;
 	}
 }

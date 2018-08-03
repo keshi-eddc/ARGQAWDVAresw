@@ -16,4 +16,10 @@ public interface TrackicoService {
 	*/
 	public void getICO_trackico_list() throws MethodNotSupportException;
 
+	/** 
+	* @Title: getICO_trackico_detail 
+	* @Description: 解析详情页的接口
+	*/
+	public void getICO_trackico_detail() throws MethodNotSupportException;
+	
 }
