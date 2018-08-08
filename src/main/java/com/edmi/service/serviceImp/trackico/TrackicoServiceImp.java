@@ -23,9 +23,11 @@ import org.springframework.stereotype.Service;
 import com.edmi.configs.StateCodeConfig;
 import com.edmi.dao.trackico.ICO_trackico_detailRepository;
 import com.edmi.dao.trackico.ICO_trackico_detail_blockLabelRepository;
+import com.edmi.dao.trackico.ICO_trackico_detail_blockTeamRepository;
 import com.edmi.dao.trackico.ICO_trackico_itemRepository;
 import com.edmi.entity.trackico.ICO_trackico_detail;
 import com.edmi.entity.trackico.ICO_trackico_detail_blockLabel;
+import com.edmi.entity.trackico.ICO_trackico_detail_blockTeam;
 import com.edmi.entity.trackico.ICO_trackico_item;
 import com.edmi.service.service.TrackicoService;
 import com.edmi.utils.http.HttpClientUtil;
@@ -58,6 +60,8 @@ public class TrackicoServiceImp implements TrackicoService {
 	private ICO_trackico_detailRepository ico_trackico_detailDao;
 	@Autowired
 	private ICO_trackico_detail_blockLabelRepository detail_blockLabelDao;
+	@Autowired
+	private ICO_trackico_detail_blockTeamRepository detail_blockTeamDao;
 
 	@Override
 	public void getICO_trackico_list() throws MethodNotSupportException {
@@ -285,6 +289,8 @@ public class TrackicoServiceImp implements TrackicoService {
 						System.out.println(item.toString());
 						extraOneDetailPage(item);
 					}
+					// System.out.println(items.get(0).toString());
+					// extraOneDetailPage(items.get(0));
 				}
 			} catch (Exception e) {
 				log.error("从数据库里查出所有的更新时 error");
@@ -325,6 +331,8 @@ public class TrackicoServiceImp implements TrackicoService {
 						// 解析详情页的-公司标签链接
 						extraDetailPageBlockLabel(item, detailModel, doc);
 						// 解析详情页的-公司人员
+						extraDetailPageBlockTeam(item, detailModel, doc);
+						// 解析详情页的-公司金融
 
 					} else {
 						log.error("页面异常：" + url);
@@ -444,10 +452,7 @@ public class TrackicoServiceImp implements TrackicoService {
 					blockLabelModel.setIco_trackico_detail(detail);
 					blockLabelModel.setInsert_time(new Timestamp(Calendar.getInstance().getTime().getTime()));
 					blockLabelModel.setUpdate_time(new Timestamp(Calendar.getInstance().getTime().getTime()));
-
-					System.out.println(blockLabelModel.toString());
 					blockLabelModelList.add(blockLabelModel);
-					System.out.println("===============");
 				}
 				try {
 					// ICO_trackico_detail_blockLabel 模型存入数据库
@@ -467,6 +472,122 @@ public class TrackicoServiceImp implements TrackicoService {
 			log.error("解析详情页的-公司标签链接 异常");
 			e.printStackTrace();
 		}
+	}
+
+	/** 
+	* @Title: extraDetailPageBlockTeam 
+	* @Description: 解析详情页的-公司人员 
+	* 如果 解析错误 ICO_trackico_item的status的状态 = extraBlockTeamError
+	*/
+	public void extraDetailPageBlockTeam(ICO_trackico_item item, ICO_trackico_detail detail, Document doc) {
+		try {
+			// 详情页的所有的人员
+			List<ICO_trackico_detail_blockTeam> blockTeamList = new ArrayList<>(200);
+			Elements teameles = doc.select("div.tab-content > div#tab-team >div.row.equal-height > div");
+			if (teameles != null && teameles.size() > 0) {
+				Boolean isNotAdvisors = true;
+				for (Element ele : teameles) {
+					ICO_trackico_detail_blockTeam blockTeam = new ICO_trackico_detail_blockTeam();
+					if (isNotAdvisors) {
+						// 区分有没有顾问Advisors
+						String temp = ele.attr("class");
+						if (temp.equals("col-12")) {
+							isNotAdvisors = false;
+							continue;
+						}
+						// 解析team
+						String member_type = "member";
+						extraOneMember(ele, blockTeam, member_type, detail);
+
+					} else {
+						// 解析顾问
+						String member_type = "advisor";
+						extraOneMember(ele, blockTeam, member_type, detail);
+					}
+					System.out.println(blockTeam.toString());
+					blockTeamList.add(blockTeam);
+				}
+				// blockTeamList 对象插入数据库
+				try {
+					detail_blockTeamDao.saveAll(blockTeamList);
+				} catch (Exception e) {
+					e.printStackTrace();
+					log.info("ICO_trackico_detail_blockTeam 入库异常");
+				}
+			}
+
+		} catch (Exception e) {
+			// 更新item对象的status的状态-解析详情页的-公司人员
+			item.setStatus("extraBlockTeamError");
+			ico_trackico_itemDao.save(item);
+			log.error("解析详情页的-公司人员  异常");
+			e.printStackTrace();
+		}
+	}
+
+	/** 
+	* @Title: extraOneMember 
+	* @Description: 解析一个人的信息 
+	*/
+	public static void extraOneMember(Element ele, ICO_trackico_detail_blockTeam blockTeam, String member_type, ICO_trackico_detail detail) {
+		// 人员名称member_name
+		String member_name = "";
+		Elements member_nameles = ele.select("div.card > div.card-body > h5");
+		if (member_nameles != null && member_nameles.size() > 0) {
+			member_name = member_nameles.text().trim();
+		}
+		// 人员链接 member_url
+		String member_url = "";
+		Elements member_urleles = ele.select("div.card > div.card-body > h5 > a");
+		if (member_urleles != null && member_urleles.size() > 0) {
+			member_url = member_nameles.attr("href").trim();
+			if (!member_url.contains("https://www.trackico.io")) {
+				member_url = "https://www.trackico.io" + member_url;
+			}
+		}
+
+		// 人员责任（职位） member_position
+		String member_position = "";
+		Elements member_positioneles = ele.select("div.card > div.card-body > span");
+		if (member_positioneles != null && member_positioneles.size() > 0) {
+			member_position = member_positioneles.text().trim();
+		}
+		// 头像地址 member_photo_url
+		String member_photo_url = "";
+		Elements member_photo_urleles = ele.select("div.card > div.card-body > a > span.avatar > img");
+		if (member_photo_urleles != null && member_photo_urleles.size() > 0) {
+			member_photo_url = member_photo_urleles.attr("src");
+			if (!member_photo_url.contains("https://www.trackico.io")) {
+				member_photo_url = "https://www.trackico.io" + member_photo_url;
+			}
+		}
+
+		// 2 fk_id
+		blockTeam.setIco_trackico_detail(detail);
+		// 3人员名称member_name
+		blockTeam.setMember_name(member_name);
+		// 4人员链接 member_url
+		blockTeam.setMember_url(member_url);
+		// 5人员责任（职位） member_position
+		blockTeam.setMember_position(member_position);
+		// 5人员类型 member_type
+		blockTeam.setMember_type(member_type);
+		// 6 头像地址 member_photo_url
+		blockTeam.setMember_photo_url(member_photo_url);
+		// 7 插入时间
+		blockTeam.setInsert_time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+		// 8 更新时间
+		blockTeam.setUpdate_time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+
+	}
+
+	/** 
+	* @Title: extraDetailPageBlockFinancial 
+	* @Description: 解析详情页的-公司金融
+	*  如果 解析错误 ICO_trackico_item的status的状态 = extraBlockFinancialError
+	*/
+	public void extraDetailPageBlockFinancial(ICO_trackico_item item, ICO_trackico_detail detail, Document doc) {
+
 	}
 
 	public static void main(String[] args) throws MethodNotSupportException {
