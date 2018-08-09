@@ -31,9 +31,9 @@ public class HttpClientUtil {
 
     private static PoolingHttpClientConnectionManager connMgr;
     private static RequestConfig requestConfig;
-    private static final int MAX_CONNECT_TIMEOUT = 10000;
-    private static final int MAX_SOCKET_TIMEOUT = 10000;
-    private static final int MAX_CONNECT_REQUEST_TIMEOUT = 10000;
+    private static final int MAX_CONNECT_TIMEOUT = 15000;
+    private static final int MAX_SOCKET_TIMEOUT = 15000;
+    private static final int MAX_CONNECT_REQUEST_TIMEOUT = 15000;
     private static final int MAX_TOTAL = 100;
 
     static {

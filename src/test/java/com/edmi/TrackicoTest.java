@@ -20,6 +20,8 @@ import com.edmi.utils.http.exception.MethodNotSupportException;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class TrackicoTest {
+	Logger log = Logger.getLogger(TrackicoTest.class);
+
 	// 注入实例 相当于自动new对象
 	@Autowired
 	private TrackicoService trackicoService;
