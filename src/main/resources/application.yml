@@ -25,9 +25,10 @@ spring:
   jpa:
     database: mysql
       #  show-sql: true
-      #    hibernate:
+    hibernate:
       #      ddl-auto : update
-      #      naming-strategy : org.hibernate.cfg.ImprovedNamingStrategy
+      naming:
+        physical-strategy : org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
       #    properties:
       #      hibernate:
       #        dialect : org.hibernate.dialect
