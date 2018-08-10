@@ -51,6 +51,7 @@ public class TrackicoServiceImp implements TrackicoService {
 	// 是否抓取过程出现中断
 	Boolean isInterrupted = false;
 	// 如果中断，中断的位置，如58页：https://www.trackico.io/58/
+	// 如https://www.trackico.io/3/?order=recent
 	String interruptUrl = "";
 
 	@Autowired
@@ -72,9 +73,9 @@ public class TrackicoServiceImp implements TrackicoService {
 	public void getICO_trackico_list() throws MethodNotSupportException {
 
 		// 起始页
-		String url = "https://www.trackico.io/";
+		// String url = "https://www.trackico.io/";
 		// 按时间排序
-		// String url = "https://www.trackico.io/?order=recent";
+		String url = "https://www.trackico.io/?order=recent";
 		// 如果有抓取过程中有中断，接着上次最大的位置抓取
 		if (isInterrupted) {
 			url = interruptUrl;
@@ -116,7 +117,7 @@ public class TrackicoServiceImp implements TrackicoService {
 				e.printStackTrace();
 			}
 		}
-		log.info("抓取完成");
+		log.info("trackico-列表页-抓取完成");
 	}
 
 	// 获得当前item总数
@@ -228,7 +229,7 @@ public class TrackicoServiceImp implements TrackicoService {
 	public String getPageContent(String url) {
 		String pageContent = null;
 		Request request;
-		int maxRetry = 5;
+		int maxRetry = 10;
 		int maxRetryException = 10;
 		int retryNnum = 0;
 		Boolean isright = false;

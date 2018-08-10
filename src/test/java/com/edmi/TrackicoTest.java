@@ -28,7 +28,7 @@ public class TrackicoTest {
 
 	@Test
 	public void getICO_trackico_list() throws MethodNotSupportException {
-		// trackicoService.getICO_trackico_list();
-		trackicoService.getICO_trackico_detail();
+		trackicoService.getICO_trackico_list();
+		// trackicoService.getICO_trackico_detail();
 	}
 }

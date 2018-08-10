@@ -12,14 +12,14 @@ import com.edmi.utils.http.exception.MethodNotSupportException;
 public interface TrackicoService {
 	/** 
 	* @Title: getICO_trackico_list 
-	* @Description: 抓取列表页的接口
+	* @Description: 抓取列表页的接口方法
 	*/
 	public void getICO_trackico_list() throws MethodNotSupportException;
 
 	/** 
 	* @Title: getICO_trackico_detail 
-	* @Description: 解析详情页的接口
+	* @Description: 解析详情页的接口方法
 	*/
 	public void getICO_trackico_detail() throws MethodNotSupportException;
-	
+
 }
