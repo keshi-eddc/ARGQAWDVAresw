@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
 import java.util.Calendar;
 import java.util.List;
 
-/*@Component*/
+@Component
 public class CrawlerTask {
 
     Logger log = Logger.getLogger(CrawlerTask.class);
@@ -248,13 +248,14 @@ public class CrawlerTask {
 
     // <===================== 下面是Trackico的相关job ===================================>
     //每天早晨5点开始
-    @Scheduled(cron = "0 0 5 * * ?")
+//    @Scheduled(cron = "0 41 14 * * ?")
     public void getICO_Trackico_list() throws MethodNotSupportException {
         trackicoService.getICO_trackico_list();
     }
-    //每天早晨5点30分开始
-    @Scheduled(cron = "0 30 5 * * ?")
-    public void getICO_Trackico_detail()throws MethodNotSupportException{
+
+    //每10分钟执行
+    @Scheduled(cron = "0 0/10 * * * ?")
+    public void getICO_Trackico_detail() throws MethodNotSupportException {
         trackicoService.getICO_trackico_detail();
     }
 
