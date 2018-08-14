@@ -291,7 +291,7 @@ public class CrawlerTask {
             long minutes = (mss % (1000 * 60 * 60)) / (1000 * 60);
             long seconds = (mss % (1000 * 60)) / 1000;
             String timestr = hours + " hours " + minutes + " minutes " + seconds + " seconds ";
-            log.info("this time crawled，" + "items num：" + items.size() + ".cost：" + timestr);
+            log.info(">>>>>>>>>> this time crawled," + "items num:" + items.size() + ".cost;" + timestr);
         } else {
             log.info("get item from databash ,item num is 0");
         }

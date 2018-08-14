@@ -315,7 +315,7 @@ public class TrackicoServiceImp implements TrackicoService {
             Response response = HttpClientUtil.doRequest(request);
             int code = response.getCode();
             // 500 Read timed out
-            System.out.println("code:" + code);
+            System.out.println("code;" + code);
             // 验证请求
             if (code == 200) {
                 String content = response.getResponseText();
@@ -328,7 +328,7 @@ public class TrackicoServiceImp implements TrackicoService {
                         ICO_trackico_detail detailModel = new ICO_trackico_detail();
                         //
                         List<ICO_trackico_detail> ico_trackico_detailList = ico_trackico_detailDao.getICO_trackico_detailsByFkid(item.getPk_id());
-                        log.info("insert before get details from detailsTable ,num:" + ico_trackico_detailList.size());
+                        log.info("crawl details before get details from detailsTable ,num; " + ico_trackico_detailList.size());
                         if (CollectionUtils.isEmpty(ico_trackico_detailList)) {
                             // 解析详情页的-详情
                             extraDetailPageDetails(item, detailModel, doc);
@@ -428,8 +428,16 @@ public class TrackicoServiceImp implements TrackicoService {
             detailModel.setUpdate_time(new Timestamp(Calendar.getInstance().getTime().getTime()));
             // 传入item对象，设置fk_id
             detailModel.setIco_trackico_item(item);
-            // 模型入库
-            ico_trackico_detailDao.save(detailModel);
+            try {
+                // 模型入库
+                ico_trackico_detailDao.save(detailModel);
+                //跟新 status
+                item.setStatus("200");
+                ico_trackico_itemDao.save(item);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
 //            try {
 //                //插入数据前，查询是否已经存在
 //                List<ICO_trackico_detail> ico_trackico_detailList = ico_trackico_detailDao.getICO_trackico_detailsByFkid(item.getPk_id());
@@ -461,7 +469,7 @@ public class TrackicoServiceImp implements TrackicoService {
             // 更新item对象的status -解析异常
             item.setStatus("extraDetailsError");
             ico_trackico_itemDao.save(item);
-            log.error("解析详情页的-详情-异常");
+            log.error("extra-details-Exception");
             e.printStackTrace();
         }
     }
@@ -472,7 +480,7 @@ public class TrackicoServiceImp implements TrackicoService {
      * 解析错误status = extraBlockLabelError
      */
     public void extraDetailPageBlockLabel(ICO_trackico_item item, ICO_trackico_detail detail, Document doc) {
-        log.info("解析详情页的-公司标签链接");
+        log.info("extraDetailPageBlockLabel");
         try {
             List<ICO_trackico_detail_blockLabel> blockLabelModelList = new ArrayList<>(100);
             Elements eles = doc.select("div.card-body > div.flexbox > div.flex-grow > div.d-flex.flex-row.align-items-center.flex-wrap.mt-2 > a");
@@ -504,18 +512,18 @@ public class TrackicoServiceImp implements TrackicoService {
                     // ICO_trackico_detail_blockLabel 模型存入数据库
                     detail_blockLabelDao.saveAll(blockLabelModelList);
                 } catch (Exception e) {
-                    log.error("ICO_trackico_detail_blockLabel 入库异常");
+                    log.error("ICO_trackico_detail_blockLabel  inset erro");
                     e.printStackTrace();
                 }
             } else {
-                log.error("页面标签不存在，请检查" + " extraDetailPageBlockLabel");
+                log.error("element do not exist，" + " extraDetailPageBlockLabel");
             }
 
         } catch (Exception e) {
             // 更新item对象的status的状态-解析详情页的-公司标签链接
             item.setStatus("extraBlockLabelError");
             ico_trackico_itemDao.save(item);
-            log.error("解析详情页的-公司标签链接 异常");
+            log.error("extar-conpany lable Exception");
             e.printStackTrace();
         }
     }
@@ -526,7 +534,7 @@ public class TrackicoServiceImp implements TrackicoService {
      * 如果 解析错误 ICO_trackico_item的status的状态 = extraBlockTeamError
      */
     public void extraDetailPageBlockTeam(ICO_trackico_item item, ICO_trackico_detail detail, Document doc) {
-        log.info("解析详情页的-公司人员");
+        log.info("extraDetailPageBlockTeam");
         try {
             // 详情页的所有的人员
             List<ICO_trackico_detail_blockTeam> blockTeamList = new ArrayList<>(200);
@@ -559,7 +567,7 @@ public class TrackicoServiceImp implements TrackicoService {
                     detail_blockTeamDao.saveAll(blockTeamList);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    log.info("ICO_trackico_detail_blockTeam 入库异常");
+                    log.info("ICO_trackico_detail_blockTeam insert Exception");
                 }
             }
 
@@ -567,7 +575,7 @@ public class TrackicoServiceImp implements TrackicoService {
             // 更新item对象的status的状态-解析详情页的-公司人员
             item.setStatus("extraBlockTeamError");
             ico_trackico_itemDao.save(item);
-            log.error("解析详情页的-公司人员  异常");
+            log.error("extra-company team , Exception");
             e.printStackTrace();
         }
     }
@@ -634,8 +642,7 @@ public class TrackicoServiceImp implements TrackicoService {
      * 如果 解析错误 ICO_trackico_item的status的状态 = extraBlockFinancialError
      */
     public void extraDetailPageBlockFinancial(ICO_trackico_item item, ICO_trackico_detail detail, Document doc) {
-        log.info("解析详情页的-公司金融");
-        // 公司金融 的列 目前发现有两个
+        log.info("extraDetailPageBlockFinancial");
         try {
             // 公司金融 - 列
             Elements financialeles = doc.select("div.tab-content > div#tab-financial > div.row > div");
@@ -684,17 +691,23 @@ public class TrackicoServiceImp implements TrackicoService {
 
                         }
                     } else {
-                        log.error("解析-公司金融,发现不符合规则的列");
+                        log.error("extra company BlockFinancial，find not rule line");
                     }
                 }
-                // 一次存一页
-                detail_financialDao.saveAll(blockFinancialList);
+                try {
+                    // 一次存一页
+                    detail_financialDao.saveAll(blockFinancialList);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    log.error("detail_financial insert erro ");
+                }
+
             }
         } catch (Exception e) {
             // 更新item对象的status的状态-解析详情页的-公司金融
             item.setStatus("extraBlockFinancialError");
             ico_trackico_itemDao.save(item);
-            log.error("解析详情页的-公司金融  异常");
+            log.error("extrra company financial ,Exception");
             e.printStackTrace();
         }
     }
@@ -705,7 +718,7 @@ public class TrackicoServiceImp implements TrackicoService {
      * 如果 解析错误 ICO_trackico_item的status的状态 = extraBlockMilestonesError
      */
     public void extraDetailPageBlockMilestones(ICO_trackico_item item, ICO_trackico_detail detail, Document doc) {
-        log.info("解析详情页的-公司里程表");
+        log.info("extraDetailPageBlockMilestones");
         try {
             Elements milestoneles = doc.select("div.tab-content > div#tab-milestones ol.timeline > li");
             // System.out.println("含有：" + milestoneles.size() + " 条里程表");
@@ -748,14 +761,19 @@ public class TrackicoServiceImp implements TrackicoService {
                         stoneslist.add(milestonesModel);
                     }
                 }
-                // 存入数据库，存一页的里程表
-                detail_milestonesDao.saveAll(stoneslist);
+                try {
+                    // 存入数据库，存一页的里程表
+                    detail_milestonesDao.saveAll(stoneslist);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    log.error("detail_milestones insert erro ");
+                }
             }
         } catch (Exception e) {
             // 更新item对象的status的状态-解析详情页的-公司里程表
             item.setStatus("extraBlockMilestonesError");
             ico_trackico_itemDao.save(item);
-            log.error("解析详情页的-公司里程表  异常");
+            log.error("extra detail_milestones ,Exception");
             e.printStackTrace();
         }
     }
@@ -765,7 +783,7 @@ public class TrackicoServiceImp implements TrackicoService {
      * @Description:解析详情页的-公司信息 如果 解析错误 ICO_trackico_item的status的状态 = extraBlockInfoError
      */
     public void extraDetailPageBlockInfo(ICO_trackico_item item, ICO_trackico_detail detail, Document doc) {
-        log.info("解析详情页的-公司信息");
+        log.info("extraDetailPageBlockInfo");
         try {
             Elements blockInfoeles = doc.select("div.col-md-4.col-xl-3.d-none.d-md-block > div > div:nth-child(3)");
             if (blockInfoeles != null && blockInfoeles.size() > 0) {
@@ -812,7 +830,7 @@ public class TrackicoServiceImp implements TrackicoService {
                         // System.out.println(blockInfoModel.toString());
                         detail_InfoDao.save(blockInfoModel);
                     } else {
-                        log.info("不符合 公司信息 country 不为空 的规则,不插入数据库 ");
+                        log.info("do not rule countain country not null ,do not insert table detail_Info ");
                     }
                 }
             }
@@ -820,7 +838,7 @@ public class TrackicoServiceImp implements TrackicoService {
             // 更新item对象的status的状态-解析详情页的-公司信息
             item.setStatus("extraBlockInfoError");
             ico_trackico_itemDao.save(item);
-            log.error("解析详情页的-公司信息  异常");
+            log.error("extra company ,Exception");
             e.printStackTrace();
         }
     }
