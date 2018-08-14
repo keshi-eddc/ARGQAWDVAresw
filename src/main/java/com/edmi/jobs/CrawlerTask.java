@@ -271,7 +271,7 @@ public class CrawlerTask {
 
         // List<ICO_trackico_item> items =
         // ico_trackico_itemDao.findOneByItemUrl("https://www.trackico.io/ico/w12/");
-        log.info("从数据库 查询 到 items 数量：" + items.size());
+        log.info("get items num ：" + items.size());
         if (items.size() != 0) {
             // 获取开始时间
             long startTime = System.currentTimeMillis();
@@ -290,10 +290,10 @@ public class CrawlerTask {
             long hours = (mss % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60);
             long minutes = (mss % (1000 * 60 * 60)) / (1000 * 60);
             long seconds = (mss % (1000 * 60)) / 1000;
-            String timestr = hours + " 小时 " + minutes + " 分钟 " + seconds + " 秒 ";
-            log.info("本次详情抓取完成，" + "items个数：" + items.size() + ".用时：" + timestr);
+            String timestr = hours + " hours " + minutes + " minutes " + seconds + " seconds ";
+            log.info("this time crawled，" + "items num：" + items.size() + ".cost：" + timestr);
         } else {
-            log.info("数据库查询到item的数量是0");
+            log.info("get item from databash ,item num is 0");
         }
 
     }

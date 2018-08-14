@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import com.google.common.util.concurrent.Futures;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -15,6 +16,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import com.edmi.dao.trackico.ICO_trackico_detailRepository;
@@ -37,6 +39,7 @@ import com.edmi.utils.http.exception.MethodNotSupportException;
 import com.edmi.utils.http.request.Request;
 import com.edmi.utils.http.request.RequestMethod;
 import com.edmi.utils.http.response.Response;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author keshi
@@ -64,7 +67,7 @@ public class TrackicoServiceImp implements TrackicoService {
     @Autowired
     private ICO_trackico_detail_blockTeamRepository detail_blockTeamDao;
     @Autowired
-    private ICO_trackico_detail_blockFinancialRepository detail_financialTeamDao;
+    private ICO_trackico_detail_blockFinancialRepository detail_financialDao;
     @Autowired
     private ICO_trackico_detail_blockMilestonesRepository detail_milestonesDao;
     @Autowired
@@ -300,7 +303,7 @@ public class TrackicoServiceImp implements TrackicoService {
      * @Title: extraOneDetailPage
      * @Description: 解析详情页
      */
-     @Async("myTaskAsyncPool")
+    // @Async("myTaskAsyncPool")
     public void getICO_trackico_detail(ICO_trackico_item item) {
         try {
             log.info(item.toString());
@@ -323,24 +326,43 @@ public class TrackicoServiceImp implements TrackicoService {
                         Document doc = Jsoup.parse(content);
                         // 模型
                         ICO_trackico_detail detailModel = new ICO_trackico_detail();
-                        // 解析详情页的-详情
-                        extraDetailPageDetails(item, detailModel, doc);
-                        // 解析详情页的-公司标签链接
-                        extraDetailPageBlockLabel(item, detailModel, doc);
-                        // 解析详情页的-公司人员
-                        extraDetailPageBlockTeam(item, detailModel, doc);
-                        // 解析详情页的-公司金融
-                        extraDetailPageBlockFinancial(item, detailModel, doc);
-                        // 解析详情页的-公司里程表
-                        extraDetailPageBlockMilestones(item, detailModel, doc);
-                        // 解析详情页的-公司信息
-                        extraDetailPageBlockInfo(item, detailModel, doc);
+                        //
+                        List<ICO_trackico_detail> ico_trackico_detailList = ico_trackico_detailDao.getICO_trackico_detailsByFkid(item.getPk_id());
+                        log.info("insert before get details from detailsTable ,num:" + ico_trackico_detailList.size());
+                        if (CollectionUtils.isEmpty(ico_trackico_detailList)) {
+                            // 解析详情页的-详情
+                            extraDetailPageDetails(item, detailModel, doc);
+                            // 解析详情页的-公司标签链接
+                            extraDetailPageBlockLabel(item, detailModel, doc);
+                            // 解析详情页的-公司人员
+                            extraDetailPageBlockTeam(item, detailModel, doc);
+                            // 解析详情页的-公司金融
+                            extraDetailPageBlockFinancial(item, detailModel, doc);
+                            // 解析详情页的-公司里程表
+                            extraDetailPageBlockMilestones(item, detailModel, doc);
+                            // 解析详情页的-公司信息
+                            extraDetailPageBlockInfo(item, detailModel, doc);
+                        } else {
+                            for (ICO_trackico_detail deModel : ico_trackico_detailList) {
+                                log.info("detailPageDetails is Already exist ,and update details and others");
+                                deleteICO_trackico_detail_blockLabelByPk_id(deModel.getPk_id());
+                                deleteICO_trackico_detai_blockTeamlByPk_id(deModel.getPk_id());
+                                deleteICO_trackico_detail_blockFinancialByPk_id(deModel.getPk_id());
+                                deleteICO_trackico_detai_blockMilestonesByPk_id(deModel.getPk_id());
+                                deleteICO_trackico_detail_block_infoByPk_id(deModel.getPk_id());
+                            }
+                            deleteICO_trackico_detailByPk_id(item.getPk_id());
+
+                            // 发生了重复，先删除 从表 和 detail 表。进入下次抓取
+                            item.setStatus("ini");
+                            ico_trackico_itemDao.save(item);
+                        }
 
                     } else {
-                        log.error("页面异常：" + url);
+                        log.error("page Exception：" + url);
                     }
                 } else {
-                    log.error("页面为空：" + url);
+                    log.error("page null：" + url);
                 }
 
             } else {
@@ -364,7 +386,7 @@ public class TrackicoServiceImp implements TrackicoService {
      * 未解析 status = ini
      */
     public void extraDetailPageDetails(ICO_trackico_item item, ICO_trackico_detail detailModel, Document doc) {
-        log.info("解析详情页的-详情");
+        log.info("extraDetailPageDetails");
         // 如果解析异常，catch 处修改status
         try {
             // 解析页面
@@ -408,10 +430,33 @@ public class TrackicoServiceImp implements TrackicoService {
             detailModel.setIco_trackico_item(item);
             // 模型入库
             ico_trackico_detailDao.save(detailModel);
-            // log.info(detailModel.toString());
-            // 更新item对象的status -正常解析
-            item.setStatus("200");
-            ico_trackico_itemDao.save(item);
+//            try {
+//                //插入数据前，查询是否已经存在
+//                List<ICO_trackico_detail> ico_trackico_detailList = ico_trackico_detailDao.getICO_trackico_detailsByFkid(item.getPk_id());
+//                log.info("insert before get details from detailsTable ,num:" + ico_trackico_detailList.size());
+//                if (CollectionUtils.isEmpty(ico_trackico_detailList)) {
+//                    // 模型入库
+//                    ico_trackico_detailDao.save(detailModel);
+//                } else {
+//                    for (ICO_trackico_detail deModel : ico_trackico_detailList) {
+//                        log.info("detailPageDetails is Already exist ,and update details and others");
+//                        deleteICO_trackico_detail_blockLabelByPk_id(deModel.getPk_id());
+//                        deleteICO_trackico_detai_blockTeamlByPk_id(deModel.getPk_id());
+//                        deleteICO_trackico_detail_blockFinancialByPk_id(deModel.getPk_id());
+//                        deleteICO_trackico_detai_blockMilestonesByPk_id(deModel.getPk_id());
+//                        deleteICO_trackico_detail_block_infoByPk_id(deModel.getPk_id());
+//                    }
+//                    deleteICO_trackico_detailByPk_id(item.getPk_id());
+//
+//                    // 发生了重复，删除 先删除 从表 和 detail 表。进入下次抓取
+//                    item.setStatus("ini");
+//                    ico_trackico_itemDao.save(item);
+//                }
+//
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//                log.info("details table Exception");
+//            }
         } catch (Exception e) {
             // 更新item对象的status -解析异常
             item.setStatus("extraDetailsError");
@@ -474,6 +519,7 @@ public class TrackicoServiceImp implements TrackicoService {
             e.printStackTrace();
         }
     }
+
     /**
      * @Title: extraDetailPageBlockTeam
      * @Description: 解析详情页的-公司人员
@@ -642,7 +688,7 @@ public class TrackicoServiceImp implements TrackicoService {
                     }
                 }
                 // 一次存一页
-                detail_financialTeamDao.saveAll(blockFinancialList);
+                detail_financialDao.saveAll(blockFinancialList);
             }
         } catch (Exception e) {
             // 更新item对象的status的状态-解析详情页的-公司金融
@@ -652,6 +698,7 @@ public class TrackicoServiceImp implements TrackicoService {
             e.printStackTrace();
         }
     }
+
     /**
      * @Title: extraDetailPageBlockMilestones
      * @Description: 解析详情页的-公司里程表
@@ -777,6 +824,7 @@ public class TrackicoServiceImp implements TrackicoService {
             e.printStackTrace();
         }
     }
+
     //毫秒转到时分秒
     public static String formatDuring(long mss) {
         long hours = (mss % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60);
@@ -804,6 +852,42 @@ public class TrackicoServiceImp implements TrackicoService {
 
         String startTime = "https://www.trackico.io/ico/ubcoin/";
         System.out.println(t.ico_trackico_itemDao.getICO_trackico_itemByItemUrl(startTime).toString());
+    }
+
+    @Override
+    @Transactional
+    public int deleteICO_trackico_detailByPk_id(long fk_id) {
+        return ico_trackico_detailDao.deleteICO_trackico_detailByPk_id(fk_id);
+    }
+
+    @Override
+    @Transactional
+    public int deleteICO_trackico_detai_blockTeamlByPk_id(long fk_id) {
+        return detail_blockTeamDao.deleteICO_trackico_detai_blockTeamlByPk_id(fk_id);
+    }
+
+    @Override
+    @Transactional
+    public int deleteICO_trackico_detai_blockMilestonesByPk_id(long fk_id) {
+        return detail_milestonesDao.deleteICO_trackico_detai_blockMilestonesByPk_id(fk_id);
+    }
+
+    @Override
+    @Transactional
+    public int deleteICO_trackico_detail_blockLabelByPk_id(long fk_id) {
+        return detail_blockLabelDao.deleteICO_trackico_detail_blockLabelByPk_id(fk_id);
+    }
+
+    @Override
+    @Transactional
+    public int deleteICO_trackico_detail_block_infoByPk_id(long fk_id) {
+        return detail_InfoDao.deleteICO_trackico_detail_block_infoByPk_id(fk_id);
+    }
+
+    @Override
+    @Transactional
+    public int deleteICO_trackico_detail_blockFinancialByPk_id(long fk_id) {
+        return detail_financialDao.deleteICO_trackico_detail_blockFinancialByPk_id(fk_id);
     }
 
 }
