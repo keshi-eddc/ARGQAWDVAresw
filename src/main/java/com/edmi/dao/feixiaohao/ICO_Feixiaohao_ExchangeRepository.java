@@ -20,5 +20,4 @@ public interface ICO_Feixiaohao_ExchangeRepository extends JpaRepository<ICO_Fei
 
     @Query(value = "select ex from ICO_Feixiaohao_Exchange ex order by ex.pk_id asc")
     Page<ICO_Feixiaohao_Exchange> getICO_Feixiaohao_Exchange(Pageable pageable);
-
 }
