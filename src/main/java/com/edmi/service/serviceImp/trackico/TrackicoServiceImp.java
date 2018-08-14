@@ -303,6 +303,7 @@ public class TrackicoServiceImp implements TrackicoService {
      @Async("myTaskAsyncPool")
     public void getICO_trackico_detail(ICO_trackico_item item) {
         try {
+            log.info(item.toString());
             // 详情页链接
             String url = item.getItemUrl();
             // https://www.trackico.io/ico/ubcoin/
@@ -319,7 +320,6 @@ public class TrackicoServiceImp implements TrackicoService {
                 if (StringUtils.isNotBlank(content)) {
                     // 验证是否是正常页面
                     if (content.contains("card-body")) {
-
                         Document doc = Jsoup.parse(content);
                         // 模型
                         ICO_trackico_detail detailModel = new ICO_trackico_detail();

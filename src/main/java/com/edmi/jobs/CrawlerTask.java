@@ -4,9 +4,11 @@ import com.edmi.dao.etherscan.*;
 import com.edmi.dao.feixiaohao.ICO_Feixiaohao_ExchangeRepository;
 import com.edmi.dao.feixiaohao.ICO_Feixiaohao_Exchange_CurrenciesRepository;
 import com.edmi.dao.feixiaohao.ICO_Feixiaohao_Exchange_DetailsRepository;
+import com.edmi.dao.trackico.ICO_trackico_itemRepository;
 import com.edmi.entity.etherscan.*;
 import com.edmi.entity.feixiaohao.ICO_Feixiaohao_Exchange;
 import com.edmi.entity.feixiaohao.ICO_Feixiaohao_Exchange_Currencies;
+import com.edmi.entity.trackico.ICO_trackico_item;
 import com.edmi.service.service.EtherscanService;
 import com.edmi.service.service.FeixiaohaoService;
 import com.edmi.service.service.TrackicoService;
@@ -31,6 +33,7 @@ public class CrawlerTask {
 
     @Autowired
     private FeixiaohaoService feixiaohaoService;
+
     @Autowired
     private TrackicoService trackicoService;
 
@@ -60,6 +63,10 @@ public class CrawlerTask {
 
     @Autowired
     private ICO_Feixiaohao_Exchange_DetailsRepository exchange_detailsDao;
+
+    @Autowired
+    private ICO_trackico_itemRepository ico_trackico_itemDao;
+
 
     /*@Scheduled(cron = "0 38 08 25 * ?")*/
     public void getICO_Etherscan_IO_Blocks() throws Exception {
@@ -248,15 +255,48 @@ public class CrawlerTask {
 
     // <===================== 下面是Trackico的相关job ===================================>
     //每天早晨5点开始
-//    @Scheduled(cron = "0 41 14 * * ?")
+    @Scheduled(cron = "0 00 05 * * ?")
     public void getICO_Trackico_list() throws MethodNotSupportException {
         trackicoService.getICO_trackico_list();
     }
 
     //每10分钟执行
-    @Scheduled(cron = "0 0/10 * * * ?")
+    @Scheduled(cron = "0 0/5 * * * ?")
     public void getICO_Trackico_detail() throws MethodNotSupportException {
-        trackicoService.getICO_trackico_detail();
+
+        //all
+//        List<ICO_trackico_item> items = ico_trackico_itemDao.findAllByStatus("ini");
+
+        List<ICO_trackico_item> items = ico_trackico_itemDao.findTop10ByStatus("ini");
+
+        // List<ICO_trackico_item> items =
+        // ico_trackico_itemDao.findOneByItemUrl("https://www.trackico.io/ico/w12/");
+        log.info("从数据库 查询 到 items 数量：" + items.size());
+        if (items.size() != 0) {
+            // 获取开始时间
+            long startTime = System.currentTimeMillis();
+
+            for (ICO_trackico_item item : items) {
+                trackicoService.getICO_trackico_detail(item);
+                try {
+                    Thread.sleep(10 * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            // 获取结束时间
+            long endTime = System.currentTimeMillis();
+            long mss = endTime - startTime;
+            long hours = (mss % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60);
+            long minutes = (mss % (1000 * 60 * 60)) / (1000 * 60);
+            long seconds = (mss % (1000 * 60)) / 1000;
+            String timestr = hours + " 小时 " + minutes + " 分钟 " + seconds + " 秒 ";
+            log.info("本次详情抓取完成，" + "items个数：" + items.size() + ".用时：" + timestr);
+        } else {
+            log.info("数据库查询到item的数量是0");
+        }
+
     }
 
 }
+

@@ -1,5 +1,6 @@
 package com.edmi.service.service;
 
+import com.edmi.entity.trackico.ICO_trackico_item;
 import com.edmi.utils.http.exception.MethodNotSupportException;
 
 /**
@@ -20,6 +21,6 @@ public interface TrackicoService {
 	* @Title: getICO_trackico_detail 
 	* @Description: 解析详情页的接口方法
 	*/
-	public void getICO_trackico_detail() throws MethodNotSupportException;
+	public void getICO_trackico_detail(ICO_trackico_item item) throws MethodNotSupportException;
 
 }

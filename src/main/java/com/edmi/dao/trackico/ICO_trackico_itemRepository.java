@@ -51,6 +51,11 @@ public interface ICO_trackico_itemRepository extends JpaRepository<ICO_trackico_
 	* @Description: 从数据库分批查，获得Status的Top10
 	*/
 	List<ICO_trackico_item> findTop10ByStatus(String status);
+	/**
+	 * @Title: findTopByStatus
+	 * @Description: 从数据库分批查，获得Status的所有的
+	 */
+	List<ICO_trackico_item> findAllByStatus(String status);
 
 	/** 
 	* @Title: findOneByItemUrl 
