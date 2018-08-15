@@ -63,5 +63,6 @@ public interface ICO_trackico_itemRepository extends JpaRepository<ICO_trackico_
 	*/
 	List<ICO_trackico_item> findOneByItemUrl(String itemUrl);
 
-	ICO_trackico_item getICO_trackico_itemByPk_id(Long detailFkId);
+	@Query("select it from ICO_trackico_item it where it.pk_id = :pk_id ")
+	ICO_trackico_item getICO_trackico_itemByPkid(@Param("pk_id") Long pk_id);
 }

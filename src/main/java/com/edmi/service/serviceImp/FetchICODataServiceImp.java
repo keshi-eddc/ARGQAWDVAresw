@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.edmi.entity.icocrunch.Ico_icocrunch_detail;
 import com.edmi.service.service.FetchICODataService;
 import com.edmi.service.service.IcocrunchSevice;
+import com.edmi.service.service.TrackicoService;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,11 +17,15 @@ public class FetchICODataServiceImp implements FetchICODataService {
 
     @Autowired
     private IcocrunchSevice icocrunchSevice;
+    @Autowired
+    private TrackicoService trackicoService;
 
     @Override
     public JSONObject getICODataBySourceName(String dataSourceName,int page_number,int pageSize) {
         if(StringUtils.equalsIgnoreCase("icocrunch.io",dataSourceName)){
             return icocrunchSevice.getIco_icocrunch_detailPageable(page_number,pageSize);
+        }else if(StringUtils.equalsIgnoreCase("trackico.io",dataSourceName)){
+            return trackicoService.getIco_trackico_detailPageable(page_number,pageSize);
         }else{
             return null;
         }

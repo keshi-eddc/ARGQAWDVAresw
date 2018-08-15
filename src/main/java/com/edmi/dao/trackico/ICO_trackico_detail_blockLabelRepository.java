@@ -22,6 +22,6 @@ public interface ICO_trackico_detail_blockLabelRepository extends JpaRepository<
     @Query("delete from ICO_trackico_detail_blockLabel  where fk_id = :fk_id")
     int deleteICO_trackico_detail_blockLabelByPk_id(@Param("fk_id") long fk_id);
 
-    @Query("select d from ICO_trackico_detail_blockLabel  where d.fk_id = :fk_id")
+    @Query("select d from ICO_trackico_detail_blockLabel d where d.ico_trackico_detail.pk_id = :fk_id")
     List<ICO_trackico_detail_blockLabel> getICO_trackico_detail_blockLabelByFkId(@Param("fk_id") long detailPkId);
 }

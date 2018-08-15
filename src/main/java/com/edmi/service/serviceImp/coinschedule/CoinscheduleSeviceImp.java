@@ -3,6 +3,7 @@ package com.edmi.service.serviceImp.coinschedule;
 import com.alibaba.fastjson.JSONObject;
 import com.edmi.dao.icocrunch.Ico_icocrunch_detailDao;
 import com.edmi.dao.icocrunch.Ico_icocrunch_listDao;
+import com.edmi.entity.coinschedule.Ico_coinschedule_List;
 import com.edmi.entity.icocrunch.Ico_icocrunch_detail;
 import com.edmi.entity.icocrunch.Ico_icocrunch_list;
 import com.edmi.service.service.CoinscheduleService;
@@ -67,8 +68,20 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
                     Elements divTable_dtLives = list_container.getElementsByAttributeValue("class", "divTable dtLive");
                     if(CollectionUtils.isNotEmpty(divTable_dtLives)){
                         Element divTable_dtLive = divTable_dtLives.first();
+
                         Elements divTableBodys = divTable_dtLive.getElementsByClass("divTableBody");//获取头信息
-                        Elements divTableRow = divTable_dtLive.getElementsByAttributeValueStarting("class","divTableRow ");//获取列表
+                        Elements divTableRows = divTable_dtLive.getElementsByAttributeValueStarting("class","divTableRow ");//获取列表
+
+                        List<Ico_coinschedule_List> ico_coinschedule_lists = new ArrayList<Ico_coinschedule_List>();
+
+                        if(CollectionUtils.isNotEmpty(divTableBodys)){
+                            Element divTableBody = divTableBodys.first();
+                            Elements heads = divTableBody.getElementsByAttributeValueStarting("class", "divTableCellHead");
+                        }
+                        /*for(divTableRows){
+
+                        }*/
+
 
                     }
                 }

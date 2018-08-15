@@ -261,7 +261,7 @@ public class CrawlerTask {
     }
 
     //每10分钟执行
-    @Scheduled(cron = "0 0/5 * * * ?")
+    //@Scheduled(cron = "0 0/5 * * * ?")
     public void getICO_Trackico_detail() throws MethodNotSupportException {
 
         //all

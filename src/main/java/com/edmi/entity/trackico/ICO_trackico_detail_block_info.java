@@ -1,14 +1,7 @@
 package com.edmi.entity.trackico;
 
 import java.sql.Timestamp;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 /** 
 * @ClassName: ICO_trackico_detail_block_info 
@@ -40,7 +33,7 @@ public class ICO_trackico_detail_block_info {
 	* 本表的fk_id是外键，指向ico_trackico_detail的pk_id
 	* 会自动关联
 	*/
-	@OneToOne
+	@OneToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "fk_id")
 	private ICO_trackico_detail ico_trackico_detail;
 

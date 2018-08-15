@@ -1,9 +1,5 @@
 package com.edmi.dao.trackico;
 
-import com.edmi.entity.icocrunch.Ico_icocrunch_detail;
-import com.edmi.entity.trackico.ICO_trackico_item;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import com.edmi.entity.trackico.ICO_trackico_detail;
 import org.springframework.data.jpa.repository.Modifying;
@@ -12,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 /** 
 * @ClassName: ICO_trackico_detailRepository 
@@ -31,6 +28,9 @@ public interface ICO_trackico_detailRepository extends JpaRepository<ICO_trackic
     @Query("delete from ICO_trackico_detail  where fk_id = :fk_id")
     int deleteICO_trackico_detailByPk_id(@Param("fk_id")long fk_id);
 
-    @Query("select d from ICO_trackico_detail d  order by d.pk_id asc")
-    Page<ICO_trackico_detail> getICO_trackico_detailPageable(Pageable pageable);
+    @Query(value = "select detail.block_name,detail.block_tag,list.itemUrl,label.block_lable_name,label.block_lable_url" +
+            " from ICO_trackico_detail detail\n" +
+            "      LEFT JOIN ico_trackico_list list ON detail.fk_id = list.pk_id\n" +
+            "      LEFT JOIN ico_trackico_detail_block_label label ON detail.pk_id = label.fk_id",nativeQuery = true)
+    List<Map>  getICO_trackico_detailIndex();
 }

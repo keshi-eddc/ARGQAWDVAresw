@@ -24,11 +24,13 @@ spring:
     logSlowSql: true
   jpa:
     database: mysql
-      #  show-sql: true
+    show-sql: true
     hibernate:
       #      ddl-auto : update
       naming:
-        physical-strategy : org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        physical-strategy :  org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+#    org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+
       #    properties:
       #      hibernate:
       #        dialect : org.hibernate.dialect
