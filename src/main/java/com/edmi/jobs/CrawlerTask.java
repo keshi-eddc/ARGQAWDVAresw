@@ -255,7 +255,7 @@ public class CrawlerTask {
 
     // <===================== 下面是Trackico的相关job ===================================>
     //每天早晨5点开始
-    @Scheduled(cron = "0 00 05 * * ?")
+    @Scheduled(cron = "0 00 21 * * ?")
     public void getICO_Trackico_list() throws MethodNotSupportException {
         trackicoService.getICO_trackico_list();
     }
@@ -271,7 +271,7 @@ public class CrawlerTask {
 
         // List<ICO_trackico_item> items =
         // ico_trackico_itemDao.findOneByItemUrl("https://www.trackico.io/ico/w12/");
-        log.info("get items num ：" + items.size());
+        log.info("get items num :" + items.size());
         if (items.size() != 0) {
             // 获取开始时间
             long startTime = System.currentTimeMillis();

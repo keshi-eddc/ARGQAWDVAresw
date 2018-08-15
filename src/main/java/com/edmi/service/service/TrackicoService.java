@@ -1,5 +1,6 @@
 package com.edmi.service.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.edmi.entity.trackico.ICO_trackico_item;
 import com.edmi.utils.http.exception.MethodNotSupportException;
 import org.springframework.data.repository.query.Param;
@@ -40,5 +41,9 @@ public interface TrackicoService {
 
     //删除 详情 公司金融
     public int deleteICO_trackico_detail_blockFinancialByPk_id(long fk_id);
+
+    //列表页借口
+    public JSONObject getIco_trackico_detailPageable(int page_number, int pageSize);
+
 
 }

@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import com.alibaba.fastjson.JSONObject;
+import com.edmi.entity.icocrunch.Ico_icocrunch_detail;
 import com.google.common.util.concurrent.Futures;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -16,6 +18,9 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -908,4 +913,76 @@ public class TrackicoServiceImp implements TrackicoService {
         return detail_financialDao.deleteICO_trackico_detail_blockFinancialByPk_id(fk_id);
     }
 
+    //实现接口
+    @Override
+    public JSONObject getIco_trackico_detailPageable(int page_number, int pageSize) {
+        Pageable pageable = PageRequest.of(page_number, pageSize);
+        Page<ICO_trackico_detail> page = ico_trackico_detailDao.getICO_trackico_detailPageable(pageable);
+
+        JSONObject result = new JSONObject();
+        result.put("totalPages", page.getTotalPages());
+        result.put("number", page.getTotalElements());
+
+        JSONObject solution_data = new JSONObject();
+        for (ICO_trackico_detail detail : page.getContent()) {
+            /*组装指定格式的Json数据*/
+            JSONObject block = new JSONObject();
+            block.put("name", detail.getBlock_name());
+            block.put("token_name", detail.getBlock_tag());
+            String website = "";
+            String white_paper = "";
+            //-------social-------
+            String bitcointalk = "";
+            String github = "";
+            //medium 没有
+            String medium = "";
+            String telegram = "";
+            String twitter = "";
+            JSONObject social = new JSONObject();
+
+            Long detailPkId = detail.getPk_id();
+            //根据 detailPkId 去查 lable
+            List<ICO_trackico_detail_blockLabel> blockLabelList = detail_blockLabelDao.getICO_trackico_detail_blockLabelByFkId(detailPkId);
+            if (CollectionUtils.isNotEmpty(blockLabelList)) {
+                for (ICO_trackico_detail_blockLabel label : blockLabelList) {
+                    String key = label.getBlock_lable_name();
+                    if (key.equalsIgnoreCase("Website")) {
+                        website = label.getBlock_lable_url();
+                    } else if (key.equalsIgnoreCase("Whitepaper")) {
+                        white_paper = label.getBlock_lable_url();
+                    } else if (key.equalsIgnoreCase("BitcoinTalk")) {
+                        bitcointalk = label.getBlock_lable_url();
+                    } else if (key.equalsIgnoreCase("GitHub")) {
+                        github = label.getBlock_lable_url();
+                    } else if (key.equalsIgnoreCase("medium")) {
+                        medium = label.getBlock_lable_url();
+                    } else if (key.equalsIgnoreCase("Telegram")) {
+                        telegram = label.getBlock_lable_url();
+                    } else if (key.equalsIgnoreCase("Twitter")) {
+                        twitter = label.getBlock_lable_url();
+                    }
+                }
+            } else {
+                log.info("blockLabelList is empty,select from blockLabelListTable with detailPkId");
+            }
+            block.put("website", website);
+            block.put("white_paper", white_paper);
+
+            social.put("bitcointalk", bitcointalk);
+            social.put("github", github);
+            social.put("medium", medium);
+            social.put("telegram", telegram);
+            social.put("twitter", twitter);
+
+            block.put("social", social);
+
+            //根据 detailFkId 去查 item url
+            Long detailFkId = detail.getIco_trackico_item().getPk_id();
+            ICO_trackico_item item = ico_trackico_itemDao.getICO_trackico_itemByPk_id(detailFkId);
+            solution_data.put(item.getItemUrl(), block);
+        }
+        result.put("solution_data", solution_data);
+        result.put("source", "icocrunch.io");
+        return result;
+    }
 }
