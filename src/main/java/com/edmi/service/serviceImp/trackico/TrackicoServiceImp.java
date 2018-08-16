@@ -1,12 +1,10 @@
 package com.edmi.service.serviceImp.trackico;
 
+import java.lang.reflect.Field;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.collections.CollectionUtils;
@@ -583,7 +581,7 @@ public class TrackicoServiceImp implements TrackicoService {
      * @Title: extraOneMember
      * @Description: 解析一个人的信息
      */
-    public  void extraOneMember(Element ele, ICO_trackico_detail_blockTeam blockTeam, String member_type, ICO_trackico_detail detail) {
+    public void extraOneMember(Element ele, ICO_trackico_detail_blockTeam blockTeam, String member_type, ICO_trackico_detail detail) {
         // 人员名称member_name
         String member_name = "";
         Elements member_nameles = ele.select("div.card > div.card-body > h5");
@@ -910,7 +908,7 @@ public class TrackicoServiceImp implements TrackicoService {
     //实现接口
     @Override
     public JSONObject getIco_trackico_detailPageable(int page_number, int pageSize) {
-       // Pageable pageable = PageRequest.of(page_number, pageSize);
+        // Pageable pageable = PageRequest.of(page_number, pageSize);
         List<Map> page = ico_trackico_detailDao.getICO_trackico_detailIndex();
 
         JSONObject result = new JSONObject();
@@ -918,13 +916,50 @@ public class TrackicoServiceImp implements TrackicoService {
         result.put("number", page.getTotalElements());*/
 
         JSONObject solution_data = new JSONObject();
-        for (Object detail : page) {
-
-
-
+        log.info(page);
+        for (int i = 0; i < page.size(); i++) {
+            Object obj = page.get(i);
+            try {
+                Map a = objectToMap(obj);
+                log.info(a);
+                for (Object okey : a.keySet()) {
+                    log.info(okey.toString() + " === " + a.get(okey));
+                }
+                Object b = a.get("tuple");
+                Map c = objectToMap(b);
+                log.info(c);
+                for (Object okey : c.keySet()) {
+                    log.info(okey.toString() + " === " + c.get(okey));
+                }
+                LinkedHashMap d = (LinkedHashMap) c.get("aliasToValue");
+                log.info(d);
+                Iterator iter = d.entrySet().iterator();
+                while (iter.hasNext()) {
+                    Map.Entry entry = (Map.Entry) iter.next();
+                    Object key = entry.getKey();
+                    Object val = entry.getValue();
+                    log.info(key +"===" + val);
+                }
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            }
         }
+
         result.put("solution_data", solution_data);
         result.put("source", "trackico.io");
         return result;
+    }
+
+    public static Map<String, Object> objectToMap(Object obj) throws IllegalAccessException {
+        Map<String, Object> map = new HashMap<>();
+        Class<?> clazz = obj.getClass();
+        System.out.println(clazz);
+        for (Field field : clazz.getDeclaredFields()) {
+            field.setAccessible(true);
+            String fieldName = field.getName();
+            Object value = field.get(obj);
+            map.put(fieldName, value);
+        }
+        return map;
     }
 }
