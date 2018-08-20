@@ -25,11 +25,6 @@ public interface ICO_icorating_listRepository extends JpaRepository<ICO_icoratin
     int deleteICO_icorating_listByLink(@Param("link") String link);
 
     /**
-     * 上次抓取的最大抓取批次
-     * @return
-     */
-
-    /**
      * 获得上次抓取的批次
      *nativeQuery = true 写数据库的属性
      * @return
@@ -44,4 +39,9 @@ public interface ICO_icorating_listRepository extends JpaRepository<ICO_icoratin
      */
     @Query("select it from ICO_icorating_list it where it.crawledTimes = :crawled_times order by it.currentPage desc")
     List<ICO_icorating_list> getMaxCurrentPageWithMaxCrawledTimes(@Param("crawled_times") Integer crawled_times);
+
+    /**
+     * 获得crawlstatus = ini 的top10
+     */
+    List<ICO_icorating_list> findTop10ByCrawledStatu(String crawledStatu);
 }

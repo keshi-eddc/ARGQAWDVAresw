@@ -3,7 +3,9 @@ package com.edmi.service.serviceImp.icorating;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.edmi.dao.icorating.ICO_icorating_detailRepository;
 import com.edmi.dao.icorating.ICO_icorating_listRepository;
+import com.edmi.entity.icorating.ICO_icorating_detail;
 import com.edmi.entity.icorating.ICO_icorating_list;
 import com.edmi.service.service.IcoratingService;
 import com.edmi.utils.http.HttpClientUtil;
@@ -14,9 +16,14 @@ import com.edmi.utils.http.response.Response;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sun.rmi.runtime.Log;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -33,6 +40,8 @@ public class IcoratingServiceImp implements IcoratingService {
     static Boolean ListPageBreakPointCrawl = true;
     @Autowired
     private ICO_icorating_listRepository listDao;
+    @Autowired
+    private ICO_icorating_detailRepository detailDao;
 
     @Override
     public void getIcotatingList() {
@@ -86,6 +95,7 @@ public class IcoratingServiceImp implements IcoratingService {
         if (maxCrawledTimes == null) {
             maxCrawledTimes = 0;
         }
+//        page = 16;
         while (isNotLast) {
             String url = "https://icorating.com/ico/all/load/?page=" + page + "&all=false&search=";
             log.info("===Upcoming visit to:" + page + " : " + url);
@@ -163,6 +173,8 @@ public class IcoratingServiceImp implements IcoratingService {
             int last_page = icosjo.getInteger("last_page");
 
             JSONArray icojos = icosjo.getJSONArray("data");
+            log.info("----------current_page has : " + icojos.size() + " items");
+
             for (int i = 0; i < icojos.size(); i++) {
                 ICO_icorating_list item = new ICO_icorating_list();
 
@@ -299,4 +311,78 @@ public class IcoratingServiceImp implements IcoratingService {
     public int deleteICO_icorating_listByLink(String link) {
         return listDao.deleteICO_icorating_listByLink(link);
     }
+
+    //=================detail=======================
+    @Override
+    public void getIcoratingDetail(ICO_icorating_list item) {
+        //查数据库有没有该详情
+        String itemUrl = item.getLink();
+        if (StringUtils.isNotBlank(itemUrl)) {
+            List<ICO_icorating_detail> oldDetailList = detailDao.getICO_icorating_detailByLink(itemUrl);
+            if (CollectionUtils.isEmpty(oldDetailList)) {
+                log.info("extra detail");
+                Request request = null;
+                try {
+                    request = new Request(itemUrl, RequestMethod.GET);
+                } catch (MethodNotSupportException e) {
+                    e.printStackTrace();
+                }
+                Response response = HttpClientUtil.doRequest(request);
+                int code = response.getCode();
+                if (code == 200) {
+                    //验证页面
+                    String content = response.getResponseText();
+                    if (StringUtils.isNotBlank(content)) {
+                        //验证页面是否正常
+                        if (content.contains("heading")) {
+                            //开始页面解析
+                            extraDetails(content,item);
+                        } else {
+                            log.info("page is not usually");
+                        }
+                    } else {
+                        log.info(" page is null ");
+                    }
+                } else {
+                    log.info("requst code is not 200 ,code:" + code);
+                }
+
+
+            } else {
+                log.info("allread exist the detail URL ：" + itemUrl);
+            }
+        } else {
+            log.error("item url is null");
+        }
+    }
+
+    //解析详情
+    public void extraDetails(String content, ICO_icorating_list item) {
+        log.info("------解析详情");
+        Document doc = Jsoup.parse(content);
+        ICO_icorating_detail detailModel = new ICO_icorating_detail();
+        try {
+            detailModel.setLink(item.getLink());
+            //fkid
+            detailModel.setIco_icorating_list(item);
+//            block_name
+//            block_tag
+            Elements blockeles = doc.select("div.o-grid__cell > div.o-media > div.o-media__body");
+            if (blockeles != null && blockeles.size() > 0) {
+                Elements nameles = blockeles.select("h1");
+                String name = nameles.text().trim();
+                Elements tageles = blockeles.select("p");
+                String tag = tageles.text().trim();
+                detailModel.setBlock_name(name);
+                detailModel.setBlock_tag(tag);
+            }
+//            block_overview
+
+        detailDao.save(detailModel);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.info("extra exception");
+        }
+    }
+
 }
