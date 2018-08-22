@@ -494,15 +494,18 @@ public class LinkedinServiceImp implements LinkedinService {
                     ICO_Linkedin_MemberDto memberdto = new ICO_Linkedin_MemberDto();
                     BeanUtils.copyProperties(member,memberdto);
                     json.put("member", JSON.toJSON(memberdto));
+                }else{
+                    json.put("member", "new");
+                    return json;
                 }
 
                 List<ICO_Linkedin_Membereducationexperience> educationexperiences = member.getEducationexperiences();
                 if(null!=educationexperiences&&educationexperiences.size()>0){
                     List<ICO_Linkedin_MembereducationexperienceDto> educationexperiencesdto = new ArrayList<>();
                     for(ICO_Linkedin_Membereducationexperience educationexperience:educationexperiences){
-                        ICO_Linkedin_MembereducationexperienceDto experienceDto = new ICO_Linkedin_MembereducationexperienceDto();
-                        BeanUtils.copyProperties(educationexperience,experienceDto);
-                        educationexperiencesdto.add(experienceDto);
+                        ICO_Linkedin_MembereducationexperienceDto membereducationexperienceDto = new ICO_Linkedin_MembereducationexperienceDto();
+                        BeanUtils.copyProperties(educationexperience,membereducationexperienceDto);
+                        educationexperiencesdto.add(membereducationexperienceDto);
                     }
                     json.put("educationexperiences", JSON.toJSON(educationexperiencesdto));
                 }

@@ -42,8 +42,10 @@ public interface TrackicoService {
     //删除 详情 公司金融
     public int deleteICO_trackico_detail_blockFinancialByPk_id(long fk_id);
 
-    //列表页接口
-    public JSONObject getIco_trackico_detailPageable(int page_number, int pageSize);
+    public JSONObject getIco_trackico_detail_index();
 
+    public ICO_trackico_item getICO_trackico_listByItemUrl(String url);
+
+    public JSONObject getICO_trackico_detailByItemUrl(String url);
 
 }

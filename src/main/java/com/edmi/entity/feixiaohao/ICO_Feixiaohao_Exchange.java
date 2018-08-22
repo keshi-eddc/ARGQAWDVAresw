@@ -22,7 +22,11 @@ public class ICO_Feixiaohao_Exchange {
     @Column(nullable = false)
     private String state;
     @Column(nullable = false)
-    private String transaction_amount;
+    private String transaction_amount_cny;
+    @Column(nullable = false)
+    private String transaction_amount_btc;
+    @Column(nullable = false)
+    private String transaction_amount_usd;
     @Column(nullable = false)
     private Timestamp insert_time;
     @Column(nullable = false)
@@ -37,6 +41,21 @@ public class ICO_Feixiaohao_Exchange {
     private String state_code;
     @Column(nullable = false)
     private String founding_time;
+    @Column(nullable = false)
+    private String wechat;
+    @Column(nullable = false)
+    private String telegram;
+    @Column(nullable = false)
+    private String twitter;
+    @Column(nullable = false)
+    private String reddit;
+    @Column(nullable = false)
+    private String medium;
+    @Column(nullable = false)
+    private String facebook;
+    @Column(nullable = false)
+    private String blog;
+
 
     public Long getPk_id() {
         return pk_id;
@@ -84,14 +103,6 @@ public class ICO_Feixiaohao_Exchange {
 
     public void setState(String state) {
         this.state = state;
-    }
-
-    public String getTransaction_amount() {
-        return transaction_amount;
-    }
-
-    public void setTransaction_amount(String transaction_amount) {
-        this.transaction_amount = transaction_amount;
     }
 
     public Timestamp getInsert_time() {
@@ -156,5 +167,85 @@ public class ICO_Feixiaohao_Exchange {
 
     public void setFounding_time(String founding_time) {
         this.founding_time = founding_time;
+    }
+
+    public String getTransaction_amount_cny() {
+        return transaction_amount_cny;
+    }
+
+    public void setTransaction_amount_cny(String transaction_amount_cny) {
+        this.transaction_amount_cny = transaction_amount_cny;
+    }
+
+    public String getTransaction_amount_btc() {
+        return transaction_amount_btc;
+    }
+
+    public void setTransaction_amount_btc(String transaction_amount_btc) {
+        this.transaction_amount_btc = transaction_amount_btc;
+    }
+
+    public String getTransaction_amount_usd() {
+        return transaction_amount_usd;
+    }
+
+    public void setTransaction_amount_usd(String transaction_amount_usd) {
+        this.transaction_amount_usd = transaction_amount_usd;
+    }
+
+    public String getWechat() {
+        return wechat;
+    }
+
+    public void setWechat(String wechat) {
+        this.wechat = wechat;
+    }
+
+    public String getTelegram() {
+        return telegram;
+    }
+
+    public void setTelegram(String telegram) {
+        this.telegram = telegram;
+    }
+
+    public String getTwitter() {
+        return twitter;
+    }
+
+    public void setTwitter(String twitter) {
+        this.twitter = twitter;
+    }
+
+    public String getReddit() {
+        return reddit;
+    }
+
+    public void setReddit(String reddit) {
+        this.reddit = reddit;
+    }
+
+    public String getMedium() {
+        return medium;
+    }
+
+    public void setMedium(String medium) {
+        this.medium = medium;
+    }
+
+    public String getFacebook() {
+        return facebook;
+    }
+
+    public void setFacebook(String facebook) {
+        this.facebook = facebook;
+    }
+
+    public String getBlog() {
+        return blog;
+    }
+
+    public void setBlog(String blog) {
+        this.blog = blog;
     }
 }

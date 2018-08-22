@@ -12,6 +12,7 @@ import com.edmi.utils.http.exception.MethodNotSupportException;
 import com.edmi.utils.http.request.Request;
 import com.edmi.utils.http.request.RequestMethod;
 import com.edmi.utils.http.response.Response;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -154,7 +155,7 @@ public class FeixiaohaoServiceImp implements FeixiaohaoService {
                                         Elements transaction_amount_a = column.getElementsByTag("a");
                                         if(null!=transaction_amount_a&&transaction_amount_a.size()>0){
                                             String transaction_amount = transaction_amount_a.first().text();
-                                            ico_feixiaohao_exchange.setTransaction_amount(StringUtils.defaultIfEmpty(transaction_amount,""));
+                                            ico_feixiaohao_exchange.setTransaction_amount_cny(StringUtils.defaultIfEmpty(transaction_amount,""));
                                         }
                                     }else if(value.equals("交易对")) {
                                         Elements counter_party_a = column.getElementsByTag("a");
@@ -326,6 +327,30 @@ public class FeixiaohaoServiceImp implements FeixiaohaoService {
                     exchangeDao.save(exchange);
                 }
             }
+            Elements vols = doc.getElementsByClass("vol");//24小时平台成交额
+            if(CollectionUtils.isNotEmpty(vols)){
+                Element vol = vols.first();
+                Elements nums = vol.getElementsByClass("num");//人民币格式的成交额
+                if(CollectionUtils.isNotEmpty(nums)){
+                    Element num = nums.first();
+                    String num_text = num.ownText();
+                    num_text = StringUtils.defaultIfEmpty(num_text,"");
+                    exchange.setTransaction_amount_cny(num_text);
+                }
+                Elements num2s = vol.getElementsByClass("num2");//美元及btc格式的成交额
+                if(CollectionUtils.isNotEmpty(num2s)){
+                    Element num2 = num2s.first();
+                    Elements spans = num2.getElementsByTag("span");//
+                    for(Element span:spans){
+                        if(StringUtils.containsIgnoreCase(span.ownText(),"$")){
+                            exchange.setTransaction_amount_usd(span.ownText());
+                        }if (StringUtils.containsIgnoreCase(span.ownText(),"BTC")){
+                            exchange.setTransaction_amount_btc(span.ownText());
+                        }
+
+                    }
+                }
+            }
             Elements marketinfos = doc.getElementsByClass("marketinfo");//官网信息
             if(null!=marketinfos&&marketinfos.size()>0){
                 Element marketinfo = marketinfos.first();
@@ -342,9 +367,33 @@ public class FeixiaohaoServiceImp implements FeixiaohaoService {
                             web_text = StringUtils.substringAfterLast(web_text,"官网地址：");
                             exchange.setWebsite(web_text);
                         }
+                        Elements blogs =  web.getElementsContainingOwnText("官方微博");//social地址
+                        if(null!=blogs&&blogs.size()>0) {
+                            Elements socials = blogs.first().getElementsByTag("a");
+                            for(Element social:socials){
+                                String className = social.attr("class");
+                                String title = social.attr("title");
+                                title = StringUtils.substringAfterLast(title,"地址：");
+                                if(StringUtils.containsIgnoreCase(className,"twitter")){
+                                    exchange.setTwitter(title);
+                                }else if(StringUtils.containsIgnoreCase(className,"facebook")){
+                                    exchange.setFacebook(title);
+                                }else if(StringUtils.containsIgnoreCase(className,"blog")){
+                                    exchange.setBlog(title);
+                                }else if(StringUtils.containsIgnoreCase(className,"wechat")){
+                                    exchange.setWechat(title);
+                                }else if(StringUtils.containsIgnoreCase(className,"telegram")){
+                                    exchange.setTelegram(title);
+                                }else if(StringUtils.containsIgnoreCase(className,"reddit")){
+                                    exchange.setReddit(title);
+                                }else if(StringUtils.containsIgnoreCase(className,"medium")){
+                                    exchange.setMedium(title);
+                                }
+                            }
+                        }
                     }
 
-                    Elements dess = info.getElementsByClass("text");//官网描述解析
+                    Elements dess = info.select("> div[class=text]");//官网描述解析
                     if(null!=dess&&dess.size()>0){
                         String des = dess.first().text();
                         exchange.setDes(StringUtils.defaultIfEmpty(des,""));
@@ -364,6 +413,7 @@ public class FeixiaohaoServiceImp implements FeixiaohaoService {
                             }
                         }
                     }
+                    exchange.setModify_time(new Timestamp(Calendar.getInstance().getTime().getTime()));
                     exchange = exchangeDao.save(exchange);
                     if (null != exchange) {
                         log.info("exchange信息更新成功：" + exchange.getPk_id());
@@ -667,7 +717,34 @@ public class FeixiaohaoServiceImp implements FeixiaohaoService {
         JSONObject result = new JSONObject();
         result.put("totalPages",page.getTotalPages());
         result.put("recordCount",page.getTotalElements());
-        result.put("datas",JSONObject.toJSON(page.getContent()));
+
+
+        JSONArray datas = new JSONArray();
+        for(ICO_Feixiaohao_Exchange exchange:page.getContent()){
+             JSONObject data = JSONObject.parseObject(JSONObject.toJSON(exchange).toString());
+
+             JSONObject social = new JSONObject();
+             social.put("wechat",exchange.getWechat());
+             social.put("telegram",exchange.getTelegram());
+             social.put("twitter",exchange.getTwitter());
+             social.put("reddit",exchange.getReddit());
+             social.put("medium",exchange.getMedium());
+             social.put("facebook",exchange.getFacebook());
+             social.put("blog",exchange.getBlog());
+             data.put("social",social);
+
+             data.remove("wechat");
+             data.remove("telegram");
+             data.remove("twitter");
+             data.remove("reddit");
+             data.remove("medium");
+             data.remove("facebook");
+             data.remove("blog");
+
+             datas.add(data);
+        }
+        result.put("datas",datas);
+
         return result;
     }
 

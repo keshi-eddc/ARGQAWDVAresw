@@ -99,7 +99,7 @@ public class FetchDataController {
             }else{
                 JSONObject solution_datas = dataSourceJSon.getJSONObject("solution_data");
                 if(null!=solution_datas&&solution_datas.size()>0){
-                    return fetchICODataService.getICODataByICOCrunchUrl(solution_datas);
+                    return fetchICODataService.getICODataByICOUrl(solution_datas);
                 }else{
                     return null;
                 }

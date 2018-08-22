@@ -25,7 +25,7 @@ public class FetchICODataServiceImp implements FetchICODataService {
         if(StringUtils.equalsIgnoreCase("icocrunch.io",dataSourceName)){
             return icocrunchSevice.getIco_icocrunch_detailPageable(page_number,pageSize);
         }else if(StringUtils.equalsIgnoreCase("trackico.io",dataSourceName)){
-            return trackicoService.getIco_trackico_detailPageable(page_number,pageSize);
+            return trackicoService.getIco_trackico_detail_index();
         }else{
             return null;
         }
@@ -33,7 +33,7 @@ public class FetchICODataServiceImp implements FetchICODataService {
     }
 
     @Override
-    public JSONObject getICODataByICOCrunchUrl(JSONObject solution_data) {
+    public JSONObject getICODataByICOUrl(JSONObject solution_data) {
         String dataSourceName = "";
         JSONObject json = new JSONObject();
         int number = 0;
@@ -45,13 +45,25 @@ public class FetchICODataServiceImp implements FetchICODataService {
             if(StringUtils.isEmpty(dataSourceName)){//根据url的域名判断是哪个网站的Block URL
                 dataSourceName = StringUtils.substringBetween(key,"//","/");
             }
-            if(StringUtils.equalsIgnoreCase("icocrunch.io",dataSourceName)){
+            if(StringUtils.containsIgnoreCase(dataSourceName,"icocrunch.io")){
+                dataSourceName = "icocrunch.io";
                 Ico_icocrunch_detail detail = icocrunchSevice.getIco_icocrunch_detailByICOCrunchUrl(key);
                 if(null!=detail){
                     number+=1;
 
                     JSONObject solution_url = new JSONObject();
-                    solution_url.put(detail.getIcoCrunchUrl(),JSON.toJSON(detail));
+                    solution_url.put(key,JSON.toJSON(detail));
+
+                    solution_id.put(value,solution_url);
+                }
+            }else if(StringUtils.containsIgnoreCase(dataSourceName,"trackico.io")){
+                dataSourceName = "trackico.io";
+                JSONObject detail = trackicoService.getICO_trackico_detailByItemUrl(key);
+                if(null!=detail){
+                    number+=1;
+
+                    JSONObject solution_url = new JSONObject();
+                    solution_url.put(key,detail);
 
                     solution_id.put(value,solution_url);
                 }
