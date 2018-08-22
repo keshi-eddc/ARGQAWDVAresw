@@ -30,9 +30,4 @@ public interface ICO_trackico_detailRepository extends JpaRepository<ICO_trackic
     @Query("delete from ICO_trackico_detail  where fk_id = :fk_id")
     int deleteICO_trackico_detailByPk_id(@Param("fk_id")long fk_id);
 
-    @Query(value = "select detail.block_name,detail.block_tag,list.itemUrl,label.block_lable_name,label.block_lable_url" +
-            " from ICO_trackico_detail detail\n" +
-            "      LEFT JOIN ico_trackico_list list ON detail.fk_id = list.pk_id\n" +
-            "      LEFT JOIN ico_trackico_detail_block_label label ON detail.pk_id = label.fk_id",nativeQuery = true)
-    List<Map>  getICO_trackico_detailIndex();
 }
