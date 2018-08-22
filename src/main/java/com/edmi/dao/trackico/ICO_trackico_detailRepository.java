@@ -1,5 +1,6 @@
 package com.edmi.dao.trackico;
 
+import com.edmi.entity.trackico.ICO_trackico_item;
 import org.springframework.data.jpa.repository.JpaRepository;
 import com.edmi.entity.trackico.ICO_trackico_detail;
 import org.springframework.data.jpa.repository.Modifying;
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /** 
 * @ClassName: ICO_trackico_detailRepository 
@@ -17,10 +19,10 @@ import java.util.Map;
 * @date 2018年7月31日 下午4:36:38 
 *  
 */
-public interface ICO_trackico_detailRepository extends JpaRepository<ICO_trackico_detail, Long> {
+public interface ICO_trackico_detailRepository extends JpaRepository<ICO_trackico_detail, Long>{
 
-    @Query("select it from ICO_trackico_detail it where it.ico_trackico_item.pk_id = :fk_id ")
-    List<ICO_trackico_detail> getICO_trackico_detailsByFkid(@Param("fk_id") long fk_id);
+    @Query("select detl from ICO_trackico_detail detl where detl.ico_trackico_item.pk_id = :fk_id ")
+    ICO_trackico_detail getICO_trackico_detailsByFkid(@Param("fk_id") long fk_id);
 
     //删除detail
     @Transactional
