@@ -208,12 +208,12 @@ public class CrawlerTask {
     }
 
     // <===================== 下面是Feixiaohao的相关job ===================================>
-    //@Scheduled(cron = "0 55 14 * * ?")
+    //@Scheduled(cron = "0 34 14 * * ?")
     public void getICO_Feixiaohao_Exchange() throws Exception {
         feixiaohaoService.getICO_Feixiaohao_Exchange();
     }
 
-    //@Scheduled(cron = "0 28 15 * * ?")
+    //@Scheduled(cron = "0 49 17 * * ?")
     public void getICO_Feixiaohao_Exchange_Details() throws Exception {
         List<ICO_Feixiaohao_Exchange> exchanges = exchangeDao.getICO_Feixiaohao_ExchangeByStatus("ini");
         for (ICO_Feixiaohao_Exchange exchange : exchanges) {
@@ -221,22 +221,27 @@ public class CrawlerTask {
         }
     }
 
-    /*@Scheduled(cron = "0 50 06 * * ?")*/
+    //@Scheduled(cron = "0 36 13 * * ?")
     public void getICO_Feixiaohao_Exchange_Counter_Party_Details() throws MethodNotSupportException {
         List<String> links = exchange_detailsDao.getICO_Feixiaohao_Exchange();
         for (int i = 0; i < links.size(); i++) {
             String link = links.get(i);
             log.info("正在抓取" + links.size() + "-" + (i + 1) + "个交易对详情，link：" + link);
             feixiaohaoService.getICO_Feixiaohao_Exchange_Counter_Party_Details(link);
+            try {
+                Thread.sleep(1*1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    //@Scheduled(cron = "0 0 14 * * ?")
+    //@Scheduled(cron = "0 57 17 * * ?")
     public void importICO_Feixiaohao_Exchange_Currencies() {
         feixiaohaoService.importICO_Feixiaohao_Exchange_Currencies();
     }
 
-    // @Scheduled(cron = "0 07 14 * * ?")
+    // @Scheduled(cron = "0 04 18 * * ?")
     public void getICO_Feixiaohao_Exchange_Currenciesdtl() throws MethodNotSupportException {
         List<ICO_Feixiaohao_Exchange_Currencies> currencies = currenciesDao.getICO_Feixiaohao_Exchange_CurrenciesByDetails_status("ini");
         int i = 0;
@@ -291,7 +296,7 @@ public class CrawlerTask {
             long minutes = (mss % (1000 * 60 * 60)) / (1000 * 60);
             long seconds = (mss % (1000 * 60)) / 1000;
             String timestr = hours + " hours " + minutes + " minutes " + seconds + " seconds ";
-            log.info(">>>>>>>>>> this time crawled," + "items num:" + items.size() + ".cost;" + timestr);
+            log.info(" this time crawled," + "items num:" + items.size() + ".cost;" + timestr);
         } else {
             log.info("get item from databash ,item num is 0");
         }
