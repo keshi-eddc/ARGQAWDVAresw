@@ -9,6 +9,7 @@ import java.sql.Timestamp;
  * 详情 模型
  */
 @Entity
+@Table(name = "ico_icorating_detail")
 public class ICO_icorating_detail {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

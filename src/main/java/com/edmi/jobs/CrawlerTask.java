@@ -4,15 +4,19 @@ import com.edmi.dao.etherscan.*;
 import com.edmi.dao.feixiaohao.ICO_Feixiaohao_ExchangeRepository;
 import com.edmi.dao.feixiaohao.ICO_Feixiaohao_Exchange_CurrenciesRepository;
 import com.edmi.dao.feixiaohao.ICO_Feixiaohao_Exchange_DetailsRepository;
+import com.edmi.dao.icorating.ICO_icorating_listRepository;
 import com.edmi.dao.trackico.ICO_trackico_itemRepository;
 import com.edmi.entity.etherscan.*;
 import com.edmi.entity.feixiaohao.ICO_Feixiaohao_Exchange;
 import com.edmi.entity.feixiaohao.ICO_Feixiaohao_Exchange_Currencies;
+import com.edmi.entity.icorating.ICO_icorating_list;
 import com.edmi.entity.trackico.ICO_trackico_item;
 import com.edmi.service.service.EtherscanService;
 import com.edmi.service.service.FeixiaohaoService;
+import com.edmi.service.service.IcoratingService;
 import com.edmi.service.service.TrackicoService;
 import com.edmi.utils.http.exception.MethodNotSupportException;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.log4j.Logger;
 import org.junit.Test;
@@ -36,6 +40,9 @@ public class CrawlerTask {
 
     @Autowired
     private TrackicoService trackicoService;
+
+    @Autowired
+    private IcoratingService icoratingService;
 
     @Autowired
     private ICO_Etherscan_IO_BlocksRepository blocksDao;
@@ -67,6 +74,8 @@ public class CrawlerTask {
     @Autowired
     private ICO_trackico_itemRepository ico_trackico_itemDao;
 
+    @Autowired
+    private ICO_icorating_listRepository ico_icorating_listDao;
 
     /*@Scheduled(cron = "0 38 08 25 * ?")*/
     public void getICO_Etherscan_IO_Blocks() throws Exception {
@@ -295,8 +304,42 @@ public class CrawlerTask {
         } else {
             log.info("get item from databash ,item num is 0");
         }
-
     }
+
+    // <===================== 下面是icorating的相关job ===================================>
+    //每3小时 0 0 */4 * * ?
+//    @Scheduled(cron = "0 0 */3 * * ?")
+    public void getICO_icorating_list() throws MethodNotSupportException {
+        icoratingService.getIcotatingList();
+    }
+
+//    @Scheduled(cron = "0 0/5 * * * ?")
+    public void icotatingDetailManager() {
+        // 获取开始时间
+        long startTime = System.currentTimeMillis();
+        log.info("******** start icotatingDetail task ********");
+        List<ICO_icorating_list> listItems = ico_icorating_listDao.findTop10ByCrawledStatu("ini");
+        log.info("get items num : " + listItems.size() + "  ,from list table");
+        if (CollectionUtils.isNotEmpty(listItems)) {
+            for (int i = 0; i < listItems.size(); i++) {
+                ICO_icorating_list item = listItems.get(i);
+//                String name = item.getName();
+//                log.info("name:" + name);
+                icoratingService.getIcoratingDetail(item);
+            }
+        } else {
+            log.info("get null from list table");
+        }
+        // 获取结束时间
+        long endTime = System.currentTimeMillis();
+        long mss = endTime - startTime;
+        long hours = (mss % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60);
+        long minutes = (mss % (1000 * 60 * 60)) / (1000 * 60);
+        long seconds = (mss % (1000 * 60)) / 1000;
+        String timestr = hours + " hours " + minutes + " minutes " + seconds + " seconds ";
+        log.info(">>>>>>>>>> this time crawled," + "items num:" + listItems.size() + ".cost:" + timestr);
+    }
+
 
 }
 
