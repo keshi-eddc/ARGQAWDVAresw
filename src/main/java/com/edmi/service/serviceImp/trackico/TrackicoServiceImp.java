@@ -79,7 +79,6 @@ public class TrackicoServiceImp implements TrackicoService {
     private JdbcTemplate jdbcTemplate;
 
 
-
     @Override
     public void getICO_trackico_list() throws MethodNotSupportException {
 
@@ -335,7 +334,7 @@ public class TrackicoServiceImp implements TrackicoService {
                         ICO_trackico_detail detailModel = new ICO_trackico_detail();
                         //
                         ICO_trackico_detail ico_trackico_detailList = ico_trackico_detailDao.getICO_trackico_detailsByFkid(item.getPk_id());
-                        if (null!=ico_trackico_detailList) {
+                        if (null == ico_trackico_detailList) {
                             // 解析详情页的-详情
                             extraDetailPageDetails(item, detailModel, doc);
                             // 解析详情页的-公司标签链接
@@ -349,13 +348,13 @@ public class TrackicoServiceImp implements TrackicoService {
                             // 解析详情页的-公司信息
                             extraDetailPageBlockInfo(item, detailModel, doc);
                         } else {
-                                log.info("detailPageDetails is Already exist ,and update details and others");
-                                deleteICO_trackico_detail_blockLabelByPk_id(ico_trackico_detailList.getPk_id());
-                                deleteICO_trackico_detai_blockTeamlByPk_id(ico_trackico_detailList.getPk_id());
-                                deleteICO_trackico_detail_blockFinancialByPk_id(ico_trackico_detailList.getPk_id());
-                                deleteICO_trackico_detai_blockMilestonesByPk_id(ico_trackico_detailList.getPk_id());
-                                deleteICO_trackico_detail_block_infoByPk_id(ico_trackico_detailList.getPk_id());
-                                deleteICO_trackico_detailByPk_id(item.getPk_id());
+                            log.info("-detailPageDetails is Already exist ,and delete details and others ,set status = ini.");
+                            deleteICO_trackico_detail_blockLabelByPk_id(ico_trackico_detailList.getPk_id());
+                            deleteICO_trackico_detai_blockTeamlByPk_id(ico_trackico_detailList.getPk_id());
+                            deleteICO_trackico_detail_blockFinancialByPk_id(ico_trackico_detailList.getPk_id());
+                            deleteICO_trackico_detai_blockMilestonesByPk_id(ico_trackico_detailList.getPk_id());
+                            deleteICO_trackico_detail_block_infoByPk_id(ico_trackico_detailList.getPk_id());
+                            deleteICO_trackico_detailByPk_id(item.getPk_id());
 
                             // 发生了重复，先删除 从表 和 detail 表。进入下次抓取
                             item.setStatus("ini");
@@ -588,7 +587,7 @@ public class TrackicoServiceImp implements TrackicoService {
      * @Title: extraOneMember
      * @Description: 解析一个人的信息
      */
-    public  void extraOneMember(Element ele, ICO_trackico_detail_blockTeam blockTeam, String member_type, ICO_trackico_detail detail) {
+    public void extraOneMember(Element ele, ICO_trackico_detail_blockTeam blockTeam, String member_type, ICO_trackico_detail detail) {
         // 人员名称member_name
         String member_name = "";
         Elements member_nameles = ele.select("div.card > div.card-body > h5");
@@ -599,8 +598,8 @@ public class TrackicoServiceImp implements TrackicoService {
         String member_url = "";
         Elements member_urleles = ele.select("div.card > div.card-body > h5 > a");
         if (member_urleles != null && member_urleles.size() > 0) {
-            member_url = member_nameles.attr("href").trim();
-            if (!member_url.contains("https://www.trackico.io")) {
+            member_url = member_urleles.attr("href").trim();
+            if (!member_url.contains("https://www.trackico.io") && StringUtils.isNotBlank(member_url)) {
                 member_url = "https://www.trackico.io" + member_url;
             }
         }
@@ -868,12 +867,11 @@ public class TrackicoServiceImp implements TrackicoService {
         // t.getNextPageLink(doc);
         // t.getCurrentPageNum(doc);
 
-        // String url = "https://www.trackico.io/";
-        // String content = t.getPageContent(url);
+        String url = "https://www.trackico.io/ico/zwoop/";
+        String content = t.getPageContent(url);
         // System.out.println(content);
-
-        String startTime = "https://www.trackico.io/ico/ubcoin/";
-        System.out.println(t.ico_trackico_itemDao.getICO_trackico_itemByItemUrl(startTime).toString());
+        Document doc = Jsoup.parse(content);
+        t.extraDetailPageBlockTeam(null, null, doc);
     }
 
     @Override
@@ -916,91 +914,91 @@ public class TrackicoServiceImp implements TrackicoService {
     @Override
     public JSONObject getIco_trackico_detail_index() {
         String indexes_sql = "select detail.block_name,\n" +
-                     "       detail.block_tag,\n" +
-                     "       list.itemUrl\n" +
-                     "       from ico_trackico_detail detail\n" +
-                     "       left join ico_trackico_list list on detail.fk_id = list.pk_id";
+                "       detail.block_tag,\n" +
+                "       list.itemUrl\n" +
+                "       from ico_trackico_detail detail\n" +
+                "       left join ico_trackico_list list on detail.fk_id = list.pk_id";
         String index_socials = "select\n" +
-                            "        list.itemUrl,\n" +
-                            "        label.block_lable_name,\n" +
-                            "        label.block_lable_url\n" +
-                            "      from ICO_trackico_detail detail\n" +
-                            "      left join ico_trackico_list list on detail.fk_id = list.pk_id\n" +
-                            "      left join ico_trackico_detail_block_label label on detail.pk_id = label.fk_id";
+                "        list.itemUrl,\n" +
+                "        label.block_lable_name,\n" +
+                "        label.block_lable_url\n" +
+                "      from ICO_trackico_detail detail\n" +
+                "      left join ico_trackico_list list on detail.fk_id = list.pk_id\n" +
+                "      left join ico_trackico_detail_block_label label on detail.pk_id = label.fk_id";
 
         List<Map<String, Object>> indexes = jdbcTemplate.queryForList(indexes_sql);
         List<Map<String, Object>> socials = jdbcTemplate.queryForList(index_socials);
 
 
         JSONObject socials_json = new JSONObject();//组装social信息
-        for(Map<String, Object> social:socials){
+        for (Map<String, Object> social : socials) {
             Object itemUrl = social.get("itemUrl");
             Object block_lable_name = social.get("block_lable_name");
             Object block_lable_url = social.get("block_lable_url");
-            if(null!=itemUrl&&null!=block_lable_name&&null!=block_lable_url){
-                if(socials_json.containsKey(itemUrl.toString())){
-                    socials_json.getJSONObject(itemUrl.toString()).put(block_lable_name.toString(),block_lable_url.toString());
-                }else{
+            if (null != itemUrl && null != block_lable_name && null != block_lable_url) {
+                if (socials_json.containsKey(itemUrl.toString())) {
+                    socials_json.getJSONObject(itemUrl.toString()).put(block_lable_name.toString(), block_lable_url.toString());
+                } else {
                     JSONObject social_json = new JSONObject();
-                    social_json.put(block_lable_name.toString(),block_lable_url.toString());
-                    socials_json.put(itemUrl.toString(),social_json);
+                    social_json.put(block_lable_name.toString(), block_lable_url.toString());
+                    socials_json.put(itemUrl.toString(), social_json);
                 }
             }
         }
 
         JSONObject result = new JSONObject();//最后返回数据集合
-        result.put("number",indexes.size());
+        result.put("number", indexes.size());
 
         JSONObject solution_data = new JSONObject();//组装solution_data信息
-        for(Map<String, Object> index:indexes){
+        for (Map<String, Object> index : indexes) {
 
             JSONObject block = new JSONObject();
-            block.put("name",index.get("block_name").toString());
-            block.put("token_name",index.get("block_tag").toString());
-            if(socials_json.containsKey(index.get("itemUrl").toString())){
+            block.put("name", index.get("block_name").toString());
+            block.put("token_name", index.get("block_tag").toString());
+            if (socials_json.containsKey(index.get("itemUrl").toString())) {
                 JSONObject social_json = socials_json.getJSONObject(index.get("itemUrl").toString());
                 JSONObject standardSocials = new JSONObject();
-                for(Map.Entry<String, Object> entry:social_json.entrySet()){
+                for (Map.Entry<String, Object> entry : social_json.entrySet()) {
                     String key = entry.getKey();
                     String value = entry.getValue().toString();
-                    if(StringUtils.equalsIgnoreCase("Website",key)){
-                        block.put("website",value);
-                    }else if(StringUtils.equalsIgnoreCase("whitepaper",key)){
-                        block.put("white_paper",value);
-                    }else if(StringUtils.equalsIgnoreCase("Telegram",key)){
-                        standardSocials.put("telegram",value);
-                    }else if(StringUtils.equalsIgnoreCase("Twitter",key)){
-                        standardSocials.put("twitter",value);
-                    }else if(StringUtils.equalsIgnoreCase("Blog",key)){
-                        standardSocials.put("blog",value);
-                    }else if(StringUtils.equalsIgnoreCase("Facebook",key)){
-                        standardSocials.put("facebook",value);
-                    }else if(StringUtils.equalsIgnoreCase("LinkedIn",key)){
-                        standardSocials.put("linkedin",value);
-                    }else if(StringUtils.equalsIgnoreCase("GitHub",key)){
-                        standardSocials.put("github",value);
-                    }else if(StringUtils.equalsIgnoreCase("BitcoinTalk",key)){
-                        standardSocials.put("bitcointalk",value);
-                    }else if(StringUtils.equalsIgnoreCase("Reddit",key)){
-                        standardSocials.put("reddit",value);
-                    }else if(StringUtils.equalsIgnoreCase("Instagram",key)){
-                        standardSocials.put("instagram",value);
-                    }else if(StringUtils.equalsIgnoreCase("Bounty",key)){
-                        standardSocials.put("bounty",value);
-                    }else if(StringUtils.equalsIgnoreCase("Slack",key)){
-                        standardSocials.put("slack",value);
-                    }else if(StringUtils.equalsIgnoreCase("Steemit",key)){
-                        standardSocials.put("steemit",value);
-                    }else if(StringUtils.equalsIgnoreCase("Discord",key)){
-                        standardSocials.put("discord",value);
+                    if (StringUtils.equalsIgnoreCase("Website", key)) {
+                        block.put("website", value);
+                    } else if (StringUtils.equalsIgnoreCase("whitepaper", key)) {
+                        block.put("white_paper", value);
+                    } else if (StringUtils.equalsIgnoreCase("Telegram", key)) {
+                        standardSocials.put("telegram", value);
+                    } else if (StringUtils.equalsIgnoreCase("Twitter", key)) {
+                        standardSocials.put("twitter", value);
+                    } else if (StringUtils.equalsIgnoreCase("Blog", key)) {
+                        standardSocials.put("blog", value);
+                    } else if (StringUtils.equalsIgnoreCase("Facebook", key)) {
+                        standardSocials.put("facebook", value);
+                    } else if (StringUtils.equalsIgnoreCase("LinkedIn", key)) {
+                        standardSocials.put("linkedin", value);
+                    } else if (StringUtils.equalsIgnoreCase("GitHub", key)) {
+                        standardSocials.put("github", value);
+                    } else if (StringUtils.equalsIgnoreCase("BitcoinTalk", key)) {
+                        standardSocials.put("bitcointalk", value);
+                    } else if (StringUtils.equalsIgnoreCase("Reddit", key)) {
+                        standardSocials.put("reddit", value);
+                    } else if (StringUtils.equalsIgnoreCase("Instagram", key)) {
+                        standardSocials.put("instagram", value);
+                    } else if (StringUtils.equalsIgnoreCase("Bounty", key)) {
+                        standardSocials.put("bounty", value);
+                    } else if (StringUtils.equalsIgnoreCase("Slack", key)) {
+                        standardSocials.put("slack", value);
+                    } else if (StringUtils.equalsIgnoreCase("Steemit", key)) {
+                        standardSocials.put("steemit", value);
+                    } else if (StringUtils.equalsIgnoreCase("Discord", key)) {
+                        standardSocials.put("discord", value);
                     }
                 }
-                block.put("social",standardSocials);
+                block.put("social", standardSocials);
             }
-            solution_data.put(index.get("itemUrl").toString(),block);
+            solution_data.put(index.get("itemUrl").toString(), block);
         }
-        result.put("solution_data",solution_data);
-        result.put("source","trackico.io");
+        result.put("solution_data", solution_data);
+        result.put("source", "trackico.io");
         return result;
     }
 
@@ -1013,9 +1011,9 @@ public class TrackicoServiceImp implements TrackicoService {
     public JSONObject getICO_trackico_detailByItemUrl(String url) {
         JSONObject json = new JSONObject();
         ICO_trackico_item item = ico_trackico_itemDao.getICO_trackico_itemByItemUrl(url);
-        if(null!=item){
+        if (null != item) {
             ICO_trackico_detail detail = ico_trackico_detailDao.getICO_trackico_detailsByFkid(item.getPk_id());
-            if(null!=detail){
+            if (null != detail) {
                 ICO_trackico_detail_block_info detail_info = detail_InfoDao.getICO_trackico_detail_block_infosByFkid(detail.getPk_id());
                 List<ICO_trackico_detail_blockFinancial> financials = detail_financialDao.getICO_trackico_detail_blockFinancialsByFkid(detail.getPk_id());
                 List<ICO_trackico_detail_blockLabel> blockLabels = detail_blockLabelDao.getICO_trackico_detail_blockLabelByFkId(detail.getPk_id());
@@ -1031,34 +1029,34 @@ public class TrackicoServiceImp implements TrackicoService {
                 List<ICO_trackico_detail_blockTeamDto> teamDtos = new ArrayList<>();
 
                 try {
-                    BeanUtils.copyProperties(itemDto,item);
-                    BeanUtils.copyProperties(detailDto,detail);
-                    BeanUtils.copyProperties(infoDto,detail_info);
-                    if(CollectionUtils.isNotEmpty(financials)){
-                        for(ICO_trackico_detail_blockFinancial financial:financials){
+                    BeanUtils.copyProperties(itemDto, item);
+                    BeanUtils.copyProperties(detailDto, detail);
+                    BeanUtils.copyProperties(infoDto, detail_info);
+                    if (CollectionUtils.isNotEmpty(financials)) {
+                        for (ICO_trackico_detail_blockFinancial financial : financials) {
                             ICO_trackico_detail_blockFinancialDto financialDto = new ICO_trackico_detail_blockFinancialDto();
-                            BeanUtils.copyProperties(financialDto,financial);
+                            BeanUtils.copyProperties(financialDto, financial);
                             financialDtos.add(financialDto);
                         }
                     }
-                    if(CollectionUtils.isNotEmpty(blockLabels)){
-                        for(ICO_trackico_detail_blockLabel blockLabel:blockLabels){
+                    if (CollectionUtils.isNotEmpty(blockLabels)) {
+                        for (ICO_trackico_detail_blockLabel blockLabel : blockLabels) {
                             ICO_trackico_detail_blockLabelDto labelDto = new ICO_trackico_detail_blockLabelDto();
-                            BeanUtils.copyProperties(labelDto,blockLabel);
+                            BeanUtils.copyProperties(labelDto, blockLabel);
                             labelDtos.add(labelDto);
                         }
                     }
-                    if(CollectionUtils.isNotEmpty(blockMilestones)){
-                        for(ICO_trackico_detail_blockMilestones blockMilestone:blockMilestones){
+                    if (CollectionUtils.isNotEmpty(blockMilestones)) {
+                        for (ICO_trackico_detail_blockMilestones blockMilestone : blockMilestones) {
                             ICO_trackico_detail_blockMilestonesDto milestonesDto = new ICO_trackico_detail_blockMilestonesDto();
-                            BeanUtils.copyProperties(milestonesDto,blockMilestone);
+                            BeanUtils.copyProperties(milestonesDto, blockMilestone);
                             milestonesDtos.add(milestonesDto);
                         }
                     }
-                    if(CollectionUtils.isNotEmpty(blockTeams)){
-                        for(ICO_trackico_detail_blockTeam blockTeam:blockTeams){
+                    if (CollectionUtils.isNotEmpty(blockTeams)) {
+                        for (ICO_trackico_detail_blockTeam blockTeam : blockTeams) {
                             ICO_trackico_detail_blockTeamDto teamDto = new ICO_trackico_detail_blockTeamDto();
-                            BeanUtils.copyProperties(teamDto,blockTeam);
+                            BeanUtils.copyProperties(teamDto, blockTeam);
                             teamDtos.add(teamDto);
                         }
                     }

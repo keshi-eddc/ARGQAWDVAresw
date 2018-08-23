@@ -22,4 +22,8 @@ public interface IcoratingService {
      * detail
      */
     public void getIcoratingDetail(ICO_icorating_list item);
+
+    //=================funds=====================
+    public void getIcoratingFundsList();
+
 }

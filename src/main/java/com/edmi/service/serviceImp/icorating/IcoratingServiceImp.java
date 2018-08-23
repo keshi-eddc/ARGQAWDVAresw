@@ -45,6 +45,8 @@ public class IcoratingServiceImp implements IcoratingService {
     private ICO_icorating_detail_block_fundsRepository fundDao;
     @Autowired
     private ICO_icorating_detail_block_developmentRepository developmentDao;
+    @Autowired
+    private ICO_icorating_funds_listRepository foundsListDao;
 
     @Override
     public void getIcotatingList() {
@@ -818,6 +820,117 @@ public class IcoratingServiceImp implements IcoratingService {
         }
     }
 
+    //=================funds=====================
+
+    @Override
+    public void getIcoratingFundsList() {
+        log.info("********** start icorating funds list task **********");
+        int page = 1;
+        Boolean isNotLast = true;
+        while (isNotLast) {
+            String url = "https://icorating.com/funds/load/?sort=avg_roi_eth&direction=desc&page=" + page;
+            try {
+//                System.out.println(url);
+                Request request = new Request(url, RequestMethod.GET);
+                Response response = HttpClientUtil.doRequest(request);
+                int code = response.getCode();
+                // 验证请求
+                if (code == 200) {
+                    String content = response.getResponseText();
+                    // 验证页面
+                    if (StringUtils.isNotBlank(content)) {
+                        // 验证是否是正常页面
+                        if (content.contains("funds") && content.contains("lastPage")) {
+                            JSONObject jo = JSONObject.parseObject(content);
+                            if (jo != null) {
+                                List<ICO_icorating_funds_list> fundsList = new ArrayList<>(100);
+                                String lastPagestr = jo.getString("lastPage");
+                                if (lastPagestr.equalsIgnoreCase("false")) {
+                                    log.info("----------current page is :" + page);
+                                } else {
+                                    isNotLast = false;
+                                    log.info("----- last page:" + page);
+                                }
+                                // 解析json
+                                JSONArray fundsarrjo = jo.getJSONArray("funds");
+                                if (fundsarrjo != null && fundsarrjo.size() > 0) {
+                                    for (int i = 0; i < fundsarrjo.size(); i++) {
+                                        ICO_icorating_funds_list foundsModel = new ICO_icorating_funds_list();
+
+                                        JSONObject linejo = fundsarrjo.getJSONObject(i);
+                                        String fund = linejo.getString("nameByLanguage");
+                                        foundsModel.setFund(fund);
+                                        String status = linejo.getString("currentStatus");
+                                        foundsModel.setStatus(status);
+                                        long aum = linejo.getLongValue("aum");
+                                        if (aum != 0) {
+                                            foundsModel.setAum(aum);
+                                        }
+                                        JSONArray strategiesjoarr = linejo.getJSONArray("strategies");
+                                        StringBuffer stbu = new StringBuffer();
+                                        for (int tempi = 0; tempi < strategiesjoarr.size(); tempi++) {
+                                            JSONObject tempjo = strategiesjoarr.getJSONObject(tempi);
+                                            String stratestr = tempjo.getString("nameByLanguage");
+                                            stbu.append(stratestr).append(",");
+                                        }
+                                        String stratgey = stbu.toString();
+                                        if (stratgey.endsWith(",")) {
+                                            stratgey = StringUtils.substringBeforeLast(stratgey, ",");
+                                        }
+                                        foundsModel.setStratgey(stratgey);
+                                        int foundation = linejo.getIntValue("foundationYear");
+                                        if (foundation != 0) {
+                                            foundsModel.setFoundation(foundation);
+                                        }
+                                        Float avgIcoEthRoi = linejo.getFloat("averageRoiEth");
+                                        if (avgIcoEthRoi != 0) {
+                                            foundsModel.setAvgIcoEthRoi(avgIcoEthRoi);
+                                        }
+                                        int analytics_reservedint = linejo.getIntValue("analytics_reserved");
+                                        String icorating_analytics = "";
+                                        if (analytics_reservedint == 0) {
+                                            icorating_analytics = "Not Provided";
+                                        } else if (analytics_reservedint == 1) {
+                                            icorating_analytics = "Provided";
+                                        }
+                                        foundsModel.setIcorating_analyticsv(icorating_analytics);
+                                        String link = linejo.getString("link");
+                                        foundsModel.setLink(link);
+                                        foundsModel.setPage(i);
+                                        foundsModel.setCrawled_status("ini");
+                                        foundsModel.setInsertTime(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                        foundsModel.setUpdateTime(new Timestamp(Calendar.getInstance().getTime().getTime()));
+
+//                                        System.out.println("fund:" + fund);
+//                                        System.out.println("status:" + status);
+//                                        System.out.println("aum:" + aum);
+//                                        System.out.println("stratgey:" + stratgey);
+//                                        System.out.println("foundation:" + foundation);
+//                                        System.out.println("avgIcoEthRoi:" + avgIcoEthRoi);
+//                                        System.out.println("icorating_analytics:" + icorating_analytics);
+//                                        System.out.println("link:" + link);
+//                                        System.out.println("---------" + i);
+                                        ICO_icorating_funds_list oldfunds = foundsListDao.getICO_icorating_funds_listByLink(link);
+                                        if (oldfunds == null) {
+                                            foundsListDao.save(foundsModel);
+                                        } else {
+                                            log.info("----- already existed ,icorating founds list");
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    log.error("!!!request erro ,code:" + code + " ,url:" + url);
+                }
+                page++;
+            } catch (Exception e) {
+                e.printStackTrace();
+                log.error("!!!icorating founds list Exception");
+            }
+        }
+    }
 
     public static void main(String[] args) {
         // String url = "https://icorating.com/ico/bitclave/";
