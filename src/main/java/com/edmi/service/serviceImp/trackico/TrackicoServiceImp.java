@@ -1066,11 +1066,13 @@ public class TrackicoServiceImp implements TrackicoService {
                     json.putAll(BeanUtils.describe(detailDto));
                     json.putAll(BeanUtils.describe(infoDto));
                     for(ICO_trackico_detail_blockLabelDto labelDto:labelDtos){
-                        json.putAll(BeanUtils.describe(labelDto));
+                        json.put(labelDto.getBlock_lable_name(),labelDto.getBlock_lable_url());
+                    }
+                    for(ICO_trackico_detail_blockFinancialDto financialDto:financialDtos){
+                        json.put(financialDto.getName(),financialDto.getValue());
                     }
                     json.put("milestones",JSON.toJSON(milestonesDtos));
                     json.put("members",JSON.toJSON(teamDtos));
-                    json.put("financials",JSON.toJSON(financialDtos));
                     json.remove("class");
                 } catch (Exception e) {
                    log.info(e.getMessage());
