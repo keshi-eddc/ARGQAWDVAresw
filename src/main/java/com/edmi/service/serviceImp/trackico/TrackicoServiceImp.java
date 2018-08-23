@@ -600,7 +600,7 @@ public class TrackicoServiceImp implements TrackicoService {
         Elements member_urleles = ele.select("div.card > div.card-body > h5 > a");
         if (member_urleles != null && member_urleles.size() > 0) {
             member_url = member_urleles.attr("href").trim();
-            if (!member_url.contains("https://www.trackico.io")) {
+            if (!member_url.contains("https://www.trackico.io") && StringUtils.isNotBlank(member_url)) {
                 member_url = "https://www.trackico.io" + member_url;
             }
         }
