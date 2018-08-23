@@ -599,7 +599,7 @@ public class TrackicoServiceImp implements TrackicoService {
         String member_url = "";
         Elements member_urleles = ele.select("div.card > div.card-body > h5 > a");
         if (member_urleles != null && member_urleles.size() > 0) {
-            member_url = member_nameles.attr("href").trim();
+            member_url = member_urleles.attr("href").trim();
             if (!member_url.contains("https://www.trackico.io")) {
                 member_url = "https://www.trackico.io" + member_url;
             }
@@ -868,12 +868,11 @@ public class TrackicoServiceImp implements TrackicoService {
         // t.getNextPageLink(doc);
         // t.getCurrentPageNum(doc);
 
-        // String url = "https://www.trackico.io/";
-        // String content = t.getPageContent(url);
+        String url = "https://www.trackico.io/ico/zwoop/";
+        String content = t.getPageContent(url);
         // System.out.println(content);
-
-        String startTime = "https://www.trackico.io/ico/ubcoin/";
-        System.out.println(t.ico_trackico_itemDao.getICO_trackico_itemByItemUrl(startTime).toString());
+        Document doc = Jsoup.parse(content);
+        t.extraDetailPageBlockTeam(null,null,doc);
     }
 
     @Override
