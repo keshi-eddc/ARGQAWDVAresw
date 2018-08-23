@@ -47,6 +47,10 @@ public class IcoratingServiceImp implements IcoratingService {
     private ICO_icorating_detail_block_developmentRepository developmentDao;
     @Autowired
     private ICO_icorating_funds_listRepository foundsListDao;
+    @Autowired
+    private ICO_icorating_funds_detailRepository foundsDetailDao;
+    @Autowired
+    private ICO_icorating_funds_detail_memberRepository foundsMemberDao;
 
     @Override
     public void getIcotatingList() {
@@ -896,25 +900,16 @@ public class IcoratingServiceImp implements IcoratingService {
                                         foundsModel.setIcorating_analyticsv(icorating_analytics);
                                         String link = linejo.getString("link");
                                         foundsModel.setLink(link);
-                                        foundsModel.setPage(i);
-                                        foundsModel.setCrawled_status("ini");
+                                        foundsModel.setPage(page);
+                                        foundsModel.setCrawledStatus("ini");
                                         foundsModel.setInsertTime(new Timestamp(Calendar.getInstance().getTime().getTime()));
                                         foundsModel.setUpdateTime(new Timestamp(Calendar.getInstance().getTime().getTime()));
 
-//                                        System.out.println("fund:" + fund);
-//                                        System.out.println("status:" + status);
-//                                        System.out.println("aum:" + aum);
-//                                        System.out.println("stratgey:" + stratgey);
-//                                        System.out.println("foundation:" + foundation);
-//                                        System.out.println("avgIcoEthRoi:" + avgIcoEthRoi);
-//                                        System.out.println("icorating_analytics:" + icorating_analytics);
-//                                        System.out.println("link:" + link);
-//                                        System.out.println("---------" + i);
                                         ICO_icorating_funds_list oldfunds = foundsListDao.getICO_icorating_funds_listByLink(link);
                                         if (oldfunds == null) {
                                             foundsListDao.save(foundsModel);
                                         } else {
-                                            log.info("----- already existed ,icorating founds list");
+                                            log.info("----- already existed ,icorating founds list,link:" + link);
                                         }
                                     }
                                 }
@@ -932,9 +927,190 @@ public class IcoratingServiceImp implements IcoratingService {
         }
     }
 
+    @Override
+    public void getIcoratingFoundDetail(ICO_icorating_funds_list foundsitem) {
+        log.info("***** strart extra icorating founds details");
+        try {
+            String url = foundsitem.getLink();
+            Request request = new Request(url, RequestMethod.GET);
+            Response response = HttpClientUtil.doRequest(request);
+            int code = response.getCode();
+            // 验证请求
+            // 验证请求
+            if (code == 200) {
+                String content = response.getResponseText();
+                // 验证页面
+                if (StringUtils.isNotBlank(content)) {
+                    // 验证是否是正常页面
+                    if (content.contains("c-heading")) {
+                        ICO_icorating_funds_detail foundsDetailModel = new ICO_icorating_funds_detail();
+                        foundsDetailModel.setIco_icorating_funds_list(foundsitem);
+                        foundsDetailModel.setLink(foundsitem.getLink());
+                        foundsDetailModel.setFund(foundsitem.getFund());
+                        foundsDetailModel.setInsert_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                        foundsDetailModel.setUpdate_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+
+                        Document doc = Jsoup.parse(content);
+                        Elements abouteles = doc.select("div.o-grid.o-grid--wrap > div.o-grid__cell.o-grid__cell--width-100 >p.mb20");
+                        if (abouteles != null && abouteles.size() > 0) {
+                            String about = abouteles.text().trim();
+//                            log.info("- about:" + about);
+                            foundsDetailModel.setAbout(about);
+                        }
+                        Elements table1eles = doc.select("div.o-grid.o-grid--wrap > div.o-grid__cell.o-grid__cell--width-100 >div.o-grid.o-grid--wrap.o-grid--negative-indent tbody >tr");
+                        if (table1eles != null && table1eles.size() > 0) {
+                            for (Element ele : table1eles) {
+                                String key = ele.select("th").text().trim();
+                                String val = ele.select("td").text().trim();
+//                                log.info("- " + key + " = " + val);
+                                if (key.contains("Funds return")) {
+                                    foundsDetailModel.setFunds_return(val);
+                                } else if (key.contains("Date of foundation")) {
+                                    foundsDetailModel.setDate_of_foundation(val);
+                                } else if (key.contains("Strategy")) {
+                                    foundsDetailModel.setStrategy(val);
+                                } else if (key.contains("Target")) {
+                                    foundsDetailModel.setTarget(val);
+                                }
+                            }
+                        }
+
+                        foundsDetailModel.setAum(foundsitem.getAum());
+                        foundsDetailModel.setAvgIcoEthRoi(foundsitem.getAvgIcoEthRoi());
+
+                        Elements table2eles = doc.select("div.o-grid__cell.o-grid__cell--width-100> div.c-card-info.c-card-info--white.mb20 > table.c-card-info__table > tbody > tr");
+                        if (table2eles != null && table2eles.size() > 0) {
+                            for (Element ele : table2eles) {
+                                Elements theles = ele.select("th");
+                                if (theles != null && theles.size() > 0) {
+                                    String key = theles.text().trim();
+                                    String val = "";
+                                    Elements tdeles = ele.select("td");
+                                    if (tdeles != null && tdeles.size() > 0) {
+                                        val = tdeles.text().trim();
+                                    }
+//                                    log.info("- " + key + " = " + val);
+                                    if (key.contains("Email")) {
+                                        foundsDetailModel.setEmail(val);
+                                    } else if (key.contains("Site")) {
+                                        foundsDetailModel.setSite(val);
+                                    } else if (key.contains("Based")) {
+                                        foundsDetailModel.setBased(val);
+                                    }
+                                }
+                            }
+                            Elements socialeles = table2eles.select("div.c-social-block.c-social-block--center > div.c-social-block__item > a");
+                            if (socialeles != null && socialeles.size() > 0) {
+                                for (Element soele : socialeles) {
+                                    String title = soele.attr("title");
+                                    String socialUrl = soele.attr("href");
+//                                    log.info("- " + title + " = " + socialUrl);
+                                    if (title.contains("Facebook")) {
+                                        foundsDetailModel.setFacebook(socialUrl);
+                                    } else if (title.contains("Twitter")) {
+                                        foundsDetailModel.setTwitter(socialUrl);
+                                    } else if (title.contains("Medium")) {
+                                        foundsDetailModel.setMedium(socialUrl);
+                                    } else if (title.contains("Linkedin")) {
+                                        foundsDetailModel.setLinkedin(socialUrl);
+                                    }
+                                }
+                            }
+                        }
+
+                        ICO_icorating_funds_detail oldfoundsDetailModel = foundsDetailDao.findICO_icorating_funds_detailByLink(foundsDetailModel.getLink());
+                        if (oldfoundsDetailModel == null) {
+                            //保存到数据库
+                            foundsDetailDao.save(foundsDetailModel);
+                            //解析founds 人员
+                            extraIcoratingFoundsDetailMember(doc, foundsDetailModel);
+                        } else {
+                            log.info("----- already existed ,icorating founds detail,the link:" + foundsDetailModel.getLink());
+                        }
+
+                        //解析成功更改foundslist的状态
+                        foundsitem.setCrawledStatus("200");
+                        foundsListDao.save(foundsitem);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("!!! extra icorating founds Exception");
+        }
+    }
+
+    /**
+     * 解析icorating founds 人员
+     */
+    public void extraIcoratingFoundsDetailMember(Document doc, ICO_icorating_funds_detail foundsDetail) {
+        log.info("***** extraIcoratingFoundsDetailMember");
+        try {
+            Elements membereles = doc.select("div.o-grid.o-grid--wrap > div.o-grid__cell.o-grid__cell--width-100 >div.c-table-container.mb20 >table.c-table-custom > tbody > tr.c-table-custom__row");
+            if (membereles != null && membereles.size() > 0) {
+                List<ICO_icorating_funds_detail_member> membersModelList = new ArrayList<>(10);
+                for (Element lineles : membereles) {
+                    ICO_icorating_funds_detail_member memberModel = new ICO_icorating_funds_detail_member();
+                    memberModel.setIco_icorating_funds_detail(foundsDetail);
+                    memberModel.setLink(foundsDetail.getLink());
+                    memberModel.setInsert_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                    memberModel.setUpdate_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+
+                    Elements tdeles = lineles.select("td");
+                    if (tdeles != null && tdeles.size() > 0) {
+                        for (Element tele : tdeles) {
+                            String label = tele.attr("data-label");
+                            if (label.contains("FOUND")) {
+                                Elements tempeles = tele.select("div.o-media__body.o-media__body--center > a");
+                                String member_name = tempeles.text().trim();
+                                String member_url = tempeles.attr("href");
+//                                log.info("member_name:" + member_name);
+//                                log.info("member_url:" + member_url);
+                                memberModel.setMember_name(member_name);
+                                memberModel.setMember_url(member_url);
+                            } else if (label.contains("STATUS")) {
+                                String experience = tele.text().trim();
+//                                log.info("experience:" + experience);
+                                memberModel.setExperience(experience);
+                            } else if (label.contains("AUM")) {
+                                Elements socialeles = tele.select("div.c-social-block__item > a");
+                                if (socialeles != null && socialeles.size() > 0) {
+                                    for (Element soele : socialeles) {
+                                        String title = soele.attr("title");
+                                        String socialUrl = soele.attr("href");
+//                                        log.info("- " + title + " = " + socialUrl);
+                                        if (title.contains("Facebook")) {
+                                            memberModel.setFacebook(socialUrl);
+                                        } else if (title.contains("Twitter")) {
+                                            memberModel.setTwitter(socialUrl);
+                                        } else if (title.contains("Medium")) {
+                                            memberModel.setMedium(socialUrl);
+                                        } else if (title.contains("Linkedin")) {
+                                            memberModel.setLinkedin(socialUrl);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    membersModelList.add(memberModel);
+                }
+                foundsMemberDao.saveAll(membersModelList);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("!!! extraIcoratingFoundsDetailMember Exception");
+        }
+
+
+    }
+
     public static void main(String[] args) {
+        IcoratingServiceImp t = new IcoratingServiceImp();
         // String url = "https://icorating.com/ico/bitclave/";
-        String url = "https://icorating.com/ico/ubex-ubex/";
+//        String url = "https://icorating.com/ico/ubex-ubex/";
+        String url = "https://icorating.com/funds/blocktrade-investments/";
+
         Request request = null;
         try {
             request = new Request(url, RequestMethod.GET);

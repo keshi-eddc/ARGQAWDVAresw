@@ -4,11 +4,13 @@ import com.edmi.dao.etherscan.*;
 import com.edmi.dao.feixiaohao.ICO_Feixiaohao_ExchangeRepository;
 import com.edmi.dao.feixiaohao.ICO_Feixiaohao_Exchange_CurrenciesRepository;
 import com.edmi.dao.feixiaohao.ICO_Feixiaohao_Exchange_DetailsRepository;
+import com.edmi.dao.icorating.ICO_icorating_funds_listRepository;
 import com.edmi.dao.icorating.ICO_icorating_listRepository;
 import com.edmi.dao.trackico.ICO_trackico_itemRepository;
 import com.edmi.entity.etherscan.*;
 import com.edmi.entity.feixiaohao.ICO_Feixiaohao_Exchange;
 import com.edmi.entity.feixiaohao.ICO_Feixiaohao_Exchange_Currencies;
+import com.edmi.entity.icorating.ICO_icorating_funds_list;
 import com.edmi.entity.icorating.ICO_icorating_list;
 import com.edmi.entity.trackico.ICO_trackico_item;
 import com.edmi.service.service.EtherscanService;
@@ -18,12 +20,14 @@ import com.edmi.service.service.TrackicoService;
 import com.edmi.utils.http.exception.MethodNotSupportException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.RandomUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
@@ -76,6 +80,9 @@ public class CrawlerTask {
 
     @Autowired
     private ICO_icorating_listRepository ico_icorating_listDao;
+
+    @Autowired
+    private ICO_icorating_funds_listRepository foundsListDao;
 
     /*@Scheduled(cron = "0 38 08 25 * ?")*/
     public void getICO_Etherscan_IO_Blocks() throws Exception {
@@ -238,7 +245,7 @@ public class CrawlerTask {
             log.info("正在抓取" + links.size() + "-" + (i + 1) + "个交易对详情，link：" + link);
             feixiaohaoService.getICO_Feixiaohao_Exchange_Counter_Party_Details(link);
             try {
-                Thread.sleep(1*1000);
+                Thread.sleep(1 * 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -275,7 +282,7 @@ public class CrawlerTask {
     }
 
     //每10分钟执行
-    //@Scheduled(cron = "0 0/5 * * * ?")
+//    @Scheduled(cron = "0 0/5 * * * ?")
     public void getICO_Trackico_detail() throws MethodNotSupportException {
 
         //all
@@ -345,6 +352,35 @@ public class CrawlerTask {
         log.info(">>>>>>>>>> this time crawled," + "items num:" + listItems.size() + ".cost:" + timestr);
     }
 
+//    @Scheduled(cron = "0 00 21 * * ?")
+    public void getIcoratingFoundsList() {
+        icoratingService.getIcoratingFundsList();
+    }
+
+//    @Scheduled(cron = "0 00 21 * * ?")
+    public void icoratingDetailManager() {
+        //查出所有的item，因为列表页已经判断，此处不会有重复
+        List<ICO_icorating_funds_list> foundslist = new ArrayList<>();
+//        foundslist = foundsListDao.getAllByCrawledStatus("ini");
+        //测试
+        ICO_icorating_funds_list one = foundsListDao.findICO_icorating_funds_listByLink("https://icorating.com/funds/blocktrade-investments/");
+        foundslist.add(one);
+        log.info("********** Start icorating founds detail task **********");
+        log.info("--- get from icorating_funds_list ,items num:" + foundslist.size());
+        if (CollectionUtils.isNotEmpty(foundslist)) {
+            for (int i = 0; i < foundslist.size(); i++) {
+                ICO_icorating_funds_list foundsitem = foundslist.get(i);
+//                log.info(foundsitem.getLink());
+                if (StringUtils.isNotEmpty(foundsitem.getLink())) {
+                    log.info("--- will extra  :" + i);
+                    icoratingService.getIcoratingFoundDetail(foundsitem);
+                }
+            }
+            log.info("********** icorating founds detail task over **********");
+        } else {
+            log.info("get null from list table");
+        }
+    }
 
 }
 
