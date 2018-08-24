@@ -63,13 +63,13 @@ public class IcoratingTest {
     }
 
     @Test
-    public void icoratingDetailManager() {
+    public void icoratingFoundsDetailManager() {
         //查出所有的item，因为列表页已经判断，此处不会有重复
         List<ICO_icorating_funds_list> foundslist = new ArrayList<>();
-//        foundslist = foundsListDao.getAllByCrawledStatus("ini");
+        foundslist = foundsListDao.getAllByCrawledStatus("ini");
         //测试
-        ICO_icorating_funds_list one = foundsListDao.findICO_icorating_funds_listByLink("https://icorating.com/funds/blocktrade-investments/");
-        foundslist.add(one);
+//        ICO_icorating_funds_list one = foundsListDao.findICO_icorating_funds_listByLink("https://icorating.com/funds/blocktrade-investments/");
+//        foundslist.add(one);
         log.info("********** Start icorating founds detail task **********");
         log.info("--- get from icorating_funds_list ,items num:" + foundslist.size());
         if (CollectionUtils.isNotEmpty(foundslist)) {

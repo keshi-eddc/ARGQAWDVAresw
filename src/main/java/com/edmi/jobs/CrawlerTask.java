@@ -283,12 +283,14 @@ public class CrawlerTask {
 
     //每10分钟执行
 //    @Scheduled(cron = "0 0/5 * * * ?")
+    //all
+//    @Scheduled(cron = "0 30 03 * * ?")
     public void getICO_Trackico_detail() throws MethodNotSupportException {
 
         //all
-//        List<ICO_trackico_item> items = ico_trackico_itemDao.findAllByStatus("ini");
+        List<ICO_trackico_item> items = ico_trackico_itemDao.findAllByStatus("ini");
 
-        List<ICO_trackico_item> items = ico_trackico_itemDao.findTop10ByStatus("ini");
+//        List<ICO_trackico_item> items = ico_trackico_itemDao.findTop10ByStatus("ini");
 
         // List<ICO_trackico_item> items =
         // ico_trackico_itemDao.findOneByItemUrl("https://www.trackico.io/ico/w12/");
@@ -297,7 +299,9 @@ public class CrawlerTask {
             // 获取开始时间
             long startTime = System.currentTimeMillis();
 
-            for (ICO_trackico_item item : items) {
+            for (int i = 0; i < items.size(); i++) {
+                ICO_trackico_item item = items.get(i);
+                log.info("--- will extra Trackico_detail: " + i + " ,total:" + items.size());
                 trackicoService.getICO_trackico_detail(item);
                 try {
                     Thread.sleep(10 * 1000);
@@ -325,18 +329,23 @@ public class CrawlerTask {
         icoratingService.getIcotatingList();
     }
 
-//    @Scheduled(cron = "0 0/5 * * * ?")
-    public void icotatingDetailManager() {
+    //    @Scheduled(cron = "0 0/5 * * * ?")
+//    @Scheduled(cron = "0 40 03 * * ?")
+    public void icoratingDetailManager() {
         // 获取开始时间
         long startTime = System.currentTimeMillis();
         log.info("******** start icotatingDetail task ********");
-        List<ICO_icorating_list> listItems = ico_icorating_listDao.findTop10ByCrawledStatu("ini");
+//        List<ICO_icorating_list> listItems = ico_icorating_listDao.findTop10ByCrawledStatu("ini");
+        //all
+        List<ICO_icorating_list> listItems = ico_icorating_listDao.findAllByCrawledStatu("ini");
+
         log.info("get items num : " + listItems.size() + "  ,from list table");
         if (CollectionUtils.isNotEmpty(listItems)) {
             for (int i = 0; i < listItems.size(); i++) {
                 ICO_icorating_list item = listItems.get(i);
 //                String name = item.getName();
 //                log.info("name:" + name);
+                log.info("--- will extra IcoratingDetail: " + i + " ,total:" + listItems.size());
                 icoratingService.getIcoratingDetail(item);
             }
         } else {
@@ -352,19 +361,19 @@ public class CrawlerTask {
         log.info(">>>>>>>>>> this time crawled," + "items num:" + listItems.size() + ".cost:" + timestr);
     }
 
-//    @Scheduled(cron = "0 00 21 * * ?")
+    //    @Scheduled(cron = "0 00 21 * * ?")
     public void getIcoratingFoundsList() {
         icoratingService.getIcoratingFundsList();
     }
 
-//    @Scheduled(cron = "0 00 21 * * ?")
-    public void icoratingDetailManager() {
+    //    @Scheduled(cron = "0 00 21 * * ?")
+    public void icoratingFoundsDetailManager() {
         //查出所有的item，因为列表页已经判断，此处不会有重复
         List<ICO_icorating_funds_list> foundslist = new ArrayList<>();
-//        foundslist = foundsListDao.getAllByCrawledStatus("ini");
+        foundslist = foundsListDao.getAllByCrawledStatus("ini");
         //测试
-        ICO_icorating_funds_list one = foundsListDao.findICO_icorating_funds_listByLink("https://icorating.com/funds/blocktrade-investments/");
-        foundslist.add(one);
+//        ICO_icorating_funds_list one = foundsListDao.findICO_icorating_funds_listByLink("https://icorating.com/funds/blocktrade-investments/");
+//        foundslist.add(one);
         log.info("********** Start icorating founds detail task **********");
         log.info("--- get from icorating_funds_list ,items num:" + foundslist.size());
         if (CollectionUtils.isNotEmpty(foundslist)) {
