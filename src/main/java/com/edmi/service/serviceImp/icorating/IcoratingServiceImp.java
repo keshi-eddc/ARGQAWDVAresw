@@ -211,7 +211,12 @@ public class IcoratingServiceImp implements IcoratingService {
                 String logo = "";
                 if (linejo.containsKey("logo")) {
                     logo = linejo.getString("logo");
-                    item.setLogo(logo);
+                    if (StringUtils.isNotBlank(logo)) {
+                        if (!logo.contains("https://icorating.com")) {
+                            logo = "https://icorating.com" + logo;
+                        }
+                        item.setLogo(logo);
+                    }
                 }
                 String status = "";
                 if (linejo.containsKey("status")) {
@@ -660,6 +665,17 @@ public class IcoratingServiceImp implements IcoratingService {
                                 team.setMember_name(name);
                                 //5
                                 team.setMember_url(memberurl);
+                            }
+                            //人头像
+                            Elements menberImageles = linele.select("div.o-media__image.visible-medium > a > img");
+                            if (menberImageles != null && menberImageles.size() > 0) {
+                                String member_photo_url = menberImageles.attr("src").trim();
+                                if (StringUtils.isNotBlank(member_photo_url)) {
+                                    if (!member_photo_url.contains("https://icorating.com")) {
+                                        member_photo_url = "https://icorating.com" + member_photo_url;
+                                        team.setMember_photo_url(member_photo_url);
+                                    }
+                                }
                             }
                             Elements tdeles = linele.select("td.c-table-custom__cell");
                             // System.out.println("tdeles size :" + tdeles.size());

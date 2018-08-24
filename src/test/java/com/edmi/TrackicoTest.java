@@ -12,6 +12,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import com.edmi.service.service.TrackicoService;
 import com.edmi.utils.http.exception.MethodNotSupportException;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -33,14 +34,13 @@ public class TrackicoTest {
 
     @Test
     public void getICO_Trackico_detail() throws MethodNotSupportException {
-
+        List<ICO_trackico_item> items = new ArrayList<>();
         //all
-//        List<ICO_trackico_item> items = ico_trackico_itemDao.findAllByStatus("ini");
+       items = ico_trackico_itemDao.findAllByStatus("ini");
 
-        List<ICO_trackico_item> items = ico_trackico_itemDao.findTop10ByStatus("ini");
+//         items = ico_trackico_itemDao.findTop10ByStatus("ini");
 
-        // List<ICO_trackico_item> items =
-        // ico_trackico_itemDao.findOneByItemUrl("https://www.trackico.io/ico/w12/");
+//        items = ico_trackico_itemDao.findOneByItemUrl("https://www.trackico.io/ico/remiit/");
         log.info("get items num ：" + items.size());
         if (items.size() != 0) {
             // 获取开始时间

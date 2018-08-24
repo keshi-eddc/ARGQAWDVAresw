@@ -28,37 +28,38 @@ public class IcoratingTest {
     @Autowired
     private ICO_icorating_funds_listRepository foundsListDao;
 
-//    @Test
-//    public void listTest() {
-//        log.info("************** start Test");
-//        icoratingService.getIcotatingList();
+    @Test
+    public void listTest() {
+        log.info("************** start Test");
+        icoratingService.getIcotatingList();
 
-//        Integer t = listDao.getMaxCrawledTimes();
-//        log.info("getMaxCrawledTimes========" + t);
-//        List<ICO_icorating_list> li = listDao.getMaxCurrentPageWithMaxCrawledTimes(t);
-//        ICO_icorating_list item = li.get(0);
-//        log.info("name:"+item.getName());
-//        log.info("CurrentPage:"+item.getCurrentPage());
-//    }
+        Integer t = listDao.getMaxCrawledTimes();
+        log.info("getMaxCrawledTimes========" + t);
+        List<ICO_icorating_list> li = listDao.getMaxCurrentPageWithMaxCrawledTimes(t);
+        ICO_icorating_list item = li.get(0);
+        log.info("name:"+item.getName());
+        log.info("CurrentPage:"+item.getCurrentPage());
+    }
 
-    //    @Test
-//    public void icotatingDetailManager() {
-//        log.info("******** start icotatingDetailManager test ");
-//        List<ICO_icorating_list> listItems = listDao.findTop10ByCrawledStatu("ini");
-//        log.info("get items num : " + listItems.size() + "  ,from list table");
-//        if (CollectionUtils.isNotEmpty(listItems)) {
-//            for (int i = 0; i < listItems.size(); i++) {
-//                ICO_icorating_list item = listItems.get(i);
-////                String name = item.getName();
-////                log.info("name:" + name);
-//                icoratingService.getIcoratingDetail(item);
-//            }
-//        } else {
-//            log.info("get null from list table");
-//        }
-//    }
+        @Test
+    public void icotatingDetailManager() {
+        log.info("******** start icotatingDetailManager test ");
+        List<ICO_icorating_list> listItems = listDao.findTop10ByCrawledStatu("ini");
+        log.info("get items num : " + listItems.size() + "  ,from list table");
+        if (CollectionUtils.isNotEmpty(listItems)) {
+            for (int i = 0; i < listItems.size(); i++) {
+                ICO_icorating_list item = listItems.get(i);
+//                String name = item.getName();
+//                log.info("name:" + name);
+                icoratingService.getIcoratingDetail(item);
+            }
+        } else {
+            log.info("get null from list table");
+        }
+    }
     @Test
     public void getIcoratingFoundsList() {
+
         icoratingService.getIcoratingFundsList();
     }
 
