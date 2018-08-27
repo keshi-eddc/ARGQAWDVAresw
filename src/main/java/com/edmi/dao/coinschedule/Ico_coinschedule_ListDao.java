@@ -11,19 +11,6 @@ import java.util.List;
 
 public interface Ico_coinschedule_ListDao extends JpaRepository<Ico_coinschedule_List,Long> {
 
-  /*  Ico_icocrunch_list findIco_icocrunch_listByBlockUrlAndBlockType(String blockUrl, String blockType);
-
-    @Query("select max(li.serialNumber) from Ico_icocrunch_list li where li.blockType = :blockType")
-    Long getIco_icocrunch_listMaxSerialNumber(@Param("blockType") String show);
-
-
-    Ico_icocrunch_list findTop1ByBlockTypeAndSerialNumberOrderByCurrentPageDesc(String show, long serialNumber);
-
-    @Query("select distinct li.blockUrl from Ico_icocrunch_list li where li.detailsStatus = :detailsStatus")
-    List<String> getIco_icocrunch_listByDetailsStatus(@Param("detailsStatus") String detailsStatus);
-
-    @Modifying
-    @Query("update Ico_icocrunch_list set detailsStatus = :detailsStatus where blockUrl = :blockUrl")
-    int updateIco_icocrunch_listByBlockUrl(@Param("detailsStatus") String detailsStatus, @Param("blockUrl") String blockUrl);*/
+    Ico_coinschedule_List findIco_icocrunch_listByIcoCoinscheduleUrlAndBlockType(String icoCoinscheduleUrl, String blockType);
 
 }

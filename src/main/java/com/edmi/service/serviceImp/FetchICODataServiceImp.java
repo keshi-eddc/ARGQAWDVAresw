@@ -2,14 +2,17 @@ package com.edmi.service.serviceImp;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.edmi.dto.icocrunch.Ico_icocrunch_detailDto;
 import com.edmi.entity.icocrunch.Ico_icocrunch_detail;
 import com.edmi.service.service.FetchICODataService;
 import com.edmi.service.service.IcocrunchSevice;
 import com.edmi.service.service.TrackicoService;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 @Service
@@ -49,12 +52,21 @@ public class FetchICODataServiceImp implements FetchICODataService {
                 dataSourceName = "icocrunch.io";
                 Ico_icocrunch_detail detail = icocrunchSevice.getIco_icocrunch_detailByICOCrunchUrl(key);
                 if(null!=detail){
-                    number+=1;
+                    Ico_icocrunch_detailDto detailDto = new Ico_icocrunch_detailDto();
+                    try {
+                        BeanUtils.copyProperties(detailDto,detail);
+                        Map<String, String> detailDtoMap = BeanUtils.describe(detailDto);
+                        detailDtoMap.put("solution_photo_url",detailDtoMap.get("logo"));
+                        detailDtoMap.remove("logo");
+                        detailDtoMap.remove("class");
+                        JSONObject solution_url = new JSONObject();
+                        solution_url.put(key,detailDtoMap);
 
-                    JSONObject solution_url = new JSONObject();
-                    solution_url.put(key,JSON.toJSON(detail));
-
-                    solution_id.put(value,solution_url);
+                        number+=1;
+                        solution_id.put(value,solution_url);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }else if(StringUtils.containsIgnoreCase(dataSourceName,"trackico.io")){
                 dataSourceName = "trackico.io";
@@ -64,7 +76,6 @@ public class FetchICODataServiceImp implements FetchICODataService {
 
                     JSONObject solution_url = new JSONObject();
                     solution_url.put(key,detail);
-
                     solution_id.put(value,solution_url);
                 }
             }else{

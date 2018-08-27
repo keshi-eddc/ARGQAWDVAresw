@@ -1071,6 +1071,9 @@ public class TrackicoServiceImp implements TrackicoService {
                     }
                     json.put("milestones",JSON.toJSON(milestonesDtos));
                     json.put("members",JSON.toJSON(teamDtos));
+
+                    json.put("solution_photo_url",json.getString("logo_url"));
+                    json.remove("logo_url");
                     json.remove("class");
                 } catch (Exception e) {
                    log.info(e.getMessage());

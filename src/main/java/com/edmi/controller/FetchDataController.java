@@ -1,9 +1,12 @@
 package com.edmi.controller;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.edmi.service.service.FeixiaohaoService;
 import com.edmi.service.service.FetchICODataService;
 import com.edmi.service.service.LinkedinService;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jsoup.helper.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +71,7 @@ public class FetchDataController {
         return member_info;
     }
 
-    @RequestMapping("/block/api/v1/{dataSourceName}/ico/index")
+    @RequestMapping("/blocktest/api/v1/{dataSourceName}/ico/index")
     public JSONObject getListData(@PathVariable String dataSourceName) {
 
         if(StringUtils.isEmpty(dataSourceName)){
@@ -80,30 +83,19 @@ public class FetchDataController {
             return fetchICODataService.getICODataBySourceName(dataSourceName,0,10000);
         }
     }
-    @RequestMapping(value = "/block/api/v1/ico/detail",method = RequestMethod.POST )
-    public JSONObject getListDataDetail(@RequestParam("solution_data")String  solution_data) {
+    @RequestMapping(value = {
+            "/blocktest/api/v1/{dataSourceNameLevel1}/ico/detail",
+            "/blocktest/api/v1/{dataSourceNameLevel1}/{dataSourceNameLevel2}/ico/detail"},method = {RequestMethod.GET,RequestMethod.POST})
+    public JSONObject getListDataDetail(@RequestParam("solution_data")String  solution_data,@PathVariable String dataSourceNameLevel1,@PathVariable(required = false) String dataSourceNameLevel2) {
 
-        if(StringUtils.isEmpty(solution_data)){
+        if(StringUtils.isEmpty(solution_data)||StringUtils.isEmpty(dataSourceNameLevel1)){
             JSONObject result = new JSONObject();
             result.put("errorCode","001");
-            result.put("msg","dataSource must be not null!");
+            result.put("msg","dataSource or dataSourceName must be not null!");
             return result;
         }else {
-            JSONObject dataSourceJSon = JSONObject.parseObject(solution_data);
-
-            if(!dataSourceJSon.containsKey("solution_data")){
-                JSONObject result = new JSONObject();
-                result.put("errorCode","002");
-                result.put("msg","the key [solution_data] must be required,please check your input!");
-                return result;
-            }else{
-                JSONObject solution_datas = dataSourceJSon.getJSONObject("solution_data");
-                if(null!=solution_datas&&solution_datas.size()>0){
-                    return fetchICODataService.getICODataByICOUrl(solution_datas);
-                }else{
-                    return null;
-                }
-            }
+            JSONObject data = JSONObject.parseObject(solution_data);
+            return fetchICODataService.getICODataByICOUrl(data);
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.edmi.service.serviceImp.coinschedule;
 
 import com.alibaba.fastjson.JSONObject;
+import com.edmi.dao.coinschedule.Ico_coinschedule_ListDao;
 import com.edmi.dao.icocrunch.Ico_icocrunch_detailDao;
 import com.edmi.dao.icocrunch.Ico_icocrunch_listDao;
 import com.edmi.entity.coinschedule.Ico_coinschedule_List;
@@ -20,6 +21,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,9 +30,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class CoinscheduleSeviceImp implements CoinscheduleService {
@@ -38,7 +38,7 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
     Logger log = Logger.getLogger(CoinscheduleSeviceImp.class);
 
     @Autowired
-    private Ico_icocrunch_listDao ico_icocrunch_listDao;
+    private Ico_coinschedule_ListDao listDao;
     @Autowired
     private Ico_icocrunch_detailDao ico_icocrunch_detailDao;
 
@@ -60,37 +60,162 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
             /*分页信息*/
             Elements lives = doc.getElementsByAttributeValue("class","live upcoming list-table div-upcoming");
             Elements upcomings = doc.getElementsByAttributeValue("class","upcoming list-table list-div");
-            if(CollectionUtils.isNotEmpty(lives)){
-                Element live = lives.first();
+            List<Ico_coinschedule_List> ico_coinschedule_lists = new ArrayList<>();
+            List<Ico_coinschedule_List> ico_coinschedule_lists_lives = this.getIco_coinschedule_List(lives, "lives");
+            List<Ico_coinschedule_List> ico_coinschedule_lists_upcomings = this.getIco_coinschedule_List(upcomings, "upcomings");
+            if(CollectionUtils.isNotEmpty(ico_coinschedule_lists_lives)){
+                ico_coinschedule_lists.addAll(ico_coinschedule_lists_lives);
+            }
+            if(CollectionUtils.isNotEmpty(ico_coinschedule_lists_upcomings)){
+                ico_coinschedule_lists.addAll(ico_coinschedule_lists_upcomings);
+            }
+            if(CollectionUtils.isNotEmpty(ico_coinschedule_lists)){
+                for(Ico_coinschedule_List ico_coinschedule_list:ico_coinschedule_lists){//逐个判断是否已经抓取过
+                    Ico_coinschedule_List list = listDao.findIco_icocrunch_listByIcoCoinscheduleUrlAndBlockType(ico_coinschedule_list.getIcoCoinscheduleUrl(), ico_coinschedule_list.getBlockType());
+                    if(null!=list){
+                        BeanUtils.copyProperties(ico_coinschedule_list,list,new String[]{"pkId","insertTime"});
+                        listDao.save(list);
+                        log.info("该coinschedule已更新,type:"+ico_coinschedule_list.getBlockType()+",url:"+ico_coinschedule_list.getIcoCoinscheduleUrl());
+                    }else{
+                        listDao.save(ico_coinschedule_list);
+                        log.info("coinschedule保存成功,type:"+ico_coinschedule_list.getBlockType()+",url:"+ico_coinschedule_list.getIcoCoinscheduleUrl());
+                    }
+                }
+            }
+        }else{
+            log.info("coinschedule获取列表请求失败，errorCode："+code);
+        }
+    }
+    public List<Ico_coinschedule_List>  getIco_coinschedule_List(Elements blocks,String type){
+        List<Ico_coinschedule_List> ico_coinschedule_lists = new ArrayList<Ico_coinschedule_List>();
+        if("lives".equals(type)){
+            if(CollectionUtils.isNotEmpty(blocks)){
+                Element live = blocks.first();
                 Elements list_containers = live.getElementsByClass("list-container");
                 if(CollectionUtils.isNotEmpty(list_containers)){
                     Element list_container = list_containers.first();
+
                     Elements divTable_dtLives = list_container.getElementsByAttributeValue("class", "divTable dtLive");
                     if(CollectionUtils.isNotEmpty(divTable_dtLives)){
                         Element divTable_dtLive = divTable_dtLives.first();
 
                         Elements divTableBodys = divTable_dtLive.getElementsByClass("divTableBody");//获取头信息
-                        Elements divTableRows = divTable_dtLive.getElementsByAttributeValueStarting("class","divTableRow ");//获取列表
+                        Elements divTableRows = divTable_dtLive.select("> div[class^=divTableRow]");//获取列表
 
-                        List<Ico_coinschedule_List> ico_coinschedule_lists = new ArrayList<Ico_coinschedule_List>();
-
+                        Map<Integer,String> heads_map = new HashMap<>();
                         if(CollectionUtils.isNotEmpty(divTableBodys)){
                             Element divTableBody = divTableBodys.first();
                             Elements heads = divTableBody.getElementsByAttributeValueStarting("class", "divTableCellHead");
+                            for(int i=0;i<heads.size();i++){
+                                Element head = heads.get(i);
+                                heads_map.put(i,head.ownText());
+                            }
                         }
-                        /*for(divTableRows){
+                        for(Element row:divTableRows){
 
-                        }*/
+                            Ico_coinschedule_List list = new Ico_coinschedule_List();
 
-
+                            Elements colums = row.select("> div");
+                            for(int i=0;i<colums.size();i++){
+                                Element colum = colums.get(i);
+                                String colum_name = heads_map.get(i);
+                                if(StringUtils.equalsIgnoreCase("Name",colum_name)){
+                                    Elements names = colum.getElementsByAttributeValue("target", "_self");
+                                    if(CollectionUtils.isNotEmpty(names)){
+                                        Element name = names.first();
+                                        String icoName = StringUtils.defaultIfEmpty(name.ownText(),"");
+                                        String icoCoinscheduleUrl = StringUtils.substringBeforeLast(StringUtils.defaultIfEmpty(name.attr("href"),""),"#event");
+                                        list.setIcoName(icoName);
+                                        list.setIcoCoinscheduleUrl(icoCoinscheduleUrl);
+                                    }
+                                }else if(StringUtils.equalsIgnoreCase("Category",colum_name)){
+                                    String category = StringUtils.defaultIfEmpty(colum.ownText(),"");
+                                    list.setCategory(category);
+                                }else if(StringUtils.equalsIgnoreCase("End Date",colum_name)){
+                                    String endDate = StringUtils.defaultIfEmpty(colum.ownText(),"");
+                                    list.setEndDate(endDate);
+                                }else if(StringUtils.equalsIgnoreCase("Ends In",colum_name)){
+                                    String endsIn = StringUtils.defaultIfEmpty(colum.ownText(),"");
+                                    list.setEndsIn(endsIn);
+                                }else if(StringUtils.equalsIgnoreCase("Trust",colum_name)){
+                                    String trust = StringUtils.defaultIfEmpty(colum.text(),"");
+                                    list.setTrust(trust);
+                                }
+                            }
+                            list.setBlockType(type);
+                            list.setInsertTime(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                            list.setModifyTime(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                            ico_coinschedule_lists.add(list);
+                        }
                     }
                 }
-
             }
+        }else if("upcomings".equals(type)){
+            if(CollectionUtils.isNotEmpty(blocks)) {
+                Element block = blocks.first();
+                Elements divTable_dtUpcomming = block.select("> div[class=divTable dtUpcomming]");//thead
+                Elements list_container = block.select("> div[class=list-container]");//tbody
 
-        }else{
-            log.info("coinschedule获取列表请求失败，errorCode："+code);
+                Map<Integer,String> heads_map = new HashMap<>();
+                if(CollectionUtils.isNotEmpty(divTable_dtUpcomming)){
+                    Elements divTableBody = divTable_dtUpcomming.first().getElementsByClass("divTableBody");
+                    if(CollectionUtils.isNotEmpty(divTableBody)){
+                        Elements divTableRowHead = divTableBody.first().getElementsByAttributeValue("class", "divTableRow divTableRowHead");
+                        if(CollectionUtils.isNotEmpty(divTableRowHead)){
+                            Elements heads =  divTableRowHead.first().getElementsByAttributeValueStarting("class", "divTableCellHead");
+                            for(int i=0;i<heads.size();i++){
+                                Element head = heads.get(i);
+                                heads_map.put(i,head.ownText());
+                            }
+                        }
+                    }
+                }
+                if(CollectionUtils.isNotEmpty(list_container)){
+                    Elements tables = list_container.first().getElementsByAttributeValue("class", "divTable dtUpcomming");
+                    if(CollectionUtils.isNotEmpty(tables)){
+                        Elements divTableRows = tables.first().getElementsByAttributeValueStarting("class","divTableRow ");
+                        for(Element row:divTableRows){
+
+                            Ico_coinschedule_List list = new Ico_coinschedule_List();
+
+                            Elements colums = row.select("> div");
+                            for(int i=0;i<colums.size();i++){
+                                Element colum = colums.get(i);
+                                String colum_name = heads_map.get(i);
+                                if(StringUtils.equalsIgnoreCase("Name",colum_name)){
+                                    Elements names = colum.getElementsByAttributeValue("target", "_self");
+                                    if(CollectionUtils.isNotEmpty(names)){
+                                        Element name = names.first();
+                                        String icoName = StringUtils.defaultIfEmpty(name.ownText(),"");
+                                        String icoCoinscheduleUrl = StringUtils.substringBeforeLast(StringUtils.defaultIfEmpty(name.attr("href"),""),"#event");
+                                        list.setIcoName(icoName);
+                                        list.setIcoCoinscheduleUrl(icoCoinscheduleUrl);
+                                    }
+                                }else if(StringUtils.equalsIgnoreCase("Category",colum_name)){
+                                    String category = StringUtils.defaultIfEmpty(colum.ownText(),"");
+                                    list.setCategory(category);
+                                }else if(StringUtils.equalsIgnoreCase("Start Date",colum_name)){
+                                    String startDate = StringUtils.defaultIfEmpty(colum.ownText(),"");
+                                    list.setStartDate(startDate);
+                                }else if(StringUtils.equalsIgnoreCase("Starts In",colum_name)){
+                                    String startsIn = StringUtils.defaultIfEmpty(colum.ownText(),"");
+                                    list.setStartsIn(startsIn);
+                                }else if(StringUtils.equalsIgnoreCase("Trust",colum_name)){
+                                    String trust = StringUtils.defaultIfEmpty(colum.text(),"");
+                                    list.setTrust(trust);
+                                }
+                            }
+                            list.setBlockType(type);
+                            list.setInsertTime(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                            list.setModifyTime(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                            ico_coinschedule_lists.add(list);
+                        }
+                    }
+                }
+            }
         }
+
+        return ico_coinschedule_lists;
     }
   /*  @Transactional
     //@Async("myTaskAsyncPool")

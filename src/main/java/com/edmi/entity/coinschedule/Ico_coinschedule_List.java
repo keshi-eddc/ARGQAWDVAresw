@@ -20,6 +20,10 @@ public class Ico_coinschedule_List {
   @Column(nullable = false)
   private String endsIn;
   @Column(nullable = false)
+  private String startDate;
+  @Column(nullable = false)
+  private String startsIn;
+  @Column(nullable = false)
   private String trust;
   @Column(nullable = false)
   private String blockType;
@@ -118,4 +122,19 @@ public class Ico_coinschedule_List {
     this.modifyTime = modifyTime;
   }
 
+  public String getStartDate() {
+    return startDate;
+  }
+
+  public void setStartDate(String startDate) {
+    this.startDate = startDate;
+  }
+
+  public String getStartsIn() {
+    return startsIn;
+  }
+
+  public void setStartsIn(String startsIn) {
+    this.startsIn = startsIn;
+  }
 }

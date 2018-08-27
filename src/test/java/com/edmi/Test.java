@@ -23,24 +23,24 @@ import java.util.Spliterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 
-public class Test implements Runnable {
+public class Test{
 
-    HashMap hashMap = new HashMap();
-    ConcurrentHashMap concurrentHashMap = new ConcurrentHashMap();
+
 
     public static void main(String[] args) throws Exception {
 
+        String url = "http://ec2-18-216-242-223.us-east-2.compute.amazonaws.com:8091/blocktest/api/v1/icocrunch.io/ico/detail";
+        String data = "{'https://icocrunch.io/ico/metal/':'2'}";
+        JSONObject json = JSONObject.parseObject(data);
 
-        for(int i= 0;i<100;i++){
-            Test t = new Test();
-            t.run();
-        }
+        Request request = new Request(url, RequestMethod.GET);
+        request.addUrlParam("solution_data",json);
 
+        /*MultiPartFormRequest request = new MultiPartFormRequest(url,RequestMethod.POST);
+        request.addPart("solution_data",json);*/
+
+        Response response = HttpClientUtil.doRequest(request);
+        System.out.println(response.getResponseText());
     }
 
-    static int i=0;
-    @Override
-    public void run() {
-        System.out.println(++i);
-    }
 }
