@@ -44,4 +44,11 @@ public interface ICO_icorating_listRepository extends JpaRepository<ICO_icoratin
      * 获得crawlstatus = ini 的top10
      */
     List<ICO_icorating_list> findTop10ByCrawledStatu(String crawledStatu);
+
+    /**
+     *  获得crawlstatus = ini 所有的
+     * @param crawledStatus
+     * @return
+     */
+    List<ICO_icorating_list> findAllByCrawledStatu(String crawledStatus);
 }

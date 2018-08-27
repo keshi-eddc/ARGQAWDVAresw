@@ -41,7 +41,7 @@ public class ICO_icorating_funds_list {
     private int page;
 
     @Column(nullable = false, name = "crawled_status")
-    private String crawled_status;
+    private String crawledStatus;
 
     @Column(nullable = false, name = "insert_Time")
     private Timestamp insertTime;
@@ -129,12 +129,12 @@ public class ICO_icorating_funds_list {
         this.page = page;
     }
 
-    public String getCrawled_status() {
-        return crawled_status;
+    public String getCrawledStatus() {
+        return crawledStatus;
     }
 
-    public void setCrawled_status(String crawled_status) {
-        this.crawled_status = crawled_status;
+    public void setCrawledStatus(String crawledStatus) {
+        this.crawledStatus = crawledStatus;
     }
 
     public Timestamp getInsertTime() {

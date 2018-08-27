@@ -47,6 +47,10 @@ public class ICO_icorating_detail_block_team {
     @Column(nullable = false, name = "update_Time")
     private Timestamp update_Time;
 
+    @Column(nullable = false, name = "member_photo_url")
+    private String member_photo_url;
+
+
     /**
      * 本表和detail表是 多对一 的关系
      * 本表的fk_id是外键，指向detail的pk_id
@@ -55,6 +59,14 @@ public class ICO_icorating_detail_block_team {
     @ManyToOne
     @JoinColumn(name = "fk_id")
     private ICO_icorating_detail ico_icorating_detail;
+
+    public String getMember_photo_url() {
+        return member_photo_url;
+    }
+
+    public void setMember_photo_url(String member_photo_url) {
+        this.member_photo_url = member_photo_url;
+    }
 
     public Long getPk_id() {
         return pk_id;
