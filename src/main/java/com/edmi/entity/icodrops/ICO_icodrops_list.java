@@ -25,6 +25,9 @@ public class ICO_icodrops_list {
     @Column(nullable = false, name = "ico_url")
     private String ico_url;
 
+    @Column(nullable = false, name = "ico_photo_url")
+    private String ico_photo_url;
+
     @Column(nullable = false, name = "interest")
     private String interest;
 
@@ -82,6 +85,14 @@ public class ICO_icodrops_list {
 
     public void setPk_id(Long pk_id) {
         this.pk_id = pk_id;
+    }
+
+    public String getIco_photo_url() {
+        return ico_photo_url;
+    }
+
+    public void setIco_photo_url(String ico_photo_url) {
+        this.ico_photo_url = ico_photo_url;
     }
 
     public String getInput_type() {
