@@ -10,8 +10,6 @@ import com.edmi.utils.http.exception.MethodNotSupportException;
 import com.edmi.utils.http.request.Request;
 import com.edmi.utils.http.request.RequestMethod;
 import com.edmi.utils.http.response.Response;
-
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -913,6 +911,15 @@ public class IcoratingServiceImp implements IcoratingService {
                                         } else if (analytics_reservedint == 1) {
                                             icorating_analytics = "Provided";
                                         }
+                                        //logo
+                                        String logo = linejo.getString("logoFile");
+                                        if (StringUtils.isNotEmpty(logo)) {
+                                            if (!logo.contains("https://icorating.com")) {
+                                                logo = "https://icorating.com" + logo;
+                                            }
+                                            foundsModel.setLogo(logo);
+                                        }
+
                                         foundsModel.setIcorating_analyticsv(icorating_analytics);
                                         String link = linejo.getString("link");
                                         foundsModel.setLink(link);
@@ -1084,6 +1091,19 @@ public class IcoratingServiceImp implements IcoratingService {
 //                                log.info("member_url:" + member_url);
                                 memberModel.setMember_name(member_name);
                                 memberModel.setMember_url(member_url);
+
+                                //member_photo_url
+                                Elements member_photo_urleles = tele.select("div.o-media a>img");
+                                if (member_photo_urleles != null && member_photo_urleles.size() > 0) {
+                                    String member_photo_url = member_photo_urleles.attr("src");
+                                    if (StringUtils.isNotEmpty(member_photo_url)) {
+                                        if (!member_photo_url.contains("https://icorating.com")) {
+                                            member_photo_url = "https://icorating.com" + member_photo_url;
+                                        }
+                                    }
+                                    memberModel.setMember_photo_url(member_photo_url);
+                                }
+
                             } else if (label.contains("STATUS")) {
                                 String experience = tele.text().trim();
 //                                log.info("experience:" + experience);

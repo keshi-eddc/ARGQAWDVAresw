@@ -22,6 +22,9 @@ public class ICO_icorating_funds_detail_member {
     @Column(nullable = false, name = "member_url")
     private String member_url;
 
+    @Column(nullable = false, name = "member_photo_url")
+    private String member_photo_url;
+
     @Column(nullable = false, name = "experience")
     private String experience;
 
@@ -66,6 +69,14 @@ public class ICO_icorating_funds_detail_member {
 
     public void setLink(String link) {
         this.link = link;
+    }
+
+    public String getMember_photo_url() {
+        return member_photo_url;
+    }
+
+    public void setMember_photo_url(String member_photo_url) {
+        this.member_photo_url = member_photo_url;
     }
 
     public String getMember_name() {
