@@ -1321,7 +1321,7 @@ public class IcoratingServiceImp implements IcoratingService {
 
             json.put("social",social);
             /*下面处理Block的logo*/
-            //json.put("solution_photo_url",detail.getIco_icorating_funds_list().());
+            json.put("solution_photo_url",detail.getIco_icorating_funds_list().getUpdateTime());
         }
         return json;
     }
