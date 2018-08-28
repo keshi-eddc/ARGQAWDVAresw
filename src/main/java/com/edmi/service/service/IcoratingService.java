@@ -1,5 +1,6 @@
 package com.edmi.service.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.edmi.entity.icorating.ICO_icorating_funds_list;
 import com.edmi.entity.icorating.ICO_icorating_list;
 
@@ -38,5 +39,11 @@ public interface IcoratingService {
      */
     public void getIcoratingFoundDetail(ICO_icorating_funds_list foundsitem);
 
+
+    public JSONObject getIco_icorating_all_index(String dataSourceNameLevel2);
+
+    public JSONObject getICO_icorating_detailByItemUrl(String url);
+
+    public JSONObject getICO_icorating_funds_detailByItemUrl(String url);
 
 }

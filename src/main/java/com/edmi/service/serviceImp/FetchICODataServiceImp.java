@@ -6,6 +6,7 @@ import com.edmi.dto.icocrunch.Ico_icocrunch_detailDto;
 import com.edmi.entity.icocrunch.Ico_icocrunch_detail;
 import com.edmi.service.service.FetchICODataService;
 import com.edmi.service.service.IcocrunchSevice;
+import com.edmi.service.service.IcoratingService;
 import com.edmi.service.service.TrackicoService;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang.StringUtils;
@@ -22,13 +23,17 @@ public class FetchICODataServiceImp implements FetchICODataService {
     private IcocrunchSevice icocrunchSevice;
     @Autowired
     private TrackicoService trackicoService;
+    @Autowired
+    private IcoratingService icoratingService;
 
     @Override
-    public JSONObject getICODataBySourceName(String dataSourceName,int page_number,int pageSize) {
-        if(StringUtils.equalsIgnoreCase("icocrunch.io",dataSourceName)){
+    public JSONObject getICODataBySourceName(String dataSourceNameLevel1,String dataSourceNameLevel2,int page_number,int pageSize) {
+        if(StringUtils.equalsIgnoreCase("icocrunch.io",dataSourceNameLevel1)){
             return icocrunchSevice.getIco_icocrunch_detailPageable(page_number,pageSize);
-        }else if(StringUtils.equalsIgnoreCase("trackico.io",dataSourceName)){
+        }else if(StringUtils.equalsIgnoreCase("trackico.io",dataSourceNameLevel1)){
             return trackicoService.getIco_trackico_detail_index();
+        }else if(StringUtils.equalsIgnoreCase("icorating.com",dataSourceNameLevel1)){
+            return icoratingService.getIco_icorating_all_index(dataSourceNameLevel2);
         }else{
             return null;
         }
@@ -36,8 +41,7 @@ public class FetchICODataServiceImp implements FetchICODataService {
     }
 
     @Override
-    public JSONObject getICODataByICOUrl(JSONObject solution_data) {
-        String dataSourceName = "";
+    public JSONObject getICODataByICOUrl(JSONObject solution_data,String dataSourceNameLevel1,String dataSourceNameLevel2) {
         JSONObject json = new JSONObject();
         int number = 0;
 
@@ -45,11 +49,10 @@ public class FetchICODataServiceImp implements FetchICODataService {
         for(Map.Entry<String, Object> entry:solution_data.entrySet()){
             String key = entry.getKey();
             String value = entry.getValue().toString();
-            if(StringUtils.isEmpty(dataSourceName)){//根据url的域名判断是哪个网站的Block URL
-                dataSourceName = StringUtils.substringBetween(key,"//","/");
-            }
-            if(StringUtils.containsIgnoreCase(dataSourceName,"icocrunch.io")){
-                dataSourceName = "icocrunch.io";
+            //根据url的域名判断是哪个网站的Block URL
+            String dataSourceName = StringUtils.substringBetween(key,"//","/");
+
+            if(StringUtils.containsIgnoreCase("icocrunch.io",dataSourceNameLevel1)&&StringUtils.containsIgnoreCase(dataSourceName,dataSourceNameLevel1)){
                 Ico_icocrunch_detail detail = icocrunchSevice.getIco_icocrunch_detailByICOCrunchUrl(key);
                 if(null!=detail){
                     Ico_icocrunch_detailDto detailDto = new Ico_icocrunch_detailDto();
@@ -61,29 +64,49 @@ public class FetchICODataServiceImp implements FetchICODataService {
                         detailDtoMap.remove("class");
                         JSONObject solution_url = new JSONObject();
                         solution_url.put(key,detailDtoMap);
-
                         number+=1;
                         solution_id.put(value,solution_url);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
-            }else if(StringUtils.containsIgnoreCase(dataSourceName,"trackico.io")){
-                dataSourceName = "trackico.io";
+            }else if(StringUtils.containsIgnoreCase("trackico.io", dataSourceNameLevel1)&&StringUtils.containsIgnoreCase(dataSourceName,dataSourceNameLevel1)){
                 JSONObject detail = trackicoService.getICO_trackico_detailByItemUrl(key);
                 if(null!=detail){
                     number+=1;
-
                     JSONObject solution_url = new JSONObject();
                     solution_url.put(key,detail);
                     solution_id.put(value,solution_url);
                 }
+            }else if(StringUtils.containsIgnoreCase("icorating.com",dataSourceNameLevel1)&&StringUtils.containsIgnoreCase(dataSourceName,dataSourceNameLevel1)){
+
+                if(StringUtils.equalsIgnoreCase("all",dataSourceNameLevel2)){
+                    JSONObject detail = icoratingService.getICO_icorating_detailByItemUrl(key);
+                    if(null!=detail){
+                        number+=1;
+                        JSONObject solution_url = new JSONObject();
+                        solution_url.put(key,detail);
+                        solution_id.put(value,solution_url);
+                    }
+                }else if(StringUtils.equalsIgnoreCase("funds",dataSourceNameLevel2)){
+                    JSONObject detail = icoratingService.getICO_icorating_funds_detailByItemUrl(key);
+                    if(null!=detail){
+                        number+=1;
+                        JSONObject solution_url = new JSONObject();
+                        solution_url.put(key,detail);
+                        solution_id.put(value,solution_url);
+                    }
+                }
             }else{
-                return null;
+                continue;
             }
         }
+        if(StringUtils.isNotEmpty(dataSourceNameLevel1)&&StringUtils.isNotEmpty(dataSourceNameLevel2)){
+            json.put("source",dataSourceNameLevel1+"."+dataSourceNameLevel2);
+        }else{
+            json.put("source",dataSourceNameLevel1);
+        }
         json.put("number",number);
-        json.put("source",dataSourceName);
         json.put("solution_data",solution_id);
         return json;
     }

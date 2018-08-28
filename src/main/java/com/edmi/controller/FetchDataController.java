@@ -71,16 +71,19 @@ public class FetchDataController {
         return member_info;
     }
 
-    @RequestMapping("/blocktest/api/v1/{dataSourceName}/ico/index")
-    public JSONObject getListData(@PathVariable String dataSourceName) {
+    @RequestMapping(value ={
+            "/blocktest/api/v1/{dataSourceNameLevel1}/ico/index",
+            "/blocktest/api/v1/{dataSourceNameLevel1}/{dataSourceNameLevel2}/ico/index",
+    },method = {RequestMethod.GET,RequestMethod.POST})
+    public JSONObject getListData(@PathVariable String dataSourceNameLevel1,@PathVariable(required = false) String dataSourceNameLevel2) {
 
-        if(StringUtils.isEmpty(dataSourceName)){
+        if(StringUtils.isEmpty(dataSourceNameLevel1)){
             JSONObject result = new JSONObject();
             result.put("errorCode","001");
             result.put("msg","dataSourceName must be not null!");
             return result;
         }else {
-            return fetchICODataService.getICODataBySourceName(dataSourceName,0,10000);
+            return fetchICODataService.getICODataBySourceName(dataSourceNameLevel1,dataSourceNameLevel2,0,10000);
         }
     }
     @RequestMapping(value = {
@@ -95,7 +98,7 @@ public class FetchDataController {
             return result;
         }else {
             JSONObject data = JSONObject.parseObject(solution_data);
-            return fetchICODataService.getICODataByICOUrl(data);
+            return fetchICODataService.getICODataByICOUrl(data,dataSourceNameLevel1,dataSourceNameLevel2);
         }
     }
 }

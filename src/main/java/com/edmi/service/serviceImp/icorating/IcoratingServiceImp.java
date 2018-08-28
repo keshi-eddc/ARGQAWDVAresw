@@ -1,8 +1,10 @@
 package com.edmi.service.serviceImp.icorating;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.edmi.dao.icorating.*;
+import com.edmi.dto.icorating.*;
 import com.edmi.entity.icorating.*;
 import com.edmi.service.service.IcoratingService;
 import com.edmi.utils.http.HttpClientUtil;
@@ -11,6 +13,7 @@ import com.edmi.utils.http.request.Request;
 import com.edmi.utils.http.request.RequestMethod;
 import com.edmi.utils.http.response.Response;
 
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -19,13 +22,16 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.lang.reflect.InvocationTargetException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 实现接口
@@ -51,6 +57,9 @@ public class IcoratingServiceImp implements IcoratingService {
     private ICO_icorating_funds_detailRepository foundsDetailDao;
     @Autowired
     private ICO_icorating_funds_detail_memberRepository foundsMemberDao;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Override
     public void getIcotatingList() {
@@ -1119,6 +1128,202 @@ public class IcoratingServiceImp implements IcoratingService {
         }
 
 
+    }
+
+    @Override
+    public JSONObject getIco_icorating_all_index(String dataSourceNameLevel2) {
+
+        JSONObject json = new JSONObject();
+        if(StringUtils.equalsIgnoreCase("all",dataSourceNameLevel2)){
+            String indexes_sql = "select ifnull(block_name,'') as block_name," +
+                    "ifnull(trading_token,'') as trading_token," +
+                    "ifnull(contacts_website,'') as contacts_website," +
+                    "ifnull(trading_whitepaper,'') as trading_whitepaper," +
+                    "ifnull(contacts_facebook,'') as contacts_facebook," +
+                    "ifnull(contacts_twitter,'') as contacts_twitter," +
+                    "ifnull(contacts_reddit_alien,'') as contacts_reddit_alien," +
+                    "ifnull(contacts_medium,'') as contacts_medium," +
+                    "ifnull(contacts_github,'') as contacts_github," +
+                    "ifnull(contacts_instagram,'') as contacts_instagram," +
+                    "ifnull(contacts_telegram_plane,'') as contacts_telegram_plane," +
+                    "ifnull(contacts_youtube,'') as contacts_youtube," +
+                    "ifnull(contacts_website,'') as contacts_website," +
+                    "ifnull(link,'') as link from ico_icorating_detail";
+            List<Map<String, Object>> details = jdbcTemplate.queryForList(indexes_sql);
+            json.put("number",details.size());
+            JSONObject solution_data = new JSONObject();
+            for(Map<String, Object> detail:details){
+
+                JSONObject solution_data_url = new JSONObject();
+                solution_data_url.put("name",detail.get("block_name").toString());
+                solution_data_url.put("token_name",detail.get("trading_token").toString());
+                solution_data_url.put("website",detail.get("contacts_website").toString());
+                solution_data_url.put("white_paper",detail.get("trading_whitepaper").toString());
+
+                JSONObject social = new JSONObject();
+                social.put("facebook", detail.get("contacts_facebook").toString());
+                social.put("twitter",detail.get("contacts_twitter").toString());
+                social.put("reddit", detail.get("contacts_reddit_alien").toString());
+                social.put("medium",detail.get("contacts_medium").toString());
+                social.put("github", detail.get("contacts_github").toString());
+                social.put("instagram",detail.get("contacts_instagram").toString());
+                social.put("telegram",detail.get("contacts_telegram_plane").toString());
+                social.put("youtube", detail.get("contacts_youtube").toString());
+
+                solution_data_url.put("social",social);
+                solution_data.put(detail.get("link").toString(),solution_data_url);
+            }
+            json.put("solution_data",solution_data);
+            json.put("source","icorating.com."+dataSourceNameLevel2);
+        }else if(StringUtils.equalsIgnoreCase("funds",dataSourceNameLevel2)){
+            String indexes_sql = "select ifnull(fund,'') as fund," +
+                    "ifnull(link,'') as link," +
+                    "ifnull(site,'') as site," +
+                    "ifnull(facebook,'') as facebook," +
+                    "ifnull(twitter,'') as twitter," +
+                    "ifnull(medium,'') as medium," +
+                    "ifnull(linkedin,'') as linkedin from ico_icorating_funds_detail";
+            List<Map<String, Object>> details = jdbcTemplate.queryForList(indexes_sql);
+            json.put("number",details.size());
+            JSONObject solution_data = new JSONObject();
+            for(Map<String, Object> detail:details){
+
+                JSONObject solution_data_url = new JSONObject();
+                solution_data_url.put("name",detail.get("fund").toString());
+                solution_data_url.put("token_name","");
+                solution_data_url.put("website",detail.get("site").toString());
+                solution_data_url.put("white_paper","");
+
+                JSONObject social = new JSONObject();
+                social.put("facebook", detail.get("facebook").toString());
+                social.put("twitter",detail.get("twitter").toString());
+                social.put("medium",detail.get("medium").toString());
+                social.put("linkedin", detail.get("linkedin").toString());
+
+                solution_data_url.put("social",social);
+                solution_data.put(detail.get("link").toString(),solution_data_url);
+            }
+            json.put("solution_data",solution_data);
+            json.put("source","icorating.com."+dataSourceNameLevel2);
+        }
+        return json;
+    }
+
+    @Override
+    public JSONObject getICO_icorating_detailByItemUrl(String url) {
+        JSONObject json = new JSONObject();
+        ICO_icorating_detail detail = detailDao.getICO_icorating_detailByLink(url);
+        if(null!=detail){
+            List<ICO_icorating_detail_block_development> developments = developmentDao.getICO_icorating_detail_block_developmentsByFkid(detail.getPk_id());
+            List<ICO_icorating_detail_block_funds> funds = fundDao.getICO_icorating_detail_block_fundsByFkid(detail.getPk_id());
+            List<ICO_icorating_detail_block_team> teams = teamDao.getICO_icorating_detail_block_teamsByFkid(detail.getPk_id());
+
+            /*开始组装数据*/
+            ICO_icorating_detailDto detailDto = new ICO_icorating_detailDto();
+            try {
+                BeanUtils.copyProperties(detailDto,detail);
+                json.putAll(BeanUtils.describe(detailDto));
+
+                if(CollectionUtils.isNotEmpty(developments)){
+                    List<ICO_icorating_detail_block_developmentDto> developmentDtos = new ArrayList<>();
+                    for(ICO_icorating_detail_block_development development:developments){
+                        ICO_icorating_detail_block_developmentDto developmentDto = new ICO_icorating_detail_block_developmentDto();
+                        BeanUtils.copyProperties(developmentDto,development);
+                        developmentDtos.add(developmentDto);
+                    }
+                    json.put("development", JSON.toJSON(developmentDtos));
+                }
+                if(CollectionUtils.isNotEmpty(funds)){
+                    List<ICO_icorating_detail_block_fundsDto> fundsDtos = new ArrayList<>();
+                    for(ICO_icorating_detail_block_funds fund:funds) {
+                        ICO_icorating_detail_block_fundsDto fundsDto = new ICO_icorating_detail_block_fundsDto();
+                        BeanUtils.copyProperties(fundsDto,fund);
+                        fundsDtos.add(fundsDto);
+                    }
+                    json.put("funds",JSON.toJSON(fundsDtos));
+                }
+                if(CollectionUtils.isNotEmpty(teams)){
+                    List<ICO_icorating_detail_block_teamDto> teamDtos = new ArrayList<>();
+                    for(ICO_icorating_detail_block_team team:teams){
+                        ICO_icorating_detail_block_teamDto teamDto = new ICO_icorating_detail_block_teamDto();
+                        BeanUtils.copyProperties(teamDto,team);
+                        teamDtos.add(teamDto);
+                    }
+                    json.put("team",teamDtos);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            json.remove("class");
+            /*组装social信息*/
+            JSONObject social = new JSONObject();
+            social.put("facebook", json.getString("contacts_facebook"));
+            json.remove("contacts_facebook");
+            social.put("twitter",json.getString("contacts_twitter"));
+            json.remove("contacts_twitter");
+            social.put("reddit", json.getString("contacts_reddit_alien"));
+            json.remove("contacts_reddit_alien");
+            social.put("medium",json.getString("contacts_medium"));
+            json.remove("contacts_medium");
+            social.put("github", json.getString("contacts_github"));
+            json.remove("contacts_github");
+            social.put("instagram",json.getString("contacts_instagram"));
+            json.remove("contacts_instagram");
+            social.put("telegram",json.getString("contacts_telegram_plane"));
+            json.remove("contacts_telegram_plane");
+            social.put("youtube", json.getString("contacts_youtube"));
+            json.remove("contacts_youtube");
+
+            json.put("social",social);
+            /*下面处理Block的logo*/
+            json.put("solution_photo_url",detail.getIco_icorating_list().getLogo());
+        }
+        return json;
+    }
+    @Override
+    public JSONObject getICO_icorating_funds_detailByItemUrl(String url) {
+        JSONObject json = new JSONObject();
+        ICO_icorating_funds_detail detail = foundsDetailDao.findICO_icorating_funds_detailByLink(url);
+        if(null!=detail){
+
+            List<ICO_icorating_funds_detail_member> teams = foundsMemberDao.getICO_icorating_funds_detail_membersByFkid(detail.getPk_id());
+
+            /*开始组装数据*/
+            ICO_icorating_funds_detailDto detailDto = new ICO_icorating_funds_detailDto();
+            try {
+                BeanUtils.copyProperties(detailDto,detail);
+                json.putAll(BeanUtils.describe(detailDto));
+
+
+                if(CollectionUtils.isNotEmpty(teams)){
+                    List<ICO_icorating_funds_detail_memberDto> teamDtos = new ArrayList<>();
+                    for(ICO_icorating_funds_detail_member team:teams){
+                        ICO_icorating_funds_detail_memberDto teamDto = new ICO_icorating_funds_detail_memberDto();
+                        BeanUtils.copyProperties(teamDto,team);
+                        teamDtos.add(teamDto);
+                    }
+                    json.put("member",teamDtos);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            json.remove("class");
+            /*组装social信息*/
+            JSONObject social = new JSONObject();
+            social.put("facebook", json.getString("facebook"));
+            json.remove("facebook");
+            social.put("twitter",json.getString("twitter"));
+            json.remove("twitter");
+            social.put("medium", json.getString("medium"));
+            json.remove("medium");
+            social.put("linkedin",json.getString("linkedin"));
+            json.remove("linkedin");
+
+            json.put("social",social);
+            /*下面处理Block的logo*/
+            //json.put("solution_photo_url",detail.getIco_icorating_funds_list().());
+        }
+        return json;
     }
 
     public static void main(String[] args) {
