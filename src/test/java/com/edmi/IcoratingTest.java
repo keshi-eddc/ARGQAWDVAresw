@@ -37,11 +37,11 @@ public class IcoratingTest {
         log.info("getMaxCrawledTimes========" + t);
         List<ICO_icorating_list> li = listDao.getMaxCurrentPageWithMaxCrawledTimes(t);
         ICO_icorating_list item = li.get(0);
-        log.info("name:"+item.getName());
-        log.info("CurrentPage:"+item.getCurrentPage());
+        log.info("name:" + item.getName());
+        log.info("CurrentPage:" + item.getCurrentPage());
     }
 
-        @Test
+    @Test
     public void icotatingDetailManager() {
         log.info("******** start icotatingDetailManager test ");
         List<ICO_icorating_list> listItems = listDao.findTop10ByCrawledStatu("ini");
@@ -57,6 +57,7 @@ public class IcoratingTest {
             log.info("get null from list table");
         }
     }
+
     @Test
     public void getIcoratingFoundsList() {
 
@@ -67,10 +68,10 @@ public class IcoratingTest {
     public void icoratingFoundsDetailManager() {
         //查出所有的item，因为列表页已经判断，此处不会有重复
         List<ICO_icorating_funds_list> foundslist = new ArrayList<>();
-        foundslist = foundsListDao.getAllByCrawledStatus("ini");
+//        foundslist = foundsListDao.getAllByCrawledStatus("ini");
         //测试
-//        ICO_icorating_funds_list one = foundsListDao.findICO_icorating_funds_listByLink("https://icorating.com/funds/blocktrade-investments/");
-//        foundslist.add(one);
+        ICO_icorating_funds_list one = foundsListDao.findICO_icorating_funds_listByLink("https://icorating.com/funds/blocktrade-investments/");
+        foundslist.add(one);
         log.info("********** Start icorating founds detail task **********");
         log.info("--- get from icorating_funds_list ,items num:" + foundslist.size());
         if (CollectionUtils.isNotEmpty(foundslist)) {

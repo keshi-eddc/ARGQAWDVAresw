@@ -16,6 +16,9 @@ public class ICO_icorating_funds_list {
     @Column(nullable = false, name = "link")
     private String link;
 
+    @Column(nullable = false, name = "logo")
+    private String logo;
+
     @Column(nullable = false, name = "fund")
     private String fund;
 
@@ -63,6 +66,14 @@ public class ICO_icorating_funds_list {
 
     public void setLink(String link) {
         this.link = link;
+    }
+
+    public String getLogo() {
+        return logo;
+    }
+
+    public void setLogo(String logo) {
+        this.logo = logo;
     }
 
     public String getFund() {

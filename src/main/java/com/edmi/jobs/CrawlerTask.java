@@ -4,25 +4,23 @@ import com.edmi.dao.etherscan.*;
 import com.edmi.dao.feixiaohao.ICO_Feixiaohao_ExchangeRepository;
 import com.edmi.dao.feixiaohao.ICO_Feixiaohao_Exchange_CurrenciesRepository;
 import com.edmi.dao.feixiaohao.ICO_Feixiaohao_Exchange_DetailsRepository;
+import com.edmi.dao.icodrops.ICO_icodrops_listRepository;
 import com.edmi.dao.icorating.ICO_icorating_funds_listRepository;
 import com.edmi.dao.icorating.ICO_icorating_listRepository;
 import com.edmi.dao.trackico.ICO_trackico_itemRepository;
 import com.edmi.entity.etherscan.*;
 import com.edmi.entity.feixiaohao.ICO_Feixiaohao_Exchange;
 import com.edmi.entity.feixiaohao.ICO_Feixiaohao_Exchange_Currencies;
+import com.edmi.entity.icodrops.ICO_icodrops_list;
 import com.edmi.entity.icorating.ICO_icorating_funds_list;
 import com.edmi.entity.icorating.ICO_icorating_list;
 import com.edmi.entity.trackico.ICO_trackico_item;
-import com.edmi.service.service.EtherscanService;
-import com.edmi.service.service.FeixiaohaoService;
-import com.edmi.service.service.IcoratingService;
-import com.edmi.service.service.TrackicoService;
+import com.edmi.service.service.*;
 import com.edmi.utils.http.exception.MethodNotSupportException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
-import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -47,6 +45,8 @@ public class CrawlerTask {
 
     @Autowired
     private IcoratingService icoratingService;
+    @Autowired
+    private IcodropsService icodropsService;
 
     @Autowired
     private ICO_Etherscan_IO_BlocksRepository blocksDao;
@@ -83,6 +83,8 @@ public class CrawlerTask {
 
     @Autowired
     private ICO_icorating_funds_listRepository foundsListDao;
+    @Autowired
+    private ICO_icodrops_listRepository icodropsItemDao;
 
     /*@Scheduled(cron = "0 38 08 25 * ?")*/
     public void getICO_Etherscan_IO_Blocks() throws Exception {
@@ -324,13 +326,13 @@ public class CrawlerTask {
 
     // <===================== 下面是icorating的相关job ===================================>
     //每3小时 0 0 */4 * * ?
-//    @Scheduled(cron = "0 0 */3 * * ?")
+//    @Scheduled(cron = "0 0 */4 * * ?")
     public void getICO_icorating_list() throws MethodNotSupportException {
         icoratingService.getIcotatingList();
     }
 
     //    @Scheduled(cron = "0 0/5 * * * ?")
-//    @Scheduled(cron = "0 40 03 * * ?")
+//    @Scheduled(cron = "0 00 17 * * ?")
     public void icoratingDetailManager() {
         // 获取开始时间
         long startTime = System.currentTimeMillis();
@@ -366,7 +368,7 @@ public class CrawlerTask {
         icoratingService.getIcoratingFundsList();
     }
 
-    //    @Scheduled(cron = "0 00 21 * * ?")
+//    @Scheduled(cron = "0 00 05 * * ?")
     public void icoratingFoundsDetailManager() {
         //查出所有的item，因为列表页已经判断，此处不会有重复
         List<ICO_icorating_funds_list> foundslist = new ArrayList<>();
@@ -391,5 +393,39 @@ public class CrawlerTask {
         }
     }
 
+    // <===================== 下面是icodrops的相关job ===================================>
+//    @Scheduled(cron = "0 00 21 * * ?")
+    public void icodropsListManager() {
+        log.info("***** getIcodropsListWithInput task start");
+        ArrayList<String> urlList = new ArrayList<>(10);
+        urlList.add("https://icodrops.com/category/active-ico/");
+        urlList.add("https://icodrops.com/category/upcoming-ico/");
+        urlList.add("https://icodrops.com/category/ended-ico/");
+        for (String url : urlList) {
+            icodropsService.getIcodropsListWithInput(url);
+        }
+        log.info("***** getIcodropsListWithInput task over");
+    }
+
+//    @Scheduled(cron = "0 00 06 * * ?")
+    public void icodropsDetailManager() {
+        log.info("***** start icodropsDetailManager task *****");
+        //1106
+        List<ICO_icodrops_list> itemList = new ArrayList<>();
+        itemList = icodropsItemDao.getAllByCrawledStatu("ini");
+//        itemList = itemDao.getICO_icodrops_listByIco_url("https://icodrops.com/hashgraph/");
+        if (CollectionUtils.isNotEmpty(itemList)) {
+            log.info("--- total items is : " + itemList.size());
+            for (int i = 0; i < itemList.size(); i++) {
+                log.info("----- will extra item:" + i);
+                ICO_icodrops_list item = itemList.get(i);
+                icodropsService.getIcodropsDetail(item);
+            }
+            log.info("***** icodropsDetailManager task over *****");
+
+        } else {
+            log.info("--- get null ,from icodrops list tabel");
+        }
+    }
 }
 
