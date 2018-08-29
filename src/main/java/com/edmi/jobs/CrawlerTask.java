@@ -368,7 +368,7 @@ public class CrawlerTask {
         icoratingService.getIcoratingFundsList();
     }
 
-//    @Scheduled(cron = "0 00 05 * * ?")
+    @Scheduled(cron = "0 30 07 * * ?")
     public void icoratingFoundsDetailManager() {
         //查出所有的item，因为列表页已经判断，此处不会有重复
         List<ICO_icorating_funds_list> foundslist = new ArrayList<>();
