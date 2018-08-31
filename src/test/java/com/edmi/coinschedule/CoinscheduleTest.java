@@ -1,9 +1,12 @@
 package com.edmi.coinschedule;
 
+import com.edmi.dao.coinschedule.ICO_coinschedule_detail_memberDao;
 import com.edmi.dao.coinschedule.Ico_coinschedule_ListDao;
+import com.edmi.entity.coinschedule.ICO_coinschedule_detail_member;
 import com.edmi.entity.coinschedule.Ico_coinschedule_List;
 import com.edmi.service.service.CoinscheduleService;
 import com.edmi.utils.http.exception.MethodNotSupportException;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,13 +25,16 @@ public class CoinscheduleTest {
     private CoinscheduleService coinscheduleService;
     @Autowired
     private Ico_coinschedule_ListDao ico_coinschedule_listDao;
+    @Autowired
+    private ICO_coinschedule_detail_memberDao ico_coinschedule_detail_memberDao;
 
     Logger log = Logger.getLogger(CoinscheduleTest.class);
 
     @Test
     public void getList() throws MethodNotSupportException {
-        coinscheduleService.getIco_coinschedule_List();
-
+//        coinscheduleService.getIco_coinschedule_List();
+        coinscheduleService.getIcoCoinscheduleICOsList();
+        //650
     }
 
     @Test
@@ -46,4 +52,19 @@ public class CoinscheduleTest {
         log.info("***** Coinschedule detail task  over *****");
     }
 
+    @Test
+    public void getMemberSocialLinks() {
+        log.info("***** start getMemberSocialLinks task *****");
+        List<ICO_coinschedule_detail_member> memberList = ico_coinschedule_detail_memberDao.findICO_coinschedule_detail_memberWithNotIn();
+        log.info("get members from detail_member,num is :" + memberList.size());
+        if (CollectionUtils.isNotEmpty(memberList)) {
+            for (int i = 0; i < memberList.size(); i++) {
+                ICO_coinschedule_detail_member member = memberList.get(i);
+                log.info("----- will extra member :" + i);
+                coinscheduleService.getIcoCoinscheduleMemberSocialLink(member);
+//                break;
+            }
+            log.info("***** getMemberSocialLinks task over  *****");
+        }
+    }
 }

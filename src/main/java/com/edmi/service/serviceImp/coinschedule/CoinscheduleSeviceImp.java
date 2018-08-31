@@ -37,7 +37,10 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
     private ICO_coinschedule_detail_sociallinkDao ico_coinschedule_detail_sociallinkDao;
     @Autowired
     private ICO_coinschedule_detail_memberDao ico_coinschedule_detail_memberDao;
-
+    @Autowired
+    private ICO_coinschedule_icos_listDao ico_coinschedule_icos_listDao;
+    @Autowired
+    private ICO_coinschedule_detail_member_sociallinkDao ico_coinschedule_detail_member_sociallinkDao;
 
     /*
      * 获取列表
@@ -800,12 +803,160 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
         }
     }
 
+    @Override
+    public void getIcoCoinscheduleICOsList() {
+        log.info("***** strat getIcoCoinscheduleICOsList task");
+        try {
+            String url = "https://www.coinschedule.com/icos.html";
+            Request request = new Request(url, RequestMethod.GET);
+            Response response = HttpClientUtil.doRequest(request);
+            int code = response.getCode();
+            //验证请求
+            if (code == 200) {
+                String content = response.getResponseText();
+                // 验证页面
+                if (StringUtils.isNotBlank(content)) {
+                    // 验证是否是正常页面
+                    if (content.contains("tbody")) {
+                        Document doc = Jsoup.parse(content);
+                        Elements lineseles = doc.select("table.dataTable > tbody >tr");
+                        if (lineseles != null && lineseles.size() > 0) {
+                            List<ICO_coinschedule_icos_list> icosLists = new ArrayList<>();
+                            for (Element linele : lineseles) {
+                                ICO_coinschedule_icos_list listModel = new ICO_coinschedule_icos_list();
+                                listModel.setInsert_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                listModel.setUpdate_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                Elements tdseles = linele.select("td");
+                                if (tdseles != null && tdseles.size() > 0) {
+                                    if (tdseles.size() == 4) {
+                                        String name = tdseles.get(0).text().trim();
+                                        String category = tdseles.get(1).text().trim();
+                                        String endedOn = tdseles.get(2).text().trim();
+                                        String totalRaised = tdseles.get(3).text().trim();
+//                                        log.info(name + " " + category + " " + endedOn + " " + totalRaised);
+                                        listModel.setName(name);
+                                        listModel.setCategory(category);
+                                        listModel.setEnded_on(endedOn);
+                                        listModel.setTotal_raised(totalRaised);
+                                        ICO_coinschedule_icos_list oldicolistModel = ico_coinschedule_icos_listDao.findICO_coinschedule_icos_listByName(name);
+                                        if (oldicolistModel == null) {
+                                            log.info("----- insert new date");
+                                            icosLists.add(listModel);
+//                                            ico_coinschedule_icos_listDao.save(listModel);
+                                        } else {
+                                            log.info("----- update old date");
+                                            oldicolistModel.setCategory(category);
+                                            oldicolistModel.setEnded_on(endedOn);
+                                            oldicolistModel.setTotal_raised(totalRaised);
+                                            oldicolistModel.setUpdate_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                            icosLists.add(oldicolistModel);
+//                                            ico_coinschedule_icos_listDao.save(oldicolistModel);
+                                        }
+                                    }
+                                }
+                            }
+                            ico_coinschedule_icos_listDao.saveAll(icosLists);
+                            log.info("***** getIcoCoinscheduleICOsList task over");
+                        }
+                    } else {
+                        log.error("un normal");
+                    }
+                }
+            } else {
+                log.error("!!!bad request:" + url);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    //    @Async("myTaskAsyncPool")
+    @Override
+    public void getIcoCoinscheduleMemberSocialLink(ICO_coinschedule_detail_member member) {
+//        log.info("----- getIcoCoinscheduleMemberSocialLink");
+        try {
+            String url = member.getMember_url();
+            Request request = new Request(url, RequestMethod.GET);
+            Response response = HttpClientUtil.doRequest(request);
+            int code = response.getCode();
+//            log.info("url: " + url + " = " + code);
+            //验证请求
+            if (code == 200) {
+                String content = response.getResponseText();
+                // 验证页面
+                if (StringUtils.isNotBlank(content)) {
+                    // 验证是否是正常页面
+                    if (content.contains("person-title")) {
+                        List<ICO_coinschedule_detail_member_sociallink> sociallinkList = new ArrayList<>(10);
+                        Document doc = Jsoup.parse(content);
+                        Elements sectionseles = doc.select("div.container >div.content-section > div.widget");
+                        if (sectionseles != null && sectionseles.size() > 0) {
+                            for (Element sectionele : sectionseles) {
+                                Elements titleles = sectionele.select("h3");
+                                if (titleles != null && titleles.size() > 0) {
+                                    String title = titleles.text().trim();
+//                                    log.info("title:" + title);
+                                    if (title.equals("Social")) {
+                                        Elements socialseles = sectionele.select("a");
+                                        if (socialseles != null && socialseles.size() > 0) {
+                                            for (Element socialele : socialseles) {
+                                                log.info("socialele:" + socialele.toString());
+                                                String social_link_key = "";
+                                                String social_link_value = socialele.attr("href").trim();
+                                                Elements keyeles = socialele.select("img");
+                                                if (keyeles != null && keyeles.size() > 0) {
+                                                    social_link_key = keyeles.attr("alt").trim();
+                                                } else {
+                                                    log.info("----- social_link_key is null : " + url);
+                                                }
+                                                log.info(social_link_key + " = " + social_link_value);
+                                                if (StringUtils.isNotEmpty(social_link_key) && StringUtils.isNotEmpty(social_link_value)) {
+                                                    ICO_coinschedule_detail_member_sociallink sociallinkModel = new ICO_coinschedule_detail_member_sociallink();
+                                                    sociallinkModel.setIco_coinschedule_detail_member(member);
+                                                    sociallinkModel.setMember_url(member.getMember_url());
+                                                    sociallinkModel.setSocial_link_key(social_link_key);
+                                                    sociallinkModel.setSocial_link_value(social_link_value);
+                                                    sociallinkModel.setInsert_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                                    sociallinkModel.setUpdate_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                                    sociallinkList.add(sociallinkModel);
+                                                }
+                                            }
+                                        } else {
+                                            log.info("----- has no Social :" + url);
+                                        }
+                                    }
+                                } else {
+                                    log.info("----- has no title:" + url);
+                                }
+                            }
+                            ico_coinschedule_detail_member_sociallinkDao.saveAll(sociallinkList);
+                        } else {
+                            log.info("----- has no sectionseles:" + url);
+                        }
+                    } else {
+                        log.info("un normal page !!!  " + url);
+                    }
+                } else {
+                    log.error("!!! page is null : " + url);
+                }
+            } else {
+                log.info("!!!bad request");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void main(String[] args) {
         CoinscheduleSeviceImp t = new CoinscheduleSeviceImp();
         Ico_coinschedule_List item = new Ico_coinschedule_List();
         item.setIcoCoinscheduleUrl("https://www.coinschedule.com/ico/mibcoin");
 //        item.setIcoCoinscheduleUrl("https://www.coinschedule.com/ico/kimex-token#event4542");
-        t.getIco_coinschedule_detail(item);
-
+//        t.getIco_coinschedule_detail(item);
+//        t.getIcoCoinscheduleICOsList();
+        ICO_coinschedule_detail_member member = new ICO_coinschedule_detail_member();
+        member.setMember_url("https://www.coinschedule.com/p/13194/tuomo-tiito");
+        t.getIcoCoinscheduleMemberSocialLink(member);
     }
 }
