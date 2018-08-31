@@ -33,7 +33,7 @@ public class ICO_icodrops_detail {
      * 本表的fk_id是外键，指向list的pk_id
      * 会自动关联
      */
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "fk_id")
     private ICO_icodrops_list ico_icodrops_list;
 
