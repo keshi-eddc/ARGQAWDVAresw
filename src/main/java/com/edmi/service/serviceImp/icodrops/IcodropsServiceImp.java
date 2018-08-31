@@ -1,9 +1,14 @@
 package com.edmi.service.serviceImp.icodrops;
 
+import com.alibaba.fastjson.JSONObject;
 import com.edmi.dao.icodrops.ICO_icodrops_detailRepository;
 import com.edmi.dao.icodrops.ICO_icodrops_detail_socialLinkRepository;
 import com.edmi.dao.icodrops.ICO_icodrops_detail_tokenInfoRepository;
 import com.edmi.dao.icodrops.ICO_icodrops_listRepository;
+import com.edmi.dto.icodrops.ICO_icodrops_detailDto;
+import com.edmi.dto.icodrops.ICO_icodrops_detail_socialLinkDto;
+import com.edmi.dto.icodrops.ICO_icodrops_detail_tokenInfoDto;
+import com.edmi.dto.icodrops.ICO_icodrops_listDto;
 import com.edmi.entity.icodrops.ICO_icodrops_detail;
 import com.edmi.entity.icodrops.ICO_icodrops_detail_socialLink;
 import com.edmi.entity.icodrops.ICO_icodrops_detail_tokenInfo;
@@ -13,19 +18,27 @@ import com.edmi.utils.http.HttpClientUtil;
 import com.edmi.utils.http.request.Request;
 import com.edmi.utils.http.request.RequestMethod;
 import com.edmi.utils.http.response.Response;
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.NumberUtils;
 import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 实现接口
@@ -41,6 +54,8 @@ public class IcodropsServiceImp implements IcodropsService {
     private ICO_icodrops_detail_socialLinkRepository socialLinkDao;
     @Autowired
     private ICO_icodrops_detail_tokenInfoRepository tokenDao;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Override
     public void getIcodropsListWithInput(String inputUrl) {
@@ -392,5 +407,253 @@ public class IcodropsServiceImp implements IcodropsService {
             }
         }
         tokenDao.saveAll(tokenList);
+    }
+
+    @Override
+    public JSONObject getIco_icodrops_index(String dataSourceNameLevel2) {
+        JSONObject result = new JSONObject();//最后返回数据集合
+
+        /*查询基本列表信息*/
+        String indexes_sql = "select\n" +
+                "  li.ico_url,\n" +
+                "  li.ico_name,\n" +
+                "  tf.token_key,\n" +
+                "  tf.token_value\n" +
+                "from ico_icodrops_list li left join ico_icodrops_detail_tokeninfo tf on li.ico_url = tf.link\n" +
+                "where tf.token_key = 'Ticker'";
+        /*查询social以及token、website的信息*/
+        String indexes_social_sql = "select\n" +
+                "      li.ico_url,\n" +
+                "      so.social_link_key,\n" +
+                "      so.social_link_value\n" +
+                "from ico_icodrops_list li left join ico_icodrops_detail_tokeninfo tf on li.ico_url = tf.link\n" +
+                "      LEFT JOIN ico_icodrops_detail detail ON li.pk_id = detail.fk_id\n" +
+                "      LEFT JOIN ico_icodrops_detail_sociallink so ON detail.pk_id = so.fk_id\n" +
+                "where tf.token_key = 'Ticker'";
+
+        List<Map<String, Object>> indexes = jdbcTemplate.queryForList(indexes_sql);
+        List<Map<String, Object>> socials = jdbcTemplate.queryForList(indexes_social_sql);
+
+        JSONObject socials_json = new JSONObject();//组装social信息
+        for (Map<String, Object> social : socials) {
+            Object itemUrl = social.get("ico_url");
+            Object block_lable_name = social.get("social_link_key");
+            Object block_lable_url = social.get("social_link_value");
+            if (null != itemUrl && null != block_lable_name && null != block_lable_url) {
+                if (socials_json.containsKey(itemUrl.toString())) {
+                    socials_json.getJSONObject(itemUrl.toString()).put(block_lable_name.toString(), block_lable_url.toString());
+                } else {
+                    JSONObject social_json = new JSONObject();
+                    social_json.put(block_lable_name.toString(), block_lable_url.toString());
+                    socials_json.put(itemUrl.toString(), social_json);
+                }
+            }
+        }
+
+        JSONObject solution_data = new JSONObject();//组装solution_data信息
+        for (Map<String, Object> index : indexes) {
+
+            JSONObject block = new JSONObject();
+            block.put("name", index.get("ico_name").toString());
+            block.put("token_name", index.get("token_value").toString());
+            if (socials_json.containsKey(index.get("ico_url").toString())) {
+                JSONObject social_json = socials_json.getJSONObject(index.get("ico_url").toString());
+                JSONObject standardSocials = new JSONObject();
+                for (Map.Entry<String, Object> entry : social_json.entrySet()) {
+                    String key = entry.getKey();
+                    String value = entry.getValue().toString();
+                    if (StringUtils.equalsIgnoreCase("WEBSITE", key)) {
+                        block.put("website", value);
+                    } else if (StringUtils.equalsIgnoreCase("WHITEPAPER", key)) {
+                        block.put("white_paper", value);
+                    } else if (StringUtils.equalsIgnoreCase("facebook", key)) {
+                        standardSocials.put("facebook", value);
+                    } else if (StringUtils.equalsIgnoreCase("reddit", key)) {
+                        standardSocials.put("reddit", value);
+                    } else if (StringUtils.equalsIgnoreCase("twitter", key)) {
+                        standardSocials.put("twitter", value);
+                    } else if (StringUtils.equalsIgnoreCase("telegram", key)) {
+                        standardSocials.put("telegram", value);
+                    } else if (StringUtils.equalsIgnoreCase("linkedin", key)) {
+                        standardSocials.put("linkedin", value);
+                    } else if (StringUtils.equalsIgnoreCase("medium", key)) {
+                        standardSocials.put("medium", value);
+                    } else if (StringUtils.equalsIgnoreCase("slack", key)) {
+                        standardSocials.put("slack", value);
+                    } else if (StringUtils.equalsIgnoreCase("btc", key)) {
+                        standardSocials.put("btc", value);
+                    } else if (StringUtils.equalsIgnoreCase("youtube", key)) {
+                        standardSocials.put("youtube", value);
+                    } else if (StringUtils.equalsIgnoreCase("github", key)) {
+                        standardSocials.put("github", value);
+                    } else if (StringUtils.equalsIgnoreCase("weixin", key)) {
+                        standardSocials.put("weixin", value);
+                    } else if (StringUtils.equalsIgnoreCase("fa", key)) {
+                        standardSocials.put("fa", value);
+                    }
+                }
+                block.put("social", standardSocials);
+            }
+            solution_data.put(index.get("ico_url").toString(), block);
+        }
+        result.put("number", indexes.size());
+        result.put("solution_data", solution_data);
+        result.put("source", "icodrops.com");
+        return result;
+    }
+
+    @Override
+    public JSONObject getICO_icodrops_detailByItemUrl(String url) {
+        JSONObject json = new JSONObject();
+        List<ICO_icodrops_detail> details = icodropsDetailDao.getICO_icodrops_detailByLinkOrOrderByInsert_Time(url);
+        if(CollectionUtils.isNotEmpty(details)){
+            /*按照状态顺序取其中的一个ended-ico、active-ico、upcoming-ico*/
+            ICO_icodrops_detail detail_recent = null;
+            for(ICO_icodrops_detail detail:details){
+                String input_type = detail.getIco_icodrops_list().getInput_type();
+                if(StringUtils.equalsIgnoreCase("ended-ico",input_type)){
+                    detail_recent = detail;
+                    break;
+                }else if(StringUtils.equalsIgnoreCase("active-ico",input_type)){
+                    detail_recent = detail;
+                    break;
+                }else if(StringUtils.equalsIgnoreCase("upcoming-ico",input_type)){
+                    detail_recent = detail;
+                    break;
+                }
+            }
+            List<ICO_icodrops_detail_socialLink> socialLinks = socialLinkDao.getICO_icodrops_detail_socialLinksByFkid(detail_recent.getPk_id());
+            List<ICO_icodrops_detail_tokenInfo> tokenInfos = tokenDao.getICO_icodrops_detail_tokenInfosByFkid(detail_recent.getPk_id());
+
+            /*开始组装数据*/
+            ICO_icodrops_detailDto detailDto = new ICO_icodrops_detailDto();
+            try {
+                BeanUtils.copyProperties(detailDto,detail_recent);
+                json.putAll(BeanUtils.describe(detailDto));
+
+                if(CollectionUtils.isNotEmpty(socialLinks)){
+                    List<ICO_icodrops_detail_socialLinkDto> socialLinkDtos = new ArrayList<>();
+                    for(ICO_icodrops_detail_socialLink socialLink:socialLinks){
+                        ICO_icodrops_detail_socialLinkDto socialLinkDto = new ICO_icodrops_detail_socialLinkDto();
+                        BeanUtils.copyProperties(socialLinkDto,socialLink);
+                        socialLinkDtos.add(socialLinkDto);
+                    }
+                    /*添加属于detail本身的链接，如website、whitePape*/
+                    if(CollectionUtils.isNotEmpty(socialLinkDtos)){
+                        for(ICO_icodrops_detail_socialLinkDto socialLinkDto:socialLinkDtos){
+                            String key = socialLinkDto.getSocial_link_key();
+                            if(StringUtils.equalsIgnoreCase("WEBSITE",key)||StringUtils.equalsIgnoreCase("WHITEPAPER",key)){
+                                json.put(key,socialLinkDto.getSocial_link_value());
+                            }
+                        }
+                    }
+                }
+                if(CollectionUtils.isNotEmpty(tokenInfos)){
+                    List<ICO_icodrops_detail_tokenInfoDto> tokenInfoDtos = new ArrayList<>();
+                    for(ICO_icodrops_detail_tokenInfo tokenInfo:tokenInfos){
+                        ICO_icodrops_detail_tokenInfoDto tokenInfoDto = new ICO_icodrops_detail_tokenInfoDto();
+                        BeanUtils.copyProperties(tokenInfoDto,tokenInfo);
+                        tokenInfoDtos.add(tokenInfoDto);
+                    }
+                    /*添加更多detail的信息*/
+                    if(CollectionUtils.isNotEmpty(tokenInfoDtos)){
+                        for(ICO_icodrops_detail_tokenInfoDto tokenInfoDto:tokenInfoDtos){
+                            String key = tokenInfoDto.getToken_key();
+                            if(StringUtils.isNotEmpty(key)){
+                                json.put(key,tokenInfoDto.getToken_value());
+                            }
+                        }
+                    }
+                }
+                /*从list里面提取信息*/
+                ICO_icodrops_list list = detail_recent.getIco_icodrops_list();
+                ICO_icodrops_listDto listDto = new ICO_icodrops_listDto();
+
+                BeanUtils.copyProperties(listDto,list);
+                json.putAll(BeanUtils.describe(listDto));
+                /*处理Block的logo*/
+                json.put("solution_photo_url",json.getString("ico_photo_url"));
+                json.remove("ico_photo_url");
+
+                /*从list里面取bounty  BOUNTY: NO INFORMATION*/
+                String bounty = json.getString("tag_four");
+                String[] bounty_ky = StringUtils.split(bounty, ":");
+                if(null!=bounty_ky&&bounty_ky.length==2){
+                    json.put(bounty_ky[0],bounty_ky[1]);
+                }
+                json.remove("tag_four");
+
+                /*提取kyc*/
+                String tag_one = json.getString("tag_one");
+                String[] tag_one_ky = StringUtils.split(tag_one, ":");
+                if(null!=tag_one_ky&&tag_one_ky.length==2){
+                    json.put(tag_one_ky[0],tag_one_ky[1]);
+                }
+                json.remove("tag_one");
+                json.remove("Know Your Customer (KYC)");
+
+                /*处理时间*/
+                String end_date = json.getString("end_date");
+                String end_date_time = json.getString("end_date_time");
+                json.put("ico_end",end_date);
+                json.remove("end_date");
+                json.remove("end_date_time");
+
+                String start_date = json.getString("start_date");
+                json.put("ico_start",start_date);
+                json.remove("start_date");
+
+                /*处理participate*/
+                String participate_not = json.getString("Сan't participate");
+                json.put("can not participate",participate_not);
+                json.remove("Сan't participate");
+
+                /*处理Whitelist*/
+                String whitelist = json.getString("Whitelist");
+                whitelist = StringUtils.substringBefore(whitelist,"(");
+                json.put("Whitelist",whitelist);
+
+                /*添加ico状态*/
+                json.put("ico_status",detail_recent.getIco_icodrops_list().getInput_type());
+
+                /*处理title Token Sale*/
+                if(json.containsKey("title Token Sale")){
+                    String token_sale = json.getString("title Token Sale");
+                    String[] token_sales = StringUtils.split(token_sale, "–");
+                    if(null!=token_sales&&token_sales.length==2){
+                        json.put("icoStart",tag_one_ky[0]);
+                        json.put("icoEnd",tag_one_ky[1]);
+                    }
+                }
+                /*处理Total Tokens 、 Available for Token Sale*/
+                Number total = null;
+                if(json.containsKey("Total Tokens")){
+                    //每三位以逗号进行分隔。
+                    DecimalFormat format = new DecimalFormat(",###");//299,792,458
+                    String total_tokens = json.getString("Total Tokens");
+                    if(StringUtils.isEmpty(total_tokens)){
+                        total_tokens = "0";
+                    }
+                    total = format.parse(total_tokens);
+                }
+                Number available = null;
+                if(json.containsKey("Available for Token Sale")){
+                    //以百分比方式计数，并取两位小数
+                    DecimalFormat format = new DecimalFormat("#.##%");
+                    String available_for_token_sale = json.getString("Available for Token Sale");
+                    if(StringUtils.isEmpty(available_for_token_sale)){
+                        available_for_token_sale = "0";
+                    }
+                    available = format.parse(available_for_token_sale);
+                }
+                BigDecimal token_for_sale = BigDecimal.valueOf(total.longValue()).multiply(BigDecimal.valueOf(available.doubleValue()));
+                json.put("Token for sale",token_for_sale.toString());
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            json.remove("class");
+        }
+        return json;
     }
 }

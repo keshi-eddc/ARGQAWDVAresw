@@ -1,5 +1,6 @@
 package com.edmi.service.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.edmi.entity.icodrops.ICO_icodrops_list;
 
 /**
@@ -19,4 +20,8 @@ public interface IcodropsService {
      * @param item
      */
     public void getIcodropsDetail(ICO_icodrops_list item);
+
+    public JSONObject getIco_icodrops_index(String dataSourceNameLevel2);
+
+    public JSONObject getICO_icodrops_detailByItemUrl(String  url);
 }

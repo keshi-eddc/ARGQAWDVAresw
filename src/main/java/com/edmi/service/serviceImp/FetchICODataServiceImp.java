@@ -4,11 +4,10 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.edmi.dto.icocrunch.Ico_icocrunch_detailDto;
 import com.edmi.entity.icocrunch.Ico_icocrunch_detail;
-import com.edmi.service.service.FetchICODataService;
-import com.edmi.service.service.IcocrunchSevice;
-import com.edmi.service.service.IcoratingService;
-import com.edmi.service.service.TrackicoService;
+import com.edmi.service.service.*;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,6 +24,8 @@ public class FetchICODataServiceImp implements FetchICODataService {
     private TrackicoService trackicoService;
     @Autowired
     private IcoratingService icoratingService;
+    @Autowired
+    private IcodropsService icodropsService;
 
     @Override
     public JSONObject getICODataBySourceName(String dataSourceNameLevel1,String dataSourceNameLevel2,int page_number,int pageSize) {
@@ -34,6 +35,10 @@ public class FetchICODataServiceImp implements FetchICODataService {
             return trackicoService.getIco_trackico_detail_index();
         }else if(StringUtils.equalsIgnoreCase("icorating.com",dataSourceNameLevel1)){
             return icoratingService.getIco_icorating_all_index(dataSourceNameLevel2);
+        }else if(StringUtils.equalsIgnoreCase("icodrops.com",dataSourceNameLevel1)){
+            return icodropsService.getIco_icodrops_index(dataSourceNameLevel2);
+        }else if(StringUtils.equalsIgnoreCase("coinschedule.com",dataSourceNameLevel1)){
+            return icodropsService.getIco_icodrops_index(dataSourceNameLevel2);
         }else{
             return null;
         }
@@ -61,6 +66,41 @@ public class FetchICODataServiceImp implements FetchICODataService {
                         Map<String, String> detailDtoMap = BeanUtils.describe(detailDto);
                         detailDtoMap.put("solution_photo_url",detailDtoMap.get("logo"));
                         detailDtoMap.remove("logo");
+
+                        /*处理时间，preicoDate拆分出开始、结束时间*/
+                        String preicoDate = detailDtoMap.get("preicoDate");
+                        if(StringUtils.isNotEmpty(preicoDate)){
+                            String[] preicoDates = StringUtils.split(preicoDate, "—");
+                            if(ArrayUtils.isNotEmpty(preicoDates)&&preicoDates.length==2){
+                                detailDtoMap.put("preicoStart",preicoDates[0]);
+                                detailDtoMap.put("preicoEnd",preicoDates[1]);
+                            }else{
+                                detailDtoMap.put("preicoStart",preicoDates[0]);
+                                detailDtoMap.put("preicoEnd",preicoDates[1]);
+                            }
+                        }else{
+                            detailDtoMap.put("preicoStart","");
+                            detailDtoMap.put("preicoEnd","");
+                        }
+                        detailDtoMap.remove("preicoDate");
+                        /*处理时间，icoDate拆分出开始、结束时间*/
+                        String icoDate = detailDtoMap.get("icoDate");
+                        if(StringUtils.isNotEmpty(icoDate)){
+                            String[] icoDates = StringUtils.split(icoDate, "—");
+                            if(ArrayUtils.isNotEmpty(icoDates)&&icoDates.length==2){
+                                detailDtoMap.put("icoStart",icoDates[0]);
+                                detailDtoMap.put("icoEnd",icoDates[1]);
+                            }else{
+                                detailDtoMap.put("icoStart",icoDates[0]);
+                                detailDtoMap.put("icoEnd",icoDates[1]);
+                            }
+                        }else{
+                            detailDtoMap.put("icoStart","");
+                            detailDtoMap.put("icoEnd","");
+                        }
+                        detailDtoMap.remove("icoDate");
+
+
                         detailDtoMap.remove("class");
                         JSONObject solution_url = new JSONObject();
                         solution_url.put(key,detailDtoMap);
@@ -97,6 +137,16 @@ public class FetchICODataServiceImp implements FetchICODataService {
                         solution_id.put(value,solution_url);
                     }
                 }
+            }else if(StringUtils.containsIgnoreCase("icodrops.com",dataSourceNameLevel1)&&StringUtils.containsIgnoreCase(dataSourceName,dataSourceNameLevel1)) {
+
+                    JSONObject detail = icodropsService.getICO_icodrops_detailByItemUrl(key);
+                    if (null != detail) {
+                        number += 1;
+                        JSONObject solution_url = new JSONObject();
+                        solution_url.put(key, detail);
+                        solution_id.put(value, solution_url);
+                    }
+
             }else{
                 continue;
             }

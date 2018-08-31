@@ -12,6 +12,7 @@ import com.edmi.dto.trackico.*;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -1074,6 +1075,39 @@ public class TrackicoServiceImp implements TrackicoService {
 
                     json.put("solution_photo_url",json.getString("logo_url"));
                     json.remove("logo_url");
+                    /*拆分pre_sale开始结束时间*/
+                    String pre_sale = json.getString("pre_sale");
+                    if(StringUtils.isNotEmpty(pre_sale)){
+                        String[] pre_sales = StringUtils.split(pre_sale, "-");
+                        if(ArrayUtils.isNotEmpty(pre_sales)&&pre_sales.length==2){
+                            json.put("preicoStart",pre_sales[0]);
+                            json.put("preicoEnd",pre_sales[1]);
+                        }else{
+                            json.put("preicoStart","");
+                            json.put("preicoEnd","");
+                        }
+                    }else{
+                        json.put("preicoStart","");
+                        json.put("preicoEnd","");
+                    }
+                    json.remove("pre_sale");
+                    /*拆分pre_sale开始结束时间*/
+                    String token_sale = json.getString("token_sale");
+                    if(StringUtils.isNotEmpty(token_sale)){
+                        String[] token_sales = StringUtils.split(token_sale, "-");
+                        if(ArrayUtils.isNotEmpty(token_sales)&&token_sales.length==2){
+                            json.put("icoStart",token_sales[0]);
+                            json.put("icoEnd",token_sales[1]);
+                        }else{
+                            json.put("icoStart","");
+                            json.put("icoEnd","");
+                        }
+                    }else{
+                        json.put("icoStart","");
+                        json.put("icoEnd","");
+                    }
+                    json.remove("token_sale");
+
                     json.remove("class");
                 } catch (Exception e) {
                    log.info(e.getMessage());
