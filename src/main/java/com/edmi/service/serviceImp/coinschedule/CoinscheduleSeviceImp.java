@@ -1,8 +1,7 @@
 package com.edmi.service.serviceImp.coinschedule;
 
-import com.edmi.dao.coinschedule.Ico_coinschedule_ListDao;
-import com.edmi.dao.icocrunch.Ico_icocrunch_detailDao;
-import com.edmi.entity.coinschedule.Ico_coinschedule_List;
+import com.edmi.dao.coinschedule.*;
+import com.edmi.entity.coinschedule.*;
 import com.edmi.service.service.CoinscheduleService;
 import com.edmi.utils.http.HttpClientUtil;
 import com.edmi.utils.http.exception.MethodNotSupportException;
@@ -31,7 +30,13 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
     @Autowired
     private Ico_coinschedule_ListDao listDao;
     @Autowired
-    private Ico_icocrunch_detailDao ico_icocrunch_detailDao;
+    private ICO_coinschedule_detailDao ico_coinschedule_detailDao;
+    @Autowired
+    private ICO_coinschedule_detail_icoinfoDao ico_coinschedule_detail_icoinfoDao;
+    @Autowired
+    private ICO_coinschedule_detail_sociallinkDao ico_coinschedule_detail_sociallinkDao;
+    @Autowired
+    private ICO_coinschedule_detail_memberDao ico_coinschedule_detail_memberDao;
 
 
     /*
@@ -427,6 +432,7 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
             Response response = HttpClientUtil.doRequest(request);
             int code = response.getCode();
             //验证请求
+            log.info("----- request code:" + code);
             if (code == 200) {
                 String content = response.getResponseText();
                 // 验证页面
@@ -434,30 +440,372 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
                     // 验证是否是正常页面
                     if (content.contains("prj-title")) {
                         Document doc = Jsoup.parse(content);
-                        Elements titleles = doc.select("div.info-container > h1.prj-title");
-                        if (titleles != null && titleles.size() > 0) {
-                            String titlestr = titleles.text().trim();
-                            log.info("titlestr:" + titlestr);
-                            String title = "";
-                            String tag = "";
-                            if (titlestr.contains("(") && titleles.contains(")")) {
-                                title = StringUtils.substringBefore(titlestr, "(");
-                                tag = StringUtils.substringBetween(titlestr, "(", ")");
+                        ICO_coinschedule_detail detailModel = extraDetails(doc, item);
+                        //解析ico信息
+                        extraIcoInfo(doc, detailModel);
+                        //解析社交链接
+                        extraSocialLink(doc, detailModel);
+                        //解析人员信息
+                        extraMember(doc, detailModel);
+
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 解析详情
+     *
+     * @param doc
+     * @param item
+     */
+    public ICO_coinschedule_detail extraDetails(Document doc, Ico_coinschedule_List item) {
+        ICO_coinschedule_detail detailModel = new ICO_coinschedule_detail();
+
+        try {
+            detailModel.setIco_coinschedule_list(item);
+            detailModel.setLink(item.getIcoCoinscheduleUrl());
+            detailModel.setInsert_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+            detailModel.setUpdate_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+
+            Elements titleles = doc.select("div.info-container > h1.prj-title");
+            if (titleles != null && titleles.size() > 0) {
+                String titlestr = titleles.text().trim();
+//                            log.info("titlestr:" + titlestr);
+                String title = "";
+                String tag = "";
+                if (titlestr.contains("(") && titlestr.contains(")")) {
+                    title = StringUtils.substringBefore(titlestr, "(").trim();
+                    tag = StringUtils.substringBetween(titlestr, "(", ")").trim();
+                }
+//                            log.info("title :" + title);
+//                            log.info("tag:" + tag);
+                detailModel.setIco_name(title);
+                detailModel.setIco_tag(tag);
+            }
+            //website
+            Elements websiteles = doc.select("div.actions-bar > a.website-link");
+            if (websiteles != null && websiteles.size() > 0) {
+                String website = websiteles.attr("href").trim();
+//                            log.info("website:" + website);
+                detailModel.setWebsite(website);
+            }
+            //description
+            Elements descriptioneles = doc.select("div.widget >div.project-description");
+            if (descriptioneles != null && descriptioneles.size() > 0) {
+                String description = descriptioneles.text().trim();
+//                            log.info("description:" + description);
+                detailModel.setIco_description(description);
+            }
+            //tags div.content-section > div.widget
+            Elements tagseles = doc.select("div.content-section > div.widget");
+            if (tagseles != null && tagseles.size() > 0) {
+                for (Element ele : tagseles) {
+                    Elements tageles = ele.select("h5");
+                    if (tageles != null && tageles.size() > 0) {
+                        String tagtitle = tageles.text().trim();
+                        if (tagtitle.equals("Tags")) {
+//                                        log.info("tagtitle:" + tagtitle);
+                            Elements tagveles = ele.select("div.ui.label.ui-tag");
+                            if (tagveles != null && tagveles.size() > 0) {
+                                StringBuffer sbff = new StringBuffer();
+                                for (Element tagvele : tagveles) {
+                                    String tagvaltemp = tagvele.text().trim();
+                                    sbff.append(tagvaltemp).append("#&#");
+                                }
+                                String tagval = sbff.toString();
+                                if (tagval.endsWith("#&#")) {
+                                    tagval = StringUtils.substringBeforeLast(tagval, "#&#");
+                                }
+//                                            log.info("tagval:" + tagval);
+                                detailModel.setTags(tagval);
                             }
-                            log.info("title :" + title);
-                            log.info("tag:" + tag);
-                        }
-                        Elements photoeles = doc.select("div.logo-container > img");
-                        if (photoeles != null && photoeles.size() > 0) {
-                            String photourl = photoeles.attr("src");
-                            log.info("photourl:" + photourl);
                         }
                     }
                 }
             }
 
+            //div.tab-pane div.content-item > div.timer-container.timewrapper1
+            //判断有无 preico date
+            Elements predateeles = doc.select("div.tab-content.widget > div.tab-pane");
+            if (predateeles != null && predateeles.size() > 0) {
+                //其他
+                Elements sectionseles = predateeles.select("div.content-item > div.ui.label,h5.ui.header,div.ui.label");
+                if (sectionseles != null && sectionseles.size() > 0) {
+                    int sw = 0;
+                    StringBuffer restrictedSB = new StringBuffer();
+                    String tokens_for_sale = "";
+                    for (Element ele : sectionseles) {
+                        String seClassStr = ele.attr("class");
+//                                    log.info("seClassStr:" + seClassStr);
+                        String val = ele.text().trim();
+//                                    log.info("val:" + val);
+                        if (seClassStr.equals("ui header")) {
+                            if (val.equals("Restricted Countries")) {
+                                sw = 1;
+                            } else if (val.equals("Tokens for sale")) {
+                                sw = 2;
+                            }
+                        }
+                        if (sw == 1) {
+                            restrictedSB = restrictedSB.append(val).append("#&#");
+                        } else if (sw == 2) {
+                            tokens_for_sale = val;
+                        }
+                    }
+                    String restricted_countries = restrictedSB.toString();
+                    if (restricted_countries.endsWith("#&#")) {
+                        restricted_countries = StringUtils.substringBeforeLast(restricted_countries, "#&#");
+                    }
+                    if (restricted_countries.contains("Restricted Countries#&#")) {
+                        restricted_countries = restricted_countries.replace("Restricted Countries#&#", "");
+                    }
+//                                log.info("restricted_countries:" + restricted_countries);
+//                                log.info("tokens_for_sale:" + tokens_for_sale);
+                    detailModel.setRestricted_countries(restricted_countries);
+                    detailModel.setTokens_for_sale(tokens_for_sale);
+                }
+
+                //时间
+                if (predateeles.size() == 1) {
+                    Elements strateles = predateeles.select("div.timer-container.timewrapper1.start-date.startclock span.date-text");
+                    if (strateles != null && strateles.size() > 0) {
+                        String start_date = strateles.text().trim();
+//                                    log.info("start_date:" + start_date);
+                        detailModel.setStart_date(start_date);
+                    }
+                    Elements endeles = predateeles.select("div.timer-container.timewrapper1.end-date.endclock span.date-text");
+                    if (endeles != null && endeles.size() > 0) {
+                        String end_date = endeles.text().trim();
+//                                    log.info("end_date:" + end_date);
+                        detailModel.setEnd_date(end_date);
+                    }
+                } else if (predateeles.size() == 2) {
+                    //含有 pre date，两个时间
+                    //0 pre
+                    Element predateOnele = predateeles.get(0);
+                    if (predateOnele != null) {
+                        Elements strateles = predateOnele.select("div.timer-container.timewrapper1.start-date.startclock span.date-text");
+                        if (strateles != null && strateles.size() > 0) {
+                            String pre_start_date = strateles.text().trim();
+//                                        log.info("pre_start_date:" + pre_start_date);
+                            detailModel.setPre_start_date(pre_start_date);
+                        }
+                        Elements endeles = predateOnele.select("div.timer-container.timewrapper1.end-date.endclock span.date-text");
+                        if (endeles != null && endeles.size() > 0) {
+                            String pre_end_date = endeles.text().trim();
+//                                        log.info("pre_end_date:" + pre_end_date);
+                            detailModel.setPre_end_date(pre_end_date);
+                        }
+                    }
+
+                    //1 normal
+                    Element predateTwoles = predateeles.get(1);
+                    if (predateTwoles != null) {
+                        Elements strateles = predateTwoles.select("div.timer-container.timewrapper2.start-date.startclock span.date-text");
+                        if (strateles != null && strateles.size() > 0) {
+                            String start_date = strateles.text().trim();
+//                                        log.info("start_date:" + start_date);
+                            detailModel.setStart_date(start_date);
+                        }
+                        Elements endeles = predateTwoles.select("div.timer-container.timewrapper2.end-date.endclock span.date-text");
+                        if (endeles != null && endeles.size() > 0) {
+                            String end_date = endeles.text().trim();
+//                                        log.info("end_date:" + end_date);
+                            detailModel.setEnd_date(end_date);
+                        }
+                    }
+                }
+            }
+            ICO_coinschedule_detail oldDetail = ico_coinschedule_detailDao.findICO_coinschedule_detailByLink(detailModel.getLink());
+            if (null == oldDetail) {
+                ico_coinschedule_detailDao.save(detailModel);
+            } else {
+                log.info("--- this coinschedule_detail is already existed ");
+            }
+        } catch (Exception e1) {
+            e1.printStackTrace();
+        }
+        return detailModel;
+
+    }
+
+    /**
+     * 解析ico信息
+     *
+     * @param doc
+     * @param detailModel
+     */
+    //detail 模型存入数据库，才会有 pkid
+    public void extraIcoInfo(Document doc, ICO_coinschedule_detail detailModel) {
+        List<ICO_coinschedule_detail_icoinfo> infoList = new ArrayList<>(50);
+        try {
+            Elements infoeles = doc.select("div.container>div.content-section >div.widget:nth-child(1)>ul.characteristics-list>li");
+            if (infoeles != null && infoeles.size() > 0) {
+                for (Element linele : infoeles) {
+                    ICO_coinschedule_detail_icoinfo infoModel = new ICO_coinschedule_detail_icoinfo();
+                    infoModel.setIco_coinschedule_detail(detailModel);
+                    infoModel.setInsert_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                    infoModel.setUpdate_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                    Elements titleles = linele.select("span.title");
+                    String title = "";
+                    if (titleles != null && titleles.size() > 0) {
+                        title = titleles.text();
+                    }
+                    Elements texteles = linele.select("span.text");
+                    String text = "";
+                    if (texteles != null && texteles.size() > 0) {
+                        text = texteles.text();
+                        Elements urleles = texteles.select("a.projectLink");
+                        if (urleles != null && urleles.size() > 0) {
+                            text = urleles.attr("href");
+                        }
+                    }
+//                    log.info("-- " + title + " = " + text);
+                    infoModel.setIco_key(title);
+                    infoModel.setIco_value(text);
+                    infoList.add(infoModel);
+                }
+                ico_coinschedule_detail_icoinfoDao.saveAll(infoList);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * //解析社交链接
+     */
+    public void extraSocialLink(Document doc, ICO_coinschedule_detail detailModel) {
+        try {
+            Elements sociallinkeles = doc.select("div.container>div.content-section >div.widget");
+            if (sociallinkeles != null && sociallinkeles.size() > 0) {
+                List<ICO_coinschedule_detail_sociallink> sociallinkList = new ArrayList<>(50);
+                for (Element sectionele : sociallinkeles) {
+                    Elements titleles = sectionele.select("h3.section-title");
+                    if (titleles != null && titleles.size() > 0) {
+                        String title = titleles.text().trim();
+//                        log.info("title:" + title);
+                        if (title.equals("Links")) {
+                            Elements sociallinkeseles = sectionele.select("div.socials-list-container li>a");
+                            if (sociallinkeseles != null && sociallinkeseles.size() > 0) {
+                                for (Element linkele : sociallinkeseles) {
+                                    ICO_coinschedule_detail_sociallink sociallinkModel = new ICO_coinschedule_detail_sociallink();
+                                    sociallinkModel.setIco_coinschedule_detail(detailModel);
+                                    sociallinkModel.setInsert_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                    sociallinkModel.setUpdate_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                    String key = linkele.text().trim();
+                                    String link = linkele.attr("href").trim();
+
+//                                    log.info(key + "=" + link);
+                                    sociallinkModel.setSocial_link_key(key);
+                                    sociallinkModel.setSocial_link_value(link);
+                                    sociallinkList.add(sociallinkModel);
+                                }
+                            }
+                        }
+                    }
+                }
+                ico_coinschedule_detail_sociallinkDao.saveAll(sociallinkList);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 解析人员信息
+     *
+     * @param doc
+     * @param detailModel
+     */
+    public void extraMember(Document doc, ICO_coinschedule_detail detailModel) {
+        try {
+            Elements membersectioneles = doc.select("div.container>div.content-section >div.widget");
+            if (membersectioneles != null && membersectioneles.size() > 0) {
+                for (Element sectionele : membersectioneles) {
+                    Elements titleles = sectionele.select("h4");
+                    if (titleles != null && titleles.size() > 0) {
+                        String title = titleles.text().trim();
+//                        log.info("title:" + title);
+                        if (title.contains("Team") || title.contains("Advisors")) {
+                            List<ICO_coinschedule_detail_member> memberList = new ArrayList<>(50);
+                            Elements memberparteles = sectionele.select("h4.header +div.stackable");
+                            if (memberparteles != null && memberparteles.size() > 0) {
+                                for (int i = 0; i < memberparteles.size(); i++) {
+                                    String type = "";
+                                    if (i == 0) {
+                                        type = "Team";
+                                    } else if (i == 1) {
+                                        type = "Advisors";
+                                    }
+//                                    log.info("----------------" + type);
+                                    Element mempartele = memberparteles.get(i);
+                                    Elements Memberseles = mempartele.select("a.ui.card");
+                                    if (Memberseles != null && Memberseles.size() > 0) {
+                                        for (Element oneMemberele : Memberseles) {
+                                            ICO_coinschedule_detail_member memberModel = new ICO_coinschedule_detail_member();
+                                            memberModel.setIco_coinschedule_detail(detailModel);
+                                            memberModel.setInsert_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                            memberModel.setUpdate_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                            memberModel.setMember_type(type);
+//                                            log.info("------");
+                                            String member_url = oneMemberele.attr("href");
+//                                            log.info("member_url:" + member_url);
+                                            memberModel.setMember_url(member_url);
+                                            Elements imgeles = oneMemberele.select("img");
+                                            if (imgeles != null && imgeles.size() > 0) {
+                                                String member_photo_url = imgeles.attr("src");
+//                                                log.info("member_photo_url:" + member_photo_url);
+                                                memberModel.setMember_photo_url(member_photo_url);
+                                            }
+                                            //name
+                                            Elements nameles = oneMemberele.select("div.header");
+                                            if (nameles != null && nameles.size() > 0) {
+                                                String member_name = nameles.text().trim();
+//                                                log.info("member_name:" + member_name);Andrew Sazama ✔
+                                                member_name = member_name.replaceAll("✔", "");
+                                                memberModel.setMember_name(member_name);
+                                            }
+                                            //position
+                                            Elements positioneles = oneMemberele.select("div.meta > span");
+                                            if (positioneles != null && positioneles.size() > 0) {
+                                                String position = positioneles.text().trim();
+//                                                log.info("position:" + position);
+                                                memberModel.setMember_position(position);
+                                            }
+                                            //description
+                                            Elements descriptioneles = oneMemberele.select("div.description.people-description");
+                                            if (descriptioneles != null && descriptioneles.size() > 0) {
+                                                String description = descriptioneles.text().trim();
+//                                                log.info("description:" + description);
+                                                memberModel.setMember_description(description);
+                                            }
+                                            memberList.add(memberModel);
+                                        }
+                                    }
+
+                                }
+                            }
+                            ico_coinschedule_detail_memberDao.saveAll(memberList);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) {
+        CoinscheduleSeviceImp t = new CoinscheduleSeviceImp();
+        Ico_coinschedule_List item = new Ico_coinschedule_List();
+        item.setIcoCoinscheduleUrl("https://www.coinschedule.com/ico/mibcoin");
+//        item.setIcoCoinscheduleUrl("https://www.coinschedule.com/ico/kimex-token#event4542");
+        t.getIco_coinschedule_detail(item);
+
     }
 }

@@ -33,6 +33,7 @@ public class CoinscheduleTest {
 
     @Test
     public void getDetail() throws MethodNotSupportException {
+        //216
         log.info("***** start Coinschedule detail task *****");
         List<Ico_coinschedule_List> itemlist = ico_coinschedule_listDao.findIco_coinschedule_ListWithNotIn();
         log.info("--- get coinschedule items num is :" + itemlist.size());
@@ -40,7 +41,7 @@ public class CoinscheduleTest {
             log.info("----- will extra :" + i);
             Ico_coinschedule_List item = itemlist.get(i);
             coinscheduleService.getIco_coinschedule_detail(item);
-            break;
+//            break;
         }
         log.info("***** Coinschedule detail task  over *****");
     }

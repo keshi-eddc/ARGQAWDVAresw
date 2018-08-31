@@ -40,11 +40,24 @@ public class ICO_coinschedule_detail {
     @Column(nullable = false, name = "tokens_for_sale")
     private String tokens_for_sale;
 
+    @Column(nullable = false, name = "pre_start_date")
+    private String pre_start_date;
+
+    @Column(nullable = false, name = "pre_end_date")
+    private String pre_end_date;
+
+    @Column(nullable = false, name = "tags")
+    private String tags;
+
+    @Column(nullable = false, name = "website")
+    private String website;
+
     @Column(nullable = false, name = "insert_Time")
     private Timestamp insert_Time;
 
     @Column(nullable = false, name = "update_Time")
     private Timestamp update_Time;
+
 
     /**
      * 本表和list表是一对一的关系
@@ -61,6 +74,38 @@ public class ICO_coinschedule_detail {
 
     public void setPk_id(Long pk_id) {
         this.pk_id = pk_id;
+    }
+
+    public String getWebsite() {
+        return website;
+    }
+
+    public void setWebsite(String website) {
+        this.website = website;
+    }
+
+    public String getPre_start_date() {
+        return pre_start_date;
+    }
+
+    public void setPre_start_date(String pre_start_date) {
+        this.pre_start_date = pre_start_date;
+    }
+
+    public String getPre_end_date() {
+        return pre_end_date;
+    }
+
+    public void setPre_end_date(String pre_end_date) {
+        this.pre_end_date = pre_end_date;
+    }
+
+    public String getTags() {
+        return tags;
+    }
+
+    public void setTags(String tags) {
+        this.tags = tags;
     }
 
     public String getLink() {
