@@ -31,6 +31,11 @@ public class CoinscheduleTest {
     Logger log = Logger.getLogger(CoinscheduleTest.class);
 
     @Test
+    public void getIco_coinschedule_List() throws MethodNotSupportException {
+        coinscheduleService.getIco_coinschedule_List();
+    }
+
+    @Test
     public void getList() throws MethodNotSupportException {
 //        coinscheduleService.getIco_coinschedule_List();
         coinscheduleService.getIcoCoinscheduleICOsList();

@@ -74,7 +74,7 @@ public class FetchDataController {
     @RequestMapping(value ={
             "/blocktest/api/v1/{dataSourceNameLevel1}/ico/index",
             "/blocktest/api/v1/{dataSourceNameLevel1}/{dataSourceNameLevel2}/ico/index",
-    },method = {RequestMethod.GET,RequestMethod.POST})
+    },method = {RequestMethod.GET,RequestMethod.POST},produces = "application/json;charset=UTF-8")
     public JSONObject getListData(@PathVariable String dataSourceNameLevel1,@PathVariable(required = false) String dataSourceNameLevel2) {
 
         if(StringUtils.isEmpty(dataSourceNameLevel1)){
@@ -88,7 +88,7 @@ public class FetchDataController {
     }
     @RequestMapping(value = {
             "/blocktest/api/v1/{dataSourceNameLevel1}/ico/detail",
-            "/blocktest/api/v1/{dataSourceNameLevel1}/{dataSourceNameLevel2}/ico/detail"},method = {RequestMethod.GET,RequestMethod.POST})
+            "/blocktest/api/v1/{dataSourceNameLevel1}/{dataSourceNameLevel2}/ico/detail"},method = {RequestMethod.GET,RequestMethod.POST}, produces = "application/json;charset=UTF-8")
     public JSONObject getListDataDetail(@RequestParam("solution_data")String  solution_data,@PathVariable String dataSourceNameLevel1,@PathVariable(required = false) String dataSourceNameLevel2) {
 
         if(StringUtils.isEmpty(solution_data)||StringUtils.isEmpty(dataSourceNameLevel1)){

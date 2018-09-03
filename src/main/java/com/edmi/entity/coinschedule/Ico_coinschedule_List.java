@@ -31,6 +31,8 @@ public class Ico_coinschedule_List {
   private Timestamp insertTime;
   @Column(nullable = false)
   private Timestamp modifyTime;
+  @Column(nullable = false)
+  private String blockLogo;
 
 
   public long getPkId() {
@@ -136,5 +138,13 @@ public class Ico_coinschedule_List {
 
   public void setStartsIn(String startsIn) {
     this.startsIn = startsIn;
+  }
+
+  public String getBlockLogo() {
+    return blockLogo;
+  }
+
+  public void setBlockLogo(String blockLogo) {
+    this.blockLogo = blockLogo;
   }
 }

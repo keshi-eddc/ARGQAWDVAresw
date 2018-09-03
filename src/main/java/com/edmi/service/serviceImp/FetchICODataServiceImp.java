@@ -26,6 +26,8 @@ public class FetchICODataServiceImp implements FetchICODataService {
     private IcoratingService icoratingService;
     @Autowired
     private IcodropsService icodropsService;
+    @Autowired
+    private CoinscheduleService coinscheduleService;
 
     @Override
     public JSONObject getICODataBySourceName(String dataSourceNameLevel1,String dataSourceNameLevel2,int page_number,int pageSize) {
@@ -38,7 +40,7 @@ public class FetchICODataServiceImp implements FetchICODataService {
         }else if(StringUtils.equalsIgnoreCase("icodrops.com",dataSourceNameLevel1)){
             return icodropsService.getIco_icodrops_index(dataSourceNameLevel2);
         }else if(StringUtils.equalsIgnoreCase("coinschedule.com",dataSourceNameLevel1)){
-            return icodropsService.getIco_icodrops_index(dataSourceNameLevel2);
+            return coinscheduleService.getIco_coinschedule_index(dataSourceNameLevel2);
         }else{
             return null;
         }
@@ -59,51 +61,80 @@ public class FetchICODataServiceImp implements FetchICODataService {
 
             if(StringUtils.containsIgnoreCase("icocrunch.io",dataSourceNameLevel1)&&StringUtils.containsIgnoreCase(dataSourceName,dataSourceNameLevel1)){
                 Ico_icocrunch_detail detail = icocrunchSevice.getIco_icocrunch_detailByICOCrunchUrl(key);
+                JSONObject solution_url = new JSONObject();
                 if(null!=detail){
                     Ico_icocrunch_detailDto detailDto = new Ico_icocrunch_detailDto();
                     try {
                         BeanUtils.copyProperties(detailDto,detail);
-                        Map<String, String> detailDtoMap = BeanUtils.describe(detailDto);
-                        detailDtoMap.put("solution_photo_url",detailDtoMap.get("logo"));
-                        detailDtoMap.remove("logo");
+
+                        JSONObject ico_detail = new JSONObject();
+                        ico_detail.putAll(BeanUtils.describe(detailDto));
+
+                        /*从ico_detail中提取出概况:name,whitePaperURL,tag,about,brief,description,prototype*/
+                        JSONObject ico_about = new JSONObject();
+                        if(ico_detail.containsKey("icoName")){
+                            ico_about.put("name",ico_detail.getString("icoName"));
+                            ico_detail.remove("ico_name");
+                        }
+                        if(ico_detail.containsKey("whitepaper")){
+                            ico_about.put("whitePaperURL",ico_detail.getString("whitepaper"));
+                            ico_detail.remove("whitepaper");
+                        }
+                        if(ico_detail.containsKey("whitepaper")){
+                            ico_about.put("whitePaperURL",ico_detail.getString("whitepaper"));
+                            ico_detail.remove("whitepaper");
+                        }
+                        ico_about.put("tag","");
+                        if(ico_detail.containsKey("shortDescription")){
+                            ico_about.put("about",ico_detail.getString("shortDescription"));
+                            ico_detail.remove("shortDescription");
+                        }
+                        ico_about.put("brief","");
+                        if(ico_detail.containsKey("icoProjectDescription")){
+                            ico_about.put("description",ico_detail.getString("icoProjectDescription"));
+                            ico_detail.remove("icoProjectDescription");
+                        }
+                        ico_about.put("prototype","");
+
+                        ico_detail.put("solution_photo_url",ico_detail.getString("logo"));
+                        ico_detail.remove("logo");
 
                         /*处理时间，preicoDate拆分出开始、结束时间*/
-                        String preicoDate = detailDtoMap.get("preicoDate");
+                        String preicoDate = ico_detail.getString("preicoDate");
                         if(StringUtils.isNotEmpty(preicoDate)){
                             String[] preicoDates = StringUtils.split(preicoDate, "—");
                             if(ArrayUtils.isNotEmpty(preicoDates)&&preicoDates.length==2){
-                                detailDtoMap.put("preicoStart",preicoDates[0]);
-                                detailDtoMap.put("preicoEnd",preicoDates[1]);
+                                ico_detail.put("preicoStart",preicoDates[0]);
+                                ico_detail.put("preicoEnd",preicoDates[1]);
                             }else{
-                                detailDtoMap.put("preicoStart",preicoDates[0]);
-                                detailDtoMap.put("preicoEnd",preicoDates[1]);
+                                ico_detail.put("preicoStart",preicoDates[0]);
+                                ico_detail.put("preicoEnd",preicoDates[1]);
                             }
                         }else{
-                            detailDtoMap.put("preicoStart","");
-                            detailDtoMap.put("preicoEnd","");
+                            ico_detail.put("preicoStart","");
+                            ico_detail.put("preicoEnd","");
                         }
-                        detailDtoMap.remove("preicoDate");
+                        ico_detail.remove("preicoDate");
                         /*处理时间，icoDate拆分出开始、结束时间*/
-                        String icoDate = detailDtoMap.get("icoDate");
+                        String icoDate = ico_detail.getString("icoDate");
                         if(StringUtils.isNotEmpty(icoDate)){
                             String[] icoDates = StringUtils.split(icoDate, "—");
                             if(ArrayUtils.isNotEmpty(icoDates)&&icoDates.length==2){
-                                detailDtoMap.put("icoStart",icoDates[0]);
-                                detailDtoMap.put("icoEnd",icoDates[1]);
+                                ico_detail.put("icoStart",icoDates[0]);
+                                ico_detail.put("icoEnd",icoDates[1]);
                             }else{
-                                detailDtoMap.put("icoStart",icoDates[0]);
-                                detailDtoMap.put("icoEnd",icoDates[1]);
+                                ico_detail.put("icoStart",icoDates[0]);
+                                ico_detail.put("icoEnd",icoDates[1]);
                             }
                         }else{
-                            detailDtoMap.put("icoStart","");
-                            detailDtoMap.put("icoEnd","");
+                            ico_detail.put("icoStart","");
+                            ico_detail.put("icoEnd","");
                         }
-                        detailDtoMap.remove("icoDate");
+                        ico_detail.remove("icoDate");
+                        ico_detail.remove("class");
 
-
-                        detailDtoMap.remove("class");
-                        JSONObject solution_url = new JSONObject();
-                        solution_url.put(key,detailDtoMap);
+                        ico_about.put("ico",ico_detail);
+                        solution_url.put(key,ico_about);
                         number+=1;
                         solution_id.put(value,solution_url);
                     } catch (Exception e) {
@@ -147,6 +178,25 @@ public class FetchICODataServiceImp implements FetchICODataService {
                         solution_id.put(value, solution_url);
                     }
 
+            }else if(StringUtils.containsIgnoreCase("coinschedule.com",dataSourceNameLevel1)&&StringUtils.containsIgnoreCase(dataSourceName,dataSourceNameLevel1)){
+
+                if(StringUtils.equalsIgnoreCase("all",dataSourceNameLevel2)){
+                    JSONObject detail = coinscheduleService.getICO_coinschedule_detailByItemUrl(key);
+                    if(null!=detail){
+                        number+=1;
+                        JSONObject solution_url = new JSONObject();
+                        solution_url.put(key,detail);
+                        solution_id.put(value,solution_url);
+                    }
+                }else if(StringUtils.equalsIgnoreCase("funds",dataSourceNameLevel2)){
+                    JSONObject detail = icoratingService.getICO_icorating_funds_detailByItemUrl(key);
+                    if(null!=detail){
+                        number+=1;
+                        JSONObject solution_url = new JSONObject();
+                        solution_url.put(key,detail);
+                        solution_id.put(value,solution_url);
+                    }
+                }
             }else{
                 continue;
             }

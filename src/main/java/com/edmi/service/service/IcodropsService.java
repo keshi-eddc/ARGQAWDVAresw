@@ -24,4 +24,5 @@ public interface IcodropsService {
     public JSONObject getIco_icodrops_index(String dataSourceNameLevel2);
 
     public JSONObject getICO_icodrops_detailByItemUrl(String  url);
+
 }

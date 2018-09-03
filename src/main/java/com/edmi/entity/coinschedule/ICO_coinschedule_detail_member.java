@@ -2,6 +2,7 @@ package com.edmi.entity.coinschedule;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
+import java.util.List;
 
 /**
  * 人员模型
@@ -44,6 +45,9 @@ public class ICO_coinschedule_detail_member {
     @ManyToOne
     @JoinColumn(name = "fk_id")
     private ICO_coinschedule_detail ico_coinschedule_detail;
+
+    @OneToMany(mappedBy = "ico_coinschedule_detail_member")
+    private List<ICO_coinschedule_detail_member_sociallink> memberSociallinkList;
 
     public Long getPk_id() {
         return pk_id;
@@ -123,5 +127,13 @@ public class ICO_coinschedule_detail_member {
 
     public void setIco_coinschedule_detail(ICO_coinschedule_detail ico_coinschedule_detail) {
         this.ico_coinschedule_detail = ico_coinschedule_detail;
+    }
+
+    public List<ICO_coinschedule_detail_member_sociallink> getMemberSociallinkList() {
+        return memberSociallinkList;
+    }
+
+    public void setMemberSociallinkList(List<ICO_coinschedule_detail_member_sociallink> memberSociallinkList) {
+        this.memberSociallinkList = memberSociallinkList;
     }
 }
