@@ -15,4 +15,6 @@ public interface ICO_icorating_detail_block_developmentRepository extends JpaRep
     @Query("select info from ICO_icorating_detail_block_development info where info.ico_icorating_detail.pk_id = :fk_id ")
     List<ICO_icorating_detail_block_development> getICO_icorating_detail_block_developmentsByFkid(@Param("fk_id") long fk_id);
 
+    List<ICO_icorating_detail_block_development> findICO_icorating_detail_block_developmentsByLink(String link);
+
 }

@@ -308,6 +308,14 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
                 detailModel.setIco_name(title);
                 detailModel.setIco_tag(tag);
             }
+            //logo
+            Elements logoeles = doc.select("div.company-info >div.logo-container >img");
+            if (logoeles != null && logoeles.size() > 0) {
+                String logo = logoeles.attr("src");
+//                log.info("logo :" + logo);
+                detailModel.setLogo_url(logo);
+            }
+
             //website
             Elements websiteles = doc.select("div.actions-bar > a.website-link");
             if (websiteles != null && websiteles.size() > 0) {
@@ -930,10 +938,10 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
         Ico_coinschedule_List item = new Ico_coinschedule_List();
         item.setIcoCoinscheduleUrl("https://www.coinschedule.com/ico/mibcoin");
 //        item.setIcoCoinscheduleUrl("https://www.coinschedule.com/ico/kimex-token#event4542");
-//        t.getIco_coinschedule_detail(item);
+        t.getIco_coinschedule_detail(item);
 //        t.getIcoCoinscheduleICOsList();
-        ICO_coinschedule_detail_member member = new ICO_coinschedule_detail_member();
-        member.setMember_url("https://www.coinschedule.com/p/13194/tuomo-tiito");
-        t.getIcoCoinscheduleMemberSocialLink(member);
+//        ICO_coinschedule_detail_member member = new ICO_coinschedule_detail_member();
+//        member.setMember_url("https://www.coinschedule.com/p/13194/tuomo-tiito");
+//        t.getIcoCoinscheduleMemberSocialLink(member);
     }
 }
