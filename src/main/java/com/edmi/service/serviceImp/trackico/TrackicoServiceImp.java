@@ -1010,7 +1010,8 @@ public class TrackicoServiceImp implements TrackicoService {
 
     @Override
     public JSONObject getICO_trackico_detailByItemUrl(String url) {
-        JSONObject json = new JSONObject();
+        JSONObject about_json = new JSONObject();
+        JSONObject detail_json = new JSONObject();
         ICO_trackico_item item = ico_trackico_itemDao.getICO_trackico_itemByItemUrl(url);
         if (null != item) {
             ICO_trackico_detail detail = ico_trackico_detailDao.getICO_trackico_detailsByFkid(item.getPk_id());
@@ -1061,59 +1062,93 @@ public class TrackicoServiceImp implements TrackicoService {
                             teamDtos.add(teamDto);
                         }
                     }
-                    json.putAll(BeanUtils.describe(itemDto));
-                    json.putAll(BeanUtils.describe(detailDto));
-                    json.putAll(BeanUtils.describe(infoDto));
+                    detail_json.putAll(BeanUtils.describe(itemDto));
+                    detail_json.putAll(BeanUtils.describe(detailDto));
+                    detail_json.putAll(BeanUtils.describe(infoDto));
                     for(ICO_trackico_detail_blockLabelDto labelDto:labelDtos){
-                        json.put(labelDto.getBlock_lable_name(),labelDto.getBlock_lable_url());
+                        detail_json.put(labelDto.getBlock_lable_name(),labelDto.getBlock_lable_url());
                     }
                     for(ICO_trackico_detail_blockFinancialDto financialDto:financialDtos){
-                        json.put(financialDto.getName(),financialDto.getValue());
+                        detail_json.put(financialDto.getName(),financialDto.getValue());
                     }
-                    json.put("milestones",JSON.toJSON(milestonesDtos));
-                    json.put("members",JSON.toJSON(teamDtos));
+                    about_json.put("milestones",JSON.toJSON(milestonesDtos));
+                    about_json.put("members",JSON.toJSON(teamDtos));
 
-                    json.put("solution_photo_url",json.getString("logo_url"));
-                    json.remove("logo_url");
+                    detail_json.put("solution_photo_url",detail_json.getString("logo_url"));
+                    detail_json.remove("logo_url");
                     /*拆分pre_sale开始结束时间*/
-                    String pre_sale = json.getString("pre_sale");
+                    String pre_sale = detail_json.getString("pre_sale");
                     if(StringUtils.isNotEmpty(pre_sale)){
                         String[] pre_sales = StringUtils.split(pre_sale, "-");
                         if(ArrayUtils.isNotEmpty(pre_sales)&&pre_sales.length==2){
-                            json.put("preicoStart",pre_sales[0]);
-                            json.put("preicoEnd",pre_sales[1]);
+                            detail_json.put("preicoStart",pre_sales[0]);
+                            detail_json.put("preicoEnd",pre_sales[1]);
                         }else{
-                            json.put("preicoStart","");
-                            json.put("preicoEnd","");
+                            detail_json.put("preicoStart","");
+                            detail_json.put("preicoEnd","");
                         }
                     }else{
-                        json.put("preicoStart","");
-                        json.put("preicoEnd","");
+                        detail_json.put("preicoStart","");
+                        detail_json.put("preicoEnd","");
                     }
-                    json.remove("pre_sale");
+                    detail_json.remove("pre_sale");
                     /*拆分pre_sale开始结束时间*/
-                    String token_sale = json.getString("token_sale");
+                    String token_sale = detail_json.getString("token_sale");
                     if(StringUtils.isNotEmpty(token_sale)){
                         String[] token_sales = StringUtils.split(token_sale, "-");
                         if(ArrayUtils.isNotEmpty(token_sales)&&token_sales.length==2){
-                            json.put("icoStart",token_sales[0]);
-                            json.put("icoEnd",token_sales[1]);
+                            detail_json.put("icoStart",token_sales[0]);
+                            detail_json.put("icoEnd",token_sales[1]);
                         }else{
-                            json.put("icoStart","");
-                            json.put("icoEnd","");
+                            detail_json.put("icoStart","");
+                            detail_json.put("icoEnd","");
                         }
                     }else{
-                        json.put("icoStart","");
-                        json.put("icoEnd","");
+                        detail_json.put("icoStart","");
+                        detail_json.put("icoEnd","");
                     }
-                    json.remove("token_sale");
+                    detail_json.remove("token_sale");
+                    /*从ico_detail中提取出概况:name,whitePaperURL,tag,about,brief,description,prototype*/
+                    if(detail_json.containsKey("block_name")){
+                        about_json.put("name",detail_json.getString("block_name"));
+                    }else{
+                        about_json.put("name","");
+                    }
+                    detail_json.remove("block_name");
 
-                    json.remove("class");
+                    if(detail_json.containsKey("Whitepaper")){
+                        about_json.put("whitePaperURL",detail_json.getString("Whitepaper"));
+                    }else{
+                        about_json.put("whitePaperURL","");
+                    }
+                    detail_json.remove("Whitepaper");
+
+                    if(detail_json.containsKey("block_tag")){
+                        about_json.put("tag",detail_json.getString("block_tag"));
+                    }else{
+                        about_json.put("tag","");
+                    }
+                    detail_json.remove("block_tag");
+
+                    about_json.put("about","");
+                    about_json.put("brief","");
+
+                    if(detail_json.containsKey("block_description")){
+                        about_json.put("description",detail_json.getString("block_description"));
+                    }else{
+                        about_json.put("description","");
+                    }
+                    detail_json.remove("block_description");
+
+                    about_json.put("prototype","");
+
+                    detail_json.remove("class");
                 } catch (Exception e) {
                    log.info(e.getMessage());
                 }
             }
         }
-        return json;
+        about_json.put("ico",detail_json);
+        return about_json;
     }
 }

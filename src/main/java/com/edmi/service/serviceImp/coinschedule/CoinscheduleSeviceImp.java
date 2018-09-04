@@ -886,6 +886,10 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
                 ico_about.put("about","");
                 ico_about.put("brief","");
                 ico_about.put("prototype","");
+                /*下面处理Block的logo*/
+                if(ico_detail.containsKey("logo_url")){
+                    ico_detail.put("solution_photo_url",ico_detail.getString("logo_url"));
+                }
 
                 json.putAll(ico_about);//把提取出来的概况添加进去
                 json.put("ico",ico_detail);//剩下的详细信息添加到ico里面
@@ -917,9 +921,7 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
             }
             json.remove("class");
 
-            /*下面处理Block的logo*/
-            json.put("solution_photo_url",detail.getIco_coinschedule_list().getBlockLogo());
-            /*组装ICO本身的属性*/
+
 
         }
         return json;
