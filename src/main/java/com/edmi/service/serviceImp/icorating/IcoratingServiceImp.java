@@ -159,9 +159,10 @@ public class IcoratingServiceImp implements IcoratingService {
                                     log.info("insert into list table");
                                     listDao.save(item);
                                 } else {
-                                    log.info("the item is already existed.delete and insert new one");
-                                    deleteICO_icorating_listByLink(item.getLink());
-                                    listDao.save(item);
+                                    log.info("the item is already existed.do not insert");
+//                                    log.info("the item is already existed.delete and insert new one");
+//                                    deleteICO_icorating_listByLink(item.getLink());
+//                                    listDao.save(item);
                                 }
                             }
                             // 判断是否是最后一页
@@ -1090,6 +1091,7 @@ public class IcoratingServiceImp implements IcoratingService {
                 log.error("!!!icorating founds list Exception");
             }
         }
+        log.info("********** icorating funds list task over **********");
     }
 
     @Override

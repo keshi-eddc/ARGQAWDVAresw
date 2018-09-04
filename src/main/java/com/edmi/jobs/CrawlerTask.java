@@ -1,5 +1,7 @@
 package com.edmi.jobs;
 
+import com.edmi.dao.coinschedule.ICO_coinschedule_detail_memberDao;
+import com.edmi.dao.coinschedule.Ico_coinschedule_ListDao;
 import com.edmi.dao.etherscan.*;
 import com.edmi.dao.feixiaohao.ICO_Feixiaohao_ExchangeRepository;
 import com.edmi.dao.feixiaohao.ICO_Feixiaohao_Exchange_CurrenciesRepository;
@@ -8,6 +10,8 @@ import com.edmi.dao.icodrops.ICO_icodrops_listRepository;
 import com.edmi.dao.icorating.ICO_icorating_funds_listRepository;
 import com.edmi.dao.icorating.ICO_icorating_listRepository;
 import com.edmi.dao.trackico.ICO_trackico_itemRepository;
+import com.edmi.entity.coinschedule.ICO_coinschedule_detail_member;
+import com.edmi.entity.coinschedule.Ico_coinschedule_List;
 import com.edmi.entity.etherscan.*;
 import com.edmi.entity.feixiaohao.ICO_Feixiaohao_Exchange;
 import com.edmi.entity.feixiaohao.ICO_Feixiaohao_Exchange_Currencies;
@@ -22,6 +26,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -46,6 +51,15 @@ public class CrawlerTask {
     private IcoratingService icoratingService;
     @Autowired
     private IcodropsService icodropsService;
+
+    @Autowired
+    private CoinscheduleService coinscheduleService;
+
+    @Autowired
+    private Ico_coinschedule_ListDao ico_coinschedule_listDao;
+
+    @Autowired
+    private ICO_coinschedule_detail_memberDao ico_coinschedule_detail_memberDao;
 
     @Autowired
     private ICO_Etherscan_IO_BlocksRepository blocksDao;
@@ -282,16 +296,16 @@ public class CrawlerTask {
         trackicoService.getICO_trackico_list();
     }
 
-    //每10分钟执行
-//    @Scheduled(cron = "0 0/5 * * * ?")
     //all
 //    @Scheduled(cron = "0 30 03 * * ?")
+    //每10分钟执行
+//    @Scheduled(cron = "0 0/5 * * * ?")
     public void getICO_Trackico_detail() throws MethodNotSupportException {
 
         //all
-        List<ICO_trackico_item> items = ico_trackico_itemDao.findAllByStatus("ini");
+//        List<ICO_trackico_item> items = ico_trackico_itemDao.findAllByStatus("ini");
 
-//        List<ICO_trackico_item> items = ico_trackico_itemDao.findTop10ByStatus("ini");
+        List<ICO_trackico_item> items = ico_trackico_itemDao.findTop10ByStatus("ini");
 
         // List<ICO_trackico_item> items =
         // ico_trackico_itemDao.findOneByItemUrl("https://www.trackico.io/ico/w12/");
@@ -304,11 +318,11 @@ public class CrawlerTask {
                 ICO_trackico_item item = items.get(i);
                 log.info("--- will extra Trackico_detail: " + i + " ,total:" + items.size());
                 trackicoService.getICO_trackico_detail(item);
-                try {
-                    Thread.sleep(10 * 1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+//                try {
+//                    Thread.sleep(10 * 1000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
             }
             // 获取结束时间
             long endTime = System.currentTimeMillis();
@@ -318,27 +332,30 @@ public class CrawlerTask {
             long seconds = (mss % (1000 * 60)) / 1000;
             String timestr = hours + " hours " + minutes + " minutes " + seconds + " seconds ";
             log.info(" this time crawled," + "items num:" + items.size() + ".cost;" + timestr);
+
         } else {
             log.info("get item from databash ,item num is 0");
         }
     }
 
     // <===================== 下面是icorating的相关job ===================================>
-    //每3小时 0 0 */4 * * ?
-//    @Scheduled(cron = "0 0 */4 * * ?")
+    //每4小时 0 0 */4 * * ?
+//    每天早晨5点开始
+//    @Scheduled(cron = "0 00 21 * * ?")
     public void getICO_icorating_list() throws MethodNotSupportException {
         icoratingService.getIcotatingList();
     }
 
-    //    @Scheduled(cron = "0 0/5 * * * ?")
-//    @Scheduled(cron = "0 10 09 * * ?")
+    //    @Scheduled(cron = "0 10 09 * * ?")
+    //每5分钟
+//    @Scheduled(cron = "0 0/5 * * * ?")
     public void icoratingDetailManager() {
         // 获取开始时间
         long startTime = System.currentTimeMillis();
         log.info("******** start icotatingDetail task ********");
-//        List<ICO_icorating_list> listItems = ico_icorating_listDao.findTop10ByCrawledStatu("ini");
+        List<ICO_icorating_list> listItems = ico_icorating_listDao.findTop10ByCrawledStatu("ini");
         //all
-        List<ICO_icorating_list> listItems = ico_icorating_listDao.findAllByCrawledStatu("ini");
+//        List<ICO_icorating_list> listItems = ico_icorating_listDao.findAllByCrawledStatu("ini");
 
         log.info("get items num : " + listItems.size() + "  ,from list table");
         if (CollectionUtils.isNotEmpty(listItems)) {
@@ -362,12 +379,14 @@ public class CrawlerTask {
         log.info(">>>>>>>>>> this time crawled," + "items num:" + listItems.size() + ".cost:" + timestr);
     }
 
-    //    @Scheduled(cron = "0 00 21 * * ?")
+    //每天早晨7点
+//    @Scheduled(cron = "0 00 23 * * ?")
     public void getIcoratingFoundsList() {
         icoratingService.getIcoratingFundsList();
     }
 
-    //    @Scheduled(cron = "0 30 07 * * ?")
+    //每天下午2点
+//    @Scheduled(cron = "0 00 06 * * ?")
     public void icoratingFoundsDetailManager() {
         //查出所有的item，因为列表页已经判断，此处不会有重复
         List<ICO_icorating_funds_list> foundslist = new ArrayList<>();
@@ -393,6 +412,7 @@ public class CrawlerTask {
     }
 
     // <===================== 下面是icodrops的相关job ===================================>
+    //每天早晨5点开始（中国时间）
 //    @Scheduled(cron = "0 00 21 * * ?")
     public void icodropsListManager() {
         log.info("***** getIcodropsListWithInput task start");
@@ -406,7 +426,8 @@ public class CrawlerTask {
         log.info("***** getIcodropsListWithInput task over");
     }
 
-    //    @Scheduled(cron = "0 20 09 * * ?")
+//    每天早晨10点开始（中国时间）
+//    @Scheduled(cron = "0 00 02 * * ?")
     public void icodropsDetailManager() {
         log.info("***** start icodropsDetailManager task *****");
         //1106
@@ -426,5 +447,38 @@ public class CrawlerTask {
             log.info("--- get null ,from icodrops list tabel");
         }
     }
+
+    // <===================== 下面是coinschedule的相关job ===================================>
+//    @Scheduled(cron = "0 20 09 * * ?")
+    public void getCoinscheduleDetail() throws MethodNotSupportException {
+        //216
+        log.info("***** start Coinschedule detail task *****");
+        List<Ico_coinschedule_List> itemlist = ico_coinschedule_listDao.findIco_coinschedule_ListWithNotIn();
+        log.info("--- get coinschedule items num is :" + itemlist.size());
+        for (int i = 0; i < itemlist.size(); i++) {
+            log.info("----- will extra :" + i);
+            Ico_coinschedule_List item = itemlist.get(i);
+            coinscheduleService.getIco_coinschedule_detail(item);
+//            break;
+        }
+        log.info("***** Coinschedule detail task  over *****");
+    }
+
+    //    @Scheduled(cron = "0 20 09 * * ?")
+    public void getCoinscheduleMemberSocialLinks() {
+        log.info("***** start getMemberSocialLinks task *****");
+        List<ICO_coinschedule_detail_member> memberList = ico_coinschedule_detail_memberDao.findICO_coinschedule_detail_memberWithNotIn();
+        log.info("get members from detail_member,num is :" + memberList.size());
+        if (CollectionUtils.isNotEmpty(memberList)) {
+            for (int i = 0; i < memberList.size(); i++) {
+                ICO_coinschedule_detail_member member = memberList.get(i);
+                log.info("----- will extra member :" + i);
+                coinscheduleService.getIcoCoinscheduleMemberSocialLink(member);
+//                break;
+            }
+            log.info("***** getMemberSocialLinks task over  *****");
+        }
+    }
+
 }
 
