@@ -15,5 +15,12 @@ public interface ICO_icorating_detail_block_teamRepository extends JpaRepository
     @Query("select info from ICO_icorating_detail_block_team info where info.ico_icorating_detail.pk_id = :fk_id ")
     List<ICO_icorating_detail_block_team> getICO_icorating_detail_block_teamsByFkid(@Param("fk_id") long fk_id);
 
+    /**
+     * 根据详情页的 link 查询
+     *
+     * @param link
+     * @return
+     */
+    List<ICO_icorating_detail_block_team> findICO_icorating_detail_block_teamsByLink(String link);
 
 }

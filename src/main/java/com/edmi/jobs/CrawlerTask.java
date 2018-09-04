@@ -22,14 +22,13 @@ import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-/*@Component*/
+@Component
 public class CrawlerTask {
 
     Logger log = Logger.getLogger(CrawlerTask.class);
@@ -332,7 +331,7 @@ public class CrawlerTask {
     }
 
     //    @Scheduled(cron = "0 0/5 * * * ?")
-//    @Scheduled(cron = "0 00 17 * * ?")
+//    @Scheduled(cron = "0 10 09 * * ?")
     public void icoratingDetailManager() {
         // 获取开始时间
         long startTime = System.currentTimeMillis();
@@ -368,7 +367,7 @@ public class CrawlerTask {
         icoratingService.getIcoratingFundsList();
     }
 
-    /*@Scheduled(cron = "0 30 07 * * ?")*/
+    //    @Scheduled(cron = "0 30 07 * * ?")
     public void icoratingFoundsDetailManager() {
         //查出所有的item，因为列表页已经判断，此处不会有重复
         List<ICO_icorating_funds_list> foundslist = new ArrayList<>();
@@ -407,7 +406,7 @@ public class CrawlerTask {
         log.info("***** getIcodropsListWithInput task over");
     }
 
-//    @Scheduled(cron = "0 00 06 * * ?")
+    //    @Scheduled(cron = "0 20 09 * * ?")
     public void icodropsDetailManager() {
         log.info("***** start icodropsDetailManager task *****");
         //1106

@@ -12,7 +12,6 @@ import com.edmi.utils.http.exception.MethodNotSupportException;
 import com.edmi.utils.http.request.Request;
 import com.edmi.utils.http.request.RequestMethod;
 import com.edmi.utils.http.response.Response;
-
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -26,7 +25,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.lang.reflect.InvocationTargetException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -57,9 +55,29 @@ public class IcoratingServiceImp implements IcoratingService {
     private ICO_icorating_funds_detailRepository foundsDetailDao;
     @Autowired
     private ICO_icorating_funds_detail_memberRepository foundsMemberDao;
+    @Autowired
+    private ICO_icorating_detail_detailRepository ico_icorating_detail_detailDao;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    public static void main(String[] args) {
+        IcoratingServiceImp t = new IcoratingServiceImp();
+        // String url = "https://icorating.com/ico/bitclave/";
+//        String url = "https://icorating.com/ico/ubex-ubex/";
+        String url = "https://icorating.com/ico/xyo-network/";
+
+        Request request = null;
+        try {
+            request = new Request(url, RequestMethod.GET);
+        } catch (MethodNotSupportException e) {
+            e.printStackTrace();
+        }
+        Response response = HttpClientUtil.doRequest(request);
+        String content = response.getResponseText();
+//        extraDetails(content, null);
+        t.extraDetail_Detail(content, null);
+    }
 
     @Override
     public void getIcotatingList() {
@@ -342,6 +360,7 @@ public class IcoratingServiceImp implements IcoratingService {
         String itemUrl = item.getLink();
         if (StringUtils.isNotBlank(itemUrl)) {
             ICO_icorating_detail oldDetai = detailDao.getICO_icorating_detailByLink(itemUrl);
+            //oldDetai == null
             if (oldDetai == null) {
                 log.info("extra detail");
                 Request request = null;
@@ -362,6 +381,8 @@ public class IcoratingServiceImp implements IcoratingService {
                             //解析详情页面
                             ICO_icorating_detail detail = extraDetails(content, item);
                             if (detail != null) {
+                                //解析详情页- details部分
+                                extraDetail_Detail(content, detail);
                                 //解析详情页的人员
                                 extraTeam(content, detail);
                                 //解析金融
@@ -374,12 +395,18 @@ public class IcoratingServiceImp implements IcoratingService {
 
                         } else {
                             log.info("page is not usually");
+                            item.setCrawledStatu("page is not usually");
+                            listDao.save(item);
                         }
                     } else {
                         log.info(" page is null ");
+                        item.setCrawledStatu("page is null");
+                        listDao.save(item);
                     }
                 } else {
                     log.info("requst code is not 200 ,code:" + code);
+                    item.setCrawledStatu(String.valueOf(code));
+                    listDao.save(item);
                 }
 
             } else {
@@ -544,79 +571,87 @@ public class IcoratingServiceImp implements IcoratingService {
             // detail_tokenDetails_AdditionalTokenEmission
             // detail_tokenDetails_AcceptedCurrencies
             // detail_tokenDetails_TokenDistribution
-            Elements detaileles = doc.select("div.c-tabs.tabs.mb-brand.mb40 > div.c-tabs__content >div#details");
-            if (detaileles != null && detaileles.size() > 0) {
-                Elements tableles = detaileles.select("table.c-info-table.c-info-table--va-top");
-                if (tableles != null && tableles.size() > 0) {
-                    for (Element tele : tableles) {
-                        String tabletitle = tele.select("caption").text().trim();
-//                        System.out.println("tabletitle:" + tabletitle);
-                        Elements tabdetaileles = tele.select("tbody > tr");
-                        if (tabdetaileles != null && tabdetaileles.size() > 0) {
-                            if (tabletitle.contains("Token Sale")) {
-                                // Token Sale表
-                                for (Element linele : tabdetaileles) {
-                                    String key = linele.select("th").text().trim();
-                                    String val = linele.select("td").text().trim();
-                                    // System.out.println(key + " = " + val);
-                                    if (key.contains("ICO start date")) {
-                                        detailModel.setDetail_tokenSale_icoStartDate(val);
-                                    } else if (key.contains("ICO end date")) {
-                                        detailModel.setDetail_tokenSale_icoEndDate(val);
-                                    } else if (key.contains("Raised")) {
-                                        detailModel.setDetail_tokenSale_raised(val);
-                                    } else if (key.contains("ICO token supply")) {
-                                        detailModel.setDetail_tokenSale_ICOTokenSupply(val);
-                                    } else if (key.contains("Soft cap")) {
-                                        detailModel.setDetail_tokenSale_softCap(val);
-                                    }
-                                }
-
-                            } else if (tabletitle.contains("Legal")) {
-                                // Legal 表
-                                for (Element linele : tabdetaileles) {
-                                    String key = linele.select("th").text().trim();
-                                    String val = linele.select("td").text().trim();
-                                    // System.out.println(key + " = " + val);
-                                    if (key.contains("ICO Platform")) {
-                                        detailModel.setDetail_legal_IcoPlatform(val);
-                                    } else if (key.contains("Registration Country")) {
-                                        detailModel.setDetail_legal_registrationCountry(val);
-                                    } else if (key.contains("Country Limitations")) {
-                                        detailModel.setDetail_legal_countryLimitations(val);
-                                    } else if (key.contains("Registration Year")) {
-                                        detailModel.setDetail_legal_registrationYear(val);
-                                    }
-                                }
-
-                            } else if (tabletitle.contains("Token details")) {
-                                // Token details 表
-                                for (Element linele : tabdetaileles) {
-                                    String key = linele.select("th").text().trim();
-                                    String val = linele.select("td").text().trim();
-//                                    System.out.println(key + " = " + val);
-                                    if (key.contains("Ticker")) {
-                                        detailModel.setDetail_tokenDetails_ticker(val);
-                                    } else if (key.contains("Additional Token Emission")) {
-                                        detailModel.setDetail_tokenDetails_AdditionalTokenEmissionv(val);
-                                    } else if (key.contains("Accepted Currencies")) {
-                                        detailModel.setDetail_tokenDetails_AcceptedCurrencies(val);
-                                    } else if (key.contains("Token distribution")) {
-                                        detailModel.setDetail_tokenDetails_TokenDistribution(val);
-                                    } else if (key.contains("Type")) {
-                                        detailModel.setDetail_tokenDetails_type(val);
-                                    } else if (key.contains("Bonus Program")) {
-                                        detailModel.setDetail_tokenDetails_bonusProgram(val);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+//            Elements detaileles = doc.select("div.c-tabs.tabs.mb-brand.mb40 > div.c-tabs__content >div#details");
+//            if (detaileles != null && detaileles.size() > 0) {
+//                Elements tableles = detaileles.select("table.c-info-table.c-info-table--va-top");
+//                if (tableles != null && tableles.size() > 0) {
+//                    for (Element tele : tableles) {
+//                        String tabletitle = tele.select("caption").text().trim();
+////                        System.out.println("tabletitle:" + tabletitle);
+//                        Elements tabdetaileles = tele.select("tbody > tr");
+//                        if (tabdetaileles != null && tabdetaileles.size() > 0) {
+//                            if (tabletitle.contains("Token Sale")) {
+//                                // Token Sale表
+//                                for (Element linele : tabdetaileles) {
+//                                    String key = linele.select("th").text().trim();
+//                                    String val = linele.select("td").text().trim();
+//                                    // System.out.println(key + " = " + val);
+//                                    if (key.contains("ICO start date")) {
+//                                        detailModel.setDetail_tokenSale_icoStartDate(val);
+//                                    } else if (key.contains("ICO end date")) {
+//                                        detailModel.setDetail_tokenSale_icoEndDate(val);
+//                                    } else if (key.contains("Raised")) {
+//                                        detailModel.setDetail_tokenSale_raised(val);
+//                                    } else if (key.contains("ICO token supply")) {
+//                                        detailModel.setDetail_tokenSale_ICOTokenSupply(val);
+//                                    } else if (key.contains("Soft cap")) {
+//                                        detailModel.setDetail_tokenSale_softCap(val);
+//                                    }
+//                                }
+//
+//                            } else if (tabletitle.contains("Legal")) {
+//                                // Legal 表
+//                                for (Element linele : tabdetaileles) {
+//                                    String key = linele.select("th").text().trim();
+//                                    String val = linele.select("td").text().trim();
+//                                    // System.out.println(key + " = " + val);
+//                                    if (key.contains("ICO Platform")) {
+//                                        detailModel.setDetail_legal_IcoPlatform(val);
+//                                    } else if (key.contains("Registration Country")) {
+//                                        detailModel.setDetail_legal_registrationCountry(val);
+//                                    } else if (key.contains("Country Limitations")) {
+//                                        detailModel.setDetail_legal_countryLimitations(val);
+//                                    } else if (key.contains("Registration Year")) {
+//                                        detailModel.setDetail_legal_registrationYear(val);
+//                                    }
+//                                }
+//
+//                            } else if (tabletitle.contains("Token details")) {
+//                                // Token details 表
+//                                for (Element linele : tabdetaileles) {
+//                                    String key = linele.select("th").text().trim();
+//                                    String val = linele.select("td").text().trim();
+////                                    System.out.println(key + " = " + val);
+//                                    if (key.contains("Ticker")) {
+//                                        detailModel.setDetail_tokenDetails_ticker(val);
+//                                    } else if (key.contains("Additional Token Emission")) {
+//                                        detailModel.setDetail_tokenDetails_AdditionalTokenEmissionv(val);
+//                                    } else if (key.contains("Accepted Currencies")) {
+//                                        detailModel.setDetail_tokenDetails_AcceptedCurrencies(val);
+//                                    } else if (key.contains("Token distribution")) {
+//                                        detailModel.setDetail_tokenDetails_TokenDistribution(val);
+//                                    } else if (key.contains("Type")) {
+//                                        detailModel.setDetail_tokenDetails_type(val);
+//                                    } else if (key.contains("Bonus Program")) {
+//                                        detailModel.setDetail_tokenDetails_bonusProgram(val);
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+            //--详情页的detail部分 拆分出来
             detailModel.setInsert_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
             detailModel.setUpdate_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
-            detailDao.save(detailModel);
+            //如果detailModel已经存在就不插入数据库了
+            ICO_icorating_detail oldDetail = detailDao.getICO_icorating_detailByLink(detailModel.getLink());
+            if (oldDetail == null) {
+                log.info("----- insert into new one ICO_icorating_detail object.");
+                detailDao.save(detailModel);
+            } else {
+                log.info("----- this ICO_icorating_detail object is already existed,do not insert .");
+            }
             //更改item status
             item.setCrawledStatu("200");
             listDao.save(item);
@@ -630,6 +665,69 @@ public class IcoratingServiceImp implements IcoratingService {
         return detailModel;
     }
 
+    /**
+     * 解析详情页- details部分
+     */
+    public void extraDetail_Detail(String content, ICO_icorating_detail detail) {
+        log.info("-extraDetail_Detail");
+        try {
+            Document doc = Jsoup.parse(content);
+            Elements detaileles = doc.select("div.c-tabs.tabs.mb-brand.mb40 > div.c-tabs__content >div#details");
+            if (detaileles != null && detaileles.size() > 0) {
+                List<ICO_icorating_detail_detail> ico_icorating_detail_detailList = new ArrayList<>(100);
+                Elements tableles = detaileles.select("table.c-info-table.c-info-table--va-top");
+                if (tableles != null && tableles.size() > 0) {
+                    for (Element tele : tableles) {
+                        String tabletitle = tele.select("caption").text().trim();
+//                        System.out.println("tabletitle:" + tabletitle);
+                        Elements tabdetaileles = tele.select("tbody > tr");
+                        if (tabdetaileles != null && tabdetaileles.size() > 0) {
+                            for (Element linele : tabdetaileles) {
+                                ICO_icorating_detail_detail detail_detailModel = new ICO_icorating_detail_detail();
+
+                                String key = linele.select("th").text().trim();
+                                String val = linele.select("td").text().trim();
+//                                System.out.println(key + " = " + val + " type: " + tabletitle);
+
+                                detail_detailModel.setIco_icorating_detail(detail);
+                                detail_detailModel.setLink(detail.getLink());
+                                detail_detailModel.setDetail_key(key);
+                                detail_detailModel.setDetail_value(val);
+                                detail_detailModel.setDetail_type(tabletitle);
+                                detail_detailModel.setInsert_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                detail_detailModel.setUpdate_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+
+                                List<ICO_icorating_detail_detail> oldDedails = ico_icorating_detail_detailDao.findICO_icorating_detail_detailsByLink(detail.getLink());
+                                if (CollectionUtils.isEmpty(oldDedails)) {
+                                    log.info("--insert new one detail_detailModel");
+                                    ico_icorating_detail_detailList.add(detail_detailModel);
+                                } else {
+                                    for (ICO_icorating_detail_detail old : oldDedails) {
+                                        String oldk = old.getDetail_key();
+                                        String oldv = old.getDetail_value();
+                                        String oldt = old.getDetail_type();
+                                        if (!oldt.equals(detail_detailModel.getDetail_type())) {
+                                            if (!oldk.equals(detail_detailModel.getDetail_key())) {
+                                                if (!oldv.equals(detail_detailModel.getDetail_value())) {
+                                                    log.info("--- in this detail page ,is already existed ,but show new k & v.");
+                                                    ico_icorating_detail_detailList.add(detail_detailModel);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                ico_icorating_detail_detailDao.saveAll(ico_icorating_detail_detailList);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
 
     /**
      * 解析公司人员
@@ -727,7 +825,21 @@ public class IcoratingServiceImp implements IcoratingService {
                                     }
                                 }
                             }
-                            teamList.add(team);
+                            List<ICO_icorating_detail_block_team> old_block_teams = teamDao.findICO_icorating_detail_block_teamsByLink(detail.getLink());
+                            if (CollectionUtils.isEmpty(old_block_teams)) {
+                                log.info("-- insert new ICO_icorating_detail_block_team.");
+                                teamList.add(team);
+                            } else {
+                                for (ICO_icorating_detail_block_team oldteam : old_block_teams) {
+                                    String oldMember_url = oldteam.getMember_url();
+                                    if (oldMember_url.equals(team.getMember_url())) {
+                                        log.info("-- " + team.getLink() + ",in this company,the member is already existed.do not insert");
+                                    } else {
+                                        log.info("-- insert new ICO_icorating_detail_block_team.");
+                                        teamList.add(team);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -788,7 +900,19 @@ public class IcoratingServiceImp implements IcoratingService {
                                 }
                             }
                         }
-                        fundsList.add(fundModel);
+                        List<ICO_icorating_detail_block_funds> oldFunds = fundDao.findICO_icorating_detail_block_fundsByLink(fundModel.getLink());
+                        if (CollectionUtils.isEmpty(oldFunds)) {
+                            log.info("--- insert new details founds object");
+                            fundsList.add(fundModel);
+                        } else {
+                            for (ICO_icorating_detail_block_funds old : oldFunds) {
+                                String oldFund_url = old.getFund_url();
+                                if (!oldFund_url.equals(fundModel.getFund_url())) {
+                                    log.info("--- this detail founds is already existed,but find new and insert");
+                                    fundsList.add(fundModel);
+                                }
+                            }
+                        }
                     }
                 }
                 fundDao.saveAll(fundsList);
@@ -798,6 +922,8 @@ public class IcoratingServiceImp implements IcoratingService {
             log.error("extra found exception");
         }
     }
+
+    //=================funds=====================
 
     /**
      * @Title: extraDevelopment
@@ -838,7 +964,23 @@ public class IcoratingServiceImp implements IcoratingService {
                                 }
                             }
                         }
-                        developmentList.add(developmentModel);
+                        List<ICO_icorating_detail_block_development> oldDevelopments = developmentDao.findICO_icorating_detail_block_developmentsByLink(developmentModel.getLink());
+                        if (CollectionUtils.isEmpty(oldDevelopments)) {
+                            log.info("--- insert new developmentModel");
+                            developmentList.add(developmentModel);
+                        } else {
+                            for (ICO_icorating_detail_block_development old : oldDevelopments) {
+                                String pre = old.getPre_launch();
+                                String la = old.getLaunch();
+                                String cu = old.getCustom();
+                                String te = old.getTestnet();
+                                String mi = old.getMiannet();
+                                if (pre.equals(developmentModel.getPre_launch()) && la.equals(developmentModel.getLaunch()) && cu.equals(developmentModel.getCustom()) && te.equals(developmentModel.getTestnet()) && mi.equals(developmentModel.getMiannet())) {
+                                    log.info("--- this developmentModel is already existed ,but find new developmentModel.");
+                                    developmentList.add(developmentModel);
+                                }
+                            }
+                        }
                     }
                 }
                 developmentDao.saveAll(developmentList);
@@ -848,8 +990,6 @@ public class IcoratingServiceImp implements IcoratingService {
             log.error("extraDevelopment Exception");
         }
     }
-
-    //=================funds=====================
 
     @Override
     public void getIcoratingFundsList() {
@@ -1134,7 +1274,7 @@ public class IcoratingServiceImp implements IcoratingService {
     public JSONObject getIco_icorating_all_index(String dataSourceNameLevel2) {
 
         JSONObject json = new JSONObject();
-        if(StringUtils.equalsIgnoreCase("all",dataSourceNameLevel2)){
+        if (StringUtils.equalsIgnoreCase("all", dataSourceNameLevel2)) {
             String indexes_sql = "select ifnull(block_name,'') as block_name," +
                     "ifnull(trading_token,'') as trading_token," +
                     "ifnull(contacts_website,'') as contacts_website," +
@@ -1150,32 +1290,32 @@ public class IcoratingServiceImp implements IcoratingService {
                     "ifnull(contacts_website,'') as contacts_website," +
                     "ifnull(link,'') as link from ico_icorating_detail";
             List<Map<String, Object>> details = jdbcTemplate.queryForList(indexes_sql);
-            json.put("number",details.size());
+            json.put("number", details.size());
             JSONObject solution_data = new JSONObject();
-            for(Map<String, Object> detail:details){
+            for (Map<String, Object> detail : details) {
 
                 JSONObject solution_data_url = new JSONObject();
-                solution_data_url.put("name",detail.get("block_name").toString());
-                solution_data_url.put("token_name",detail.get("trading_token").toString());
-                solution_data_url.put("website",detail.get("contacts_website").toString());
-                solution_data_url.put("white_paper",detail.get("trading_whitepaper").toString());
+                solution_data_url.put("name", detail.get("block_name").toString());
+                solution_data_url.put("token_name", detail.get("trading_token").toString());
+                solution_data_url.put("website", detail.get("contacts_website").toString());
+                solution_data_url.put("white_paper", detail.get("trading_whitepaper").toString());
 
                 JSONObject social = new JSONObject();
                 social.put("facebook", detail.get("contacts_facebook").toString());
-                social.put("twitter",detail.get("contacts_twitter").toString());
+                social.put("twitter", detail.get("contacts_twitter").toString());
                 social.put("reddit", detail.get("contacts_reddit_alien").toString());
-                social.put("medium",detail.get("contacts_medium").toString());
+                social.put("medium", detail.get("contacts_medium").toString());
                 social.put("github", detail.get("contacts_github").toString());
-                social.put("instagram",detail.get("contacts_instagram").toString());
-                social.put("telegram",detail.get("contacts_telegram_plane").toString());
+                social.put("instagram", detail.get("contacts_instagram").toString());
+                social.put("telegram", detail.get("contacts_telegram_plane").toString());
                 social.put("youtube", detail.get("contacts_youtube").toString());
 
-                solution_data_url.put("social",social);
-                solution_data.put(detail.get("link").toString(),solution_data_url);
+                solution_data_url.put("social", social);
+                solution_data.put(detail.get("link").toString(), solution_data_url);
             }
-            json.put("solution_data",solution_data);
-            json.put("source","icorating.com."+dataSourceNameLevel2);
-        }else if(StringUtils.equalsIgnoreCase("funds",dataSourceNameLevel2)){
+            json.put("solution_data", solution_data);
+            json.put("source", "icorating.com." + dataSourceNameLevel2);
+        } else if (StringUtils.equalsIgnoreCase("funds", dataSourceNameLevel2)) {
             String indexes_sql = "select ifnull(fund,'') as fund," +
                     "ifnull(link,'') as link," +
                     "ifnull(site,'') as site," +
@@ -1184,27 +1324,27 @@ public class IcoratingServiceImp implements IcoratingService {
                     "ifnull(medium,'') as medium," +
                     "ifnull(linkedin,'') as linkedin from ico_icorating_funds_detail";
             List<Map<String, Object>> details = jdbcTemplate.queryForList(indexes_sql);
-            json.put("number",details.size());
+            json.put("number", details.size());
             JSONObject solution_data = new JSONObject();
-            for(Map<String, Object> detail:details){
+            for (Map<String, Object> detail : details) {
 
                 JSONObject solution_data_url = new JSONObject();
-                solution_data_url.put("name",detail.get("fund").toString());
-                solution_data_url.put("token_name","");
-                solution_data_url.put("website",detail.get("site").toString());
-                solution_data_url.put("white_paper","");
+                solution_data_url.put("name", detail.get("fund").toString());
+                solution_data_url.put("token_name", "");
+                solution_data_url.put("website", detail.get("site").toString());
+                solution_data_url.put("white_paper", "");
 
                 JSONObject social = new JSONObject();
                 social.put("facebook", detail.get("facebook").toString());
-                social.put("twitter",detail.get("twitter").toString());
-                social.put("medium",detail.get("medium").toString());
+                social.put("twitter", detail.get("twitter").toString());
+                social.put("medium", detail.get("medium").toString());
                 social.put("linkedin", detail.get("linkedin").toString());
 
-                solution_data_url.put("social",social);
-                solution_data.put(detail.get("link").toString(),solution_data_url);
+                solution_data_url.put("social", social);
+                solution_data.put(detail.get("link").toString(), solution_data_url);
             }
-            json.put("solution_data",solution_data);
-            json.put("source","icorating.com."+dataSourceNameLevel2);
+            json.put("solution_data", solution_data);
+            json.put("source", "icorating.com." + dataSourceNameLevel2);
         }
         return json;
     }
@@ -1213,7 +1353,7 @@ public class IcoratingServiceImp implements IcoratingService {
     public JSONObject getICO_icorating_detailByItemUrl(String url) {
         JSONObject json = new JSONObject();
         ICO_icorating_detail detail = detailDao.getICO_icorating_detailByLink(url);
-        if(null!=detail){
+        if (null != detail) {
             List<ICO_icorating_detail_block_development> developments = developmentDao.getICO_icorating_detail_block_developmentsByFkid(detail.getPk_id());
             List<ICO_icorating_detail_block_funds> funds = fundDao.getICO_icorating_detail_block_fundsByFkid(detail.getPk_id());
             List<ICO_icorating_detail_block_team> teams = teamDao.getICO_icorating_detail_block_teamsByFkid(detail.getPk_id());
@@ -1221,35 +1361,35 @@ public class IcoratingServiceImp implements IcoratingService {
             /*开始组装数据*/
             ICO_icorating_detailDto detailDto = new ICO_icorating_detailDto();
             try {
-                BeanUtils.copyProperties(detailDto,detail);
+                BeanUtils.copyProperties(detailDto, detail);
                 json.putAll(BeanUtils.describe(detailDto));
 
-                if(CollectionUtils.isNotEmpty(developments)){
+                if (CollectionUtils.isNotEmpty(developments)) {
                     List<ICO_icorating_detail_block_developmentDto> developmentDtos = new ArrayList<>();
-                    for(ICO_icorating_detail_block_development development:developments){
+                    for (ICO_icorating_detail_block_development development : developments) {
                         ICO_icorating_detail_block_developmentDto developmentDto = new ICO_icorating_detail_block_developmentDto();
-                        BeanUtils.copyProperties(developmentDto,development);
+                        BeanUtils.copyProperties(developmentDto, development);
                         developmentDtos.add(developmentDto);
                     }
                     json.put("development", JSON.toJSON(developmentDtos));
                 }
-                if(CollectionUtils.isNotEmpty(funds)){
+                if (CollectionUtils.isNotEmpty(funds)) {
                     List<ICO_icorating_detail_block_fundsDto> fundsDtos = new ArrayList<>();
-                    for(ICO_icorating_detail_block_funds fund:funds) {
+                    for (ICO_icorating_detail_block_funds fund : funds) {
                         ICO_icorating_detail_block_fundsDto fundsDto = new ICO_icorating_detail_block_fundsDto();
-                        BeanUtils.copyProperties(fundsDto,fund);
+                        BeanUtils.copyProperties(fundsDto, fund);
                         fundsDtos.add(fundsDto);
                     }
-                    json.put("funds",JSON.toJSON(fundsDtos));
+                    json.put("funds", JSON.toJSON(fundsDtos));
                 }
-                if(CollectionUtils.isNotEmpty(teams)){
+                if (CollectionUtils.isNotEmpty(teams)) {
                     List<ICO_icorating_detail_block_teamDto> teamDtos = new ArrayList<>();
-                    for(ICO_icorating_detail_block_team team:teams){
+                    for (ICO_icorating_detail_block_team team : teams) {
                         ICO_icorating_detail_block_teamDto teamDto = new ICO_icorating_detail_block_teamDto();
-                        BeanUtils.copyProperties(teamDto,team);
+                        BeanUtils.copyProperties(teamDto, team);
                         teamDtos.add(teamDto);
                     }
-                    json.put("team",teamDtos);
+                    json.put("team", teamDtos);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1259,50 +1399,51 @@ public class IcoratingServiceImp implements IcoratingService {
             JSONObject social = new JSONObject();
             social.put("facebook", json.getString("contacts_facebook"));
             json.remove("contacts_facebook");
-            social.put("twitter",json.getString("contacts_twitter"));
+            social.put("twitter", json.getString("contacts_twitter"));
             json.remove("contacts_twitter");
             social.put("reddit", json.getString("contacts_reddit_alien"));
             json.remove("contacts_reddit_alien");
-            social.put("medium",json.getString("contacts_medium"));
+            social.put("medium", json.getString("contacts_medium"));
             json.remove("contacts_medium");
             social.put("github", json.getString("contacts_github"));
             json.remove("contacts_github");
-            social.put("instagram",json.getString("contacts_instagram"));
+            social.put("instagram", json.getString("contacts_instagram"));
             json.remove("contacts_instagram");
-            social.put("telegram",json.getString("contacts_telegram_plane"));
+            social.put("telegram", json.getString("contacts_telegram_plane"));
             json.remove("contacts_telegram_plane");
             social.put("youtube", json.getString("contacts_youtube"));
             json.remove("contacts_youtube");
 
-            json.put("social",social);
+            json.put("social", social);
             /*下面处理Block的logo*/
-            json.put("solution_photo_url",detail.getIco_icorating_list().getLogo());
+            json.put("solution_photo_url", detail.getIco_icorating_list().getLogo());
         }
         return json;
     }
+
     @Override
     public JSONObject getICO_icorating_funds_detailByItemUrl(String url) {
         JSONObject json = new JSONObject();
         ICO_icorating_funds_detail detail = foundsDetailDao.findICO_icorating_funds_detailByLink(url);
-        if(null!=detail){
+        if (null != detail) {
 
             List<ICO_icorating_funds_detail_member> teams = foundsMemberDao.getICO_icorating_funds_detail_membersByFkid(detail.getPk_id());
 
             /*开始组装数据*/
             ICO_icorating_funds_detailDto detailDto = new ICO_icorating_funds_detailDto();
             try {
-                BeanUtils.copyProperties(detailDto,detail);
+                BeanUtils.copyProperties(detailDto, detail);
                 json.putAll(BeanUtils.describe(detailDto));
 
 
-                if(CollectionUtils.isNotEmpty(teams)){
+                if (CollectionUtils.isNotEmpty(teams)) {
                     List<ICO_icorating_funds_detail_memberDto> teamDtos = new ArrayList<>();
-                    for(ICO_icorating_funds_detail_member team:teams){
+                    for (ICO_icorating_funds_detail_member team : teams) {
                         ICO_icorating_funds_detail_memberDto teamDto = new ICO_icorating_funds_detail_memberDto();
-                        BeanUtils.copyProperties(teamDto,team);
+                        BeanUtils.copyProperties(teamDto, team);
                         teamDtos.add(teamDto);
                     }
-                    json.put("member",teamDtos);
+                    json.put("member", teamDtos);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1312,34 +1453,17 @@ public class IcoratingServiceImp implements IcoratingService {
             JSONObject social = new JSONObject();
             social.put("facebook", json.getString("facebook"));
             json.remove("facebook");
-            social.put("twitter",json.getString("twitter"));
+            social.put("twitter", json.getString("twitter"));
             json.remove("twitter");
             social.put("medium", json.getString("medium"));
             json.remove("medium");
-            social.put("linkedin",json.getString("linkedin"));
+            social.put("linkedin", json.getString("linkedin"));
             json.remove("linkedin");
 
-            json.put("social",social);
+            json.put("social", social);
             /*下面处理Block的logo*/
-            json.put("solution_photo_url",detail.getIco_icorating_funds_list().getLogo());
+            json.put("solution_photo_url", detail.getIco_icorating_funds_list().getLogo());
         }
         return json;
-    }
-
-    public static void main(String[] args) {
-        IcoratingServiceImp t = new IcoratingServiceImp();
-        // String url = "https://icorating.com/ico/bitclave/";
-//        String url = "https://icorating.com/ico/ubex-ubex/";
-        String url = "https://icorating.com/funds/blocktrade-investments/";
-
-        Request request = null;
-        try {
-            request = new Request(url, RequestMethod.GET);
-        } catch (MethodNotSupportException e) {
-            e.printStackTrace();
-        }
-        Response response = HttpClientUtil.doRequest(request);
-        String content = response.getResponseText();
-//        extraDetails(content, null);
     }
 }
