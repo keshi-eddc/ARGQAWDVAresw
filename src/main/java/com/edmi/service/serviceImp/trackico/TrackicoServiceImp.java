@@ -1,17 +1,18 @@
 package com.edmi.service.serviceImp.trackico;
 
-import java.lang.reflect.InvocationTargetException;
-import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
-
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.edmi.dao.trackico.*;
 import com.edmi.dto.trackico.*;
+import com.edmi.entity.trackico.*;
+import com.edmi.service.service.TrackicoService;
+import com.edmi.utils.http.HttpClientUtil;
+import com.edmi.utils.http.exception.MethodNotSupportException;
+import com.edmi.utils.http.request.Request;
+import com.edmi.utils.http.request.RequestMethod;
+import com.edmi.utils.http.response.Response;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -22,27 +23,15 @@ import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import com.edmi.dao.trackico.ICO_trackico_detailRepository;
-import com.edmi.dao.trackico.ICO_trackico_detail_blockFinancialRepository;
-import com.edmi.dao.trackico.ICO_trackico_detail_blockInfoRepository;
-import com.edmi.dao.trackico.ICO_trackico_detail_blockLabelRepository;
-import com.edmi.dao.trackico.ICO_trackico_detail_blockMilestonesRepository;
-import com.edmi.dao.trackico.ICO_trackico_detail_blockTeamRepository;
-import com.edmi.dao.trackico.ICO_trackico_itemRepository;
-import com.edmi.entity.trackico.ICO_trackico_detail;
-import com.edmi.entity.trackico.ICO_trackico_detail_blockFinancial;
-import com.edmi.entity.trackico.ICO_trackico_detail_blockLabel;
-import com.edmi.entity.trackico.ICO_trackico_detail_blockMilestones;
-import com.edmi.entity.trackico.ICO_trackico_detail_blockTeam;
-import com.edmi.entity.trackico.ICO_trackico_detail_block_info;
-import com.edmi.entity.trackico.ICO_trackico_item;
-import com.edmi.service.service.TrackicoService;
-import com.edmi.utils.http.HttpClientUtil;
-import com.edmi.utils.http.exception.MethodNotSupportException;
-import com.edmi.utils.http.request.Request;
-import com.edmi.utils.http.request.RequestMethod;
-import com.edmi.utils.http.response.Response;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author keshi
@@ -333,7 +322,7 @@ public class TrackicoServiceImp implements TrackicoService {
                         Document doc = Jsoup.parse(content);
                         // 模型
                         ICO_trackico_detail detailModel = new ICO_trackico_detail();
-                        //
+                        //有一次请求，可以用来更新。旧数据是否需要跟新
                         ICO_trackico_detail ico_trackico_detailList = ico_trackico_detailDao.getICO_trackico_detailsByFkid(item.getPk_id());
                         if (null == ico_trackico_detailList) {
                             // 解析详情页的-详情
@@ -349,26 +338,25 @@ public class TrackicoServiceImp implements TrackicoService {
                             // 解析详情页的-公司信息
                             extraDetailPageBlockInfo(item, detailModel, doc);
                         } else {
-                            log.info("-detailPageDetails is Already exist ,and delete details and others ,set status = ini.");
-                            deleteICO_trackico_detail_blockLabelByPk_id(ico_trackico_detailList.getPk_id());
-                            deleteICO_trackico_detai_blockTeamlByPk_id(ico_trackico_detailList.getPk_id());
-                            deleteICO_trackico_detail_blockFinancialByPk_id(ico_trackico_detailList.getPk_id());
-                            deleteICO_trackico_detai_blockMilestonesByPk_id(ico_trackico_detailList.getPk_id());
-                            deleteICO_trackico_detail_block_infoByPk_id(ico_trackico_detailList.getPk_id());
-                            deleteICO_trackico_detailByPk_id(item.getPk_id());
-
-                            // 发生了重复，先删除 从表 和 detail 表。进入下次抓取
-                            item.setStatus("ini");
-                            ico_trackico_itemDao.save(item);
+                            log.info("-detailPageDetails is Already exist ,do not extra");
+//                            log.info("-detailPageDetails is Already exist ,and delete details and others ,set status = ini.");
+//                            deleteICO_trackico_detail_blockLabelByPk_id(ico_trackico_detailList.getPk_id());
+//                            deleteICO_trackico_detai_blockTeamlByPk_id(ico_trackico_detailList.getPk_id());
+//                            deleteICO_trackico_detail_blockFinancialByPk_id(ico_trackico_detailList.getPk_id());
+//                            deleteICO_trackico_detai_blockMilestonesByPk_id(ico_trackico_detailList.getPk_id());
+//                            deleteICO_trackico_detail_block_infoByPk_id(ico_trackico_detailList.getPk_id());
+//                            deleteICO_trackico_detailByPk_id(item.getPk_id());
+//
+//                            // 发生了重复，先删除 从表 和 detail 表。进入下次抓取
+//                            item.setStatus("ini");
+//                            ico_trackico_itemDao.save(item);
                         }
-
                     } else {
                         log.error("page Exception：" + url);
                     }
                 } else {
                     log.error("page null：" + url);
                 }
-
             } else {
                 // 更新item对象的status -请求不正确，把status = 状态码
                 item.setStatus(String.valueOf(code));
@@ -1065,90 +1053,90 @@ public class TrackicoServiceImp implements TrackicoService {
                     detail_json.putAll(BeanUtils.describe(itemDto));
                     detail_json.putAll(BeanUtils.describe(detailDto));
                     detail_json.putAll(BeanUtils.describe(infoDto));
-                    for(ICO_trackico_detail_blockLabelDto labelDto:labelDtos){
-                        detail_json.put(labelDto.getBlock_lable_name(),labelDto.getBlock_lable_url());
+                    for (ICO_trackico_detail_blockLabelDto labelDto : labelDtos) {
+                        detail_json.put(labelDto.getBlock_lable_name(), labelDto.getBlock_lable_url());
                     }
-                    for(ICO_trackico_detail_blockFinancialDto financialDto:financialDtos){
-                        detail_json.put(financialDto.getName(),financialDto.getValue());
+                    for (ICO_trackico_detail_blockFinancialDto financialDto : financialDtos) {
+                        detail_json.put(financialDto.getName(), financialDto.getValue());
                     }
-                    about_json.put("milestones",JSON.toJSON(milestonesDtos));
-                    about_json.put("members",JSON.toJSON(teamDtos));
+                    about_json.put("milestones", JSON.toJSON(milestonesDtos));
+                    about_json.put("members", JSON.toJSON(teamDtos));
 
-                    detail_json.put("solution_photo_url",detail_json.getString("logo_url"));
+                    detail_json.put("solution_photo_url", detail_json.getString("logo_url"));
                     detail_json.remove("logo_url");
                     /*拆分pre_sale开始结束时间*/
                     String pre_sale = detail_json.getString("pre_sale");
-                    if(StringUtils.isNotEmpty(pre_sale)){
+                    if (StringUtils.isNotEmpty(pre_sale)) {
                         String[] pre_sales = StringUtils.split(pre_sale, "-");
-                        if(ArrayUtils.isNotEmpty(pre_sales)&&pre_sales.length==2){
-                            detail_json.put("preicoStart",pre_sales[0]);
-                            detail_json.put("preicoEnd",pre_sales[1]);
-                        }else{
-                            detail_json.put("preicoStart","");
-                            detail_json.put("preicoEnd","");
+                        if (ArrayUtils.isNotEmpty(pre_sales) && pre_sales.length == 2) {
+                            detail_json.put("preicoStart", pre_sales[0]);
+                            detail_json.put("preicoEnd", pre_sales[1]);
+                        } else {
+                            detail_json.put("preicoStart", "");
+                            detail_json.put("preicoEnd", "");
                         }
-                    }else{
-                        detail_json.put("preicoStart","");
-                        detail_json.put("preicoEnd","");
+                    } else {
+                        detail_json.put("preicoStart", "");
+                        detail_json.put("preicoEnd", "");
                     }
                     detail_json.remove("pre_sale");
                     /*拆分pre_sale开始结束时间*/
                     String token_sale = detail_json.getString("token_sale");
-                    if(StringUtils.isNotEmpty(token_sale)){
+                    if (StringUtils.isNotEmpty(token_sale)) {
                         String[] token_sales = StringUtils.split(token_sale, "-");
-                        if(ArrayUtils.isNotEmpty(token_sales)&&token_sales.length==2){
-                            detail_json.put("icoStart",token_sales[0]);
-                            detail_json.put("icoEnd",token_sales[1]);
-                        }else{
-                            detail_json.put("icoStart","");
-                            detail_json.put("icoEnd","");
+                        if (ArrayUtils.isNotEmpty(token_sales) && token_sales.length == 2) {
+                            detail_json.put("icoStart", token_sales[0]);
+                            detail_json.put("icoEnd", token_sales[1]);
+                        } else {
+                            detail_json.put("icoStart", "");
+                            detail_json.put("icoEnd", "");
                         }
-                    }else{
-                        detail_json.put("icoStart","");
-                        detail_json.put("icoEnd","");
+                    } else {
+                        detail_json.put("icoStart", "");
+                        detail_json.put("icoEnd", "");
                     }
                     detail_json.remove("token_sale");
                     /*从ico_detail中提取出概况:name,whitePaperURL,tag,about,brief,description,prototype*/
-                    if(detail_json.containsKey("block_name")){
-                        about_json.put("name",detail_json.getString("block_name"));
-                    }else{
-                        about_json.put("name","");
+                    if (detail_json.containsKey("block_name")) {
+                        about_json.put("name", detail_json.getString("block_name"));
+                    } else {
+                        about_json.put("name", "");
                     }
                     detail_json.remove("block_name");
 
-                    if(detail_json.containsKey("Whitepaper")){
-                        about_json.put("whitePaperURL",detail_json.getString("Whitepaper"));
-                    }else{
-                        about_json.put("whitePaperURL","");
+                    if (detail_json.containsKey("Whitepaper")) {
+                        about_json.put("whitePaperURL", detail_json.getString("Whitepaper"));
+                    } else {
+                        about_json.put("whitePaperURL", "");
                     }
                     detail_json.remove("Whitepaper");
 
-                    if(detail_json.containsKey("block_tag")){
-                        about_json.put("tag",detail_json.getString("block_tag"));
-                    }else{
-                        about_json.put("tag","");
+                    if (detail_json.containsKey("block_tag")) {
+                        about_json.put("tag", detail_json.getString("block_tag"));
+                    } else {
+                        about_json.put("tag", "");
                     }
                     detail_json.remove("block_tag");
 
-                    about_json.put("about","");
-                    about_json.put("brief","");
+                    about_json.put("about", "");
+                    about_json.put("brief", "");
 
-                    if(detail_json.containsKey("block_description")){
-                        about_json.put("description",detail_json.getString("block_description"));
-                    }else{
-                        about_json.put("description","");
+                    if (detail_json.containsKey("block_description")) {
+                        about_json.put("description", detail_json.getString("block_description"));
+                    } else {
+                        about_json.put("description", "");
                     }
                     detail_json.remove("block_description");
 
-                    about_json.put("prototype","");
+                    about_json.put("prototype", "");
 
                     detail_json.remove("class");
                 } catch (Exception e) {
-                   log.info(e.getMessage());
+                    log.info(e.getMessage());
                 }
             }
         }
-        about_json.put("ico",detail_json);
+        about_json.put("ico", detail_json);
         return about_json;
     }
 }

@@ -409,7 +409,6 @@ public class IcoratingServiceImp implements IcoratingService {
                     item.setCrawledStatu(String.valueOf(code));
                     listDao.save(item);
                 }
-
             } else {
                 //已经存在，如果状态还是ini，改200
                 log.info("---------- allread exist the detail URL ：" + itemUrl);
@@ -977,6 +976,8 @@ public class IcoratingServiceImp implements IcoratingService {
                                 String te = old.getTestnet();
                                 String mi = old.getMiannet();
                                 if (pre.equals(developmentModel.getPre_launch()) && la.equals(developmentModel.getLaunch()) && cu.equals(developmentModel.getCustom()) && te.equals(developmentModel.getTestnet()) && mi.equals(developmentModel.getMiannet())) {
+                                    log.info("--- this developmentModel is already existed .");
+                                } else {
                                     log.info("--- this developmentModel is already existed ,but find new developmentModel.");
                                     developmentList.add(developmentModel);
                                 }
