@@ -88,33 +88,36 @@ public class TrackicoServiceImp implements TrackicoService {
         // 当前页码 在解析详情页时获得
         while (isNotLast) {
             try {
-                // kangkang的请求方法
-                // HttpRequestHeader header = new HttpRequestHeader();
-                // header.setUrl(url);
-                // String html = SomSiteRequest.getPageContent(header);
-                String html = getPageContent(url);
-                if (StringUtils.isNotBlank(html)) {
-                    // 验证页面是否正常
-                    if (html.contains("card-body") && html.contains("page-item")) {
-                        Document doc = Jsoup.parse(html);
-                        // 解析列表页
-                        extraOneListPage(doc);
-                        // 获得当前item总数
-                        int currentItemTotalNum = getCurrentItemTotalNum(doc);
-                        // 获得当前item数
-                        int currentItemNum = getCurrentItemNum(doc);
-                        // 判断是否是最后一页
-                        if (currentItemNum >= currentItemTotalNum) {
-                            isNotLast = false;
+                Request request = new Request(url, RequestMethod.GET);
+                Response response = HttpClientUtil.doRequest(request);
+                int code = response.getCode();
+                if (code == 200) {
+                    String html = response.getResponseText();
+                    if (StringUtils.isNotBlank(html)) {
+                        // 验证页面是否正常
+                        if (html.contains("card-body") && html.contains("page-item")) {
+                            Document doc = Jsoup.parse(html);
+                            // 解析列表页
+                            extraOneListPage(doc);
+                            // 获得当前item总数
+                            int currentItemTotalNum = getCurrentItemTotalNum(doc);
+                            // 获得当前item数
+                            int currentItemNum = getCurrentItemNum(doc);
+                            // 判断是否是最后一页
+                            if (currentItemNum >= currentItemTotalNum) {
+                                isNotLast = false;
+                            }
+                            // 获得下一页链接
+                            url = getNextPageLink(doc);
+                            // Thread.sleep(1000);
+                        } else {
+                            log.error("异常页面：" + url);
                         }
-                        // 获得下一页链接
-                        url = getNextPageLink(doc);
-                        // Thread.sleep(1000);
                     } else {
-                        log.error("异常页面：" + url);
+                        log.error("页面为空：" + url);
                     }
                 } else {
-                    log.error("页面为空：" + url);
+                    log.error("!!! bad request:" + url);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -314,7 +317,6 @@ public class TrackicoServiceImp implements TrackicoService {
             Response response = HttpClientUtil.doRequest(request);
             int code = response.getCode();
             // 500 Read timed out
-            System.out.println("code;" + code);
             // 验证请求
             if (code == 200) {
                 String content = response.getResponseText();
@@ -361,6 +363,7 @@ public class TrackicoServiceImp implements TrackicoService {
                     log.error("page null：" + url);
                 }
             } else {
+                log.error("!!! bad request :" + url);
                 // 更新item对象的status -请求不正确，把status = 状态码
                 item.setStatus(String.valueOf(code));
                 ico_trackico_itemDao.save(item);

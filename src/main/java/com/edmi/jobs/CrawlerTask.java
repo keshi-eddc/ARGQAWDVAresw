@@ -28,6 +28,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -294,18 +295,21 @@ public class CrawlerTask {
         }
     }
 
-    // <===================== 下面是Trackico的相关job ===================================>
+    // <===================== 下面是trackico的相关job ===================================>
     //每天早晨5点开始
-//    @Scheduled(cron = "0 00 21 * * ?")
+    @Scheduled(cron = "0 00 21 * * ?")
     public void getICO_Trackico_list() throws MethodNotSupportException {
+        log.info("***** getICO_Trackico_list task start *****");
         trackicoService.getICO_trackico_list();
+        log.info("***** getICO_Trackico_list task over *****");
     }
 
     //all
 //    @Scheduled(cron = "0 30 03 * * ?")
-    //每10分钟执行
-//    @Scheduled(cron = "0 0/5 * * * ?")
+    //每5分钟
+    @Scheduled(cron = "0 0/5 * * * ?")
     public void getICO_Trackico_detail() throws MethodNotSupportException {
+        log.info("***** getICO_Trackico_detail task start *****");
 
         //all
 //        List<ICO_trackico_item> items = ico_trackico_itemDao.findAllByStatus("ini");
@@ -343,15 +347,11 @@ public class CrawlerTask {
         }
     }
 
-    //    @Scheduled(cron = "0 50 07 * * ?")
+    //每天早晨10点开始（中国时间）
+    @Scheduled(cron = "0 00 02 * * ?")
     public void getTrackicoMemberSocialLinkManager() {
         log.info("***** start getTrackicoMemberSocialLink task *****");
         try {
-//            List<ICO_trackico_detail_blockTeam> memberList = new ArrayList<>();
-//            ICO_trackico_detail_blockTeam member1 = new ICO_trackico_detail_blockTeam();
-//            member1.setMember_url("https://www.trackico.io/member/nick-johnson-1/");
-//            member1.setPk_id(82746L);
-//            memberList.add(member1);
             List<ICO_trackico_detail_blockTeam> memberList = ico_trackico_detail_blockTeamDao.findICO_trackico_detail_blockTeamWithNotIn();
             if (CollectionUtils.isNotEmpty(memberList)) {
                 log.info("--- this time select from ICO_trackico_detail_blockTeam member num is :" + memberList.size());
@@ -374,7 +374,9 @@ public class CrawlerTask {
 //    每天早晨5点开始
 //    @Scheduled(cron = "0 00 21 * * ?")
     public void getICO_icorating_list() throws MethodNotSupportException {
+        log.info("***** getICO_icorating_list task start *****");
         icoratingService.getIcotatingList();
+        log.info("***** getICO_icorating_list task over *****");
     }
 
     //    @Scheduled(cron = "0 10 09 * * ?")
@@ -413,7 +415,9 @@ public class CrawlerTask {
     //每天早晨7点
 //    @Scheduled(cron = "0 00 23 * * ?")
     public void getIcoratingFoundsList() {
+        log.info("***** getIcoratingFoundsList task start *****");
         icoratingService.getIcoratingFundsList();
+        log.info("***** getIcoratingFoundsList task over *****");
     }
 
     //每天下午2点

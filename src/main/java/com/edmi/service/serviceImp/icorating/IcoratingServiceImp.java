@@ -1016,9 +1016,9 @@ public class IcoratingServiceImp implements IcoratingService {
                             if (jo != null) {
                                 List<ICO_icorating_funds_list> fundsList = new ArrayList<>(100);
                                 String lastPagestr = jo.getString("lastPage");
-                                if (lastPagestr.equalsIgnoreCase("false")) {
+                                if (lastPagestr.equals("false")) {
                                     log.info("----------current page is :" + page);
-                                } else {
+                                } else if (lastPagestr.equals("true")) {
                                     isNotLast = false;
                                     log.info("----- last page:" + page);
                                 }
@@ -1081,6 +1081,9 @@ public class IcoratingServiceImp implements IcoratingService {
                                     }
                                 }
                             }
+                        } else {
+                            log.error("!!! content do not contains funds  lastPage");
+                            isNotLast = false;
                         }
                     }
                 } else {
