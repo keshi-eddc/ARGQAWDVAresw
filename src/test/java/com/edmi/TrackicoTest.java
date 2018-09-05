@@ -1,16 +1,18 @@
 package com.edmi;
 
+import com.edmi.dao.trackico.ICO_trackico_detail_blockTeamRepository;
 import com.edmi.dao.trackico.ICO_trackico_itemRepository;
+import com.edmi.entity.trackico.ICO_trackico_detail_blockTeam;
 import com.edmi.entity.trackico.ICO_trackico_item;
+import com.edmi.service.service.TrackicoService;
+import com.edmi.utils.http.exception.MethodNotSupportException;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import com.edmi.service.service.TrackicoService;
-import com.edmi.utils.http.exception.MethodNotSupportException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,12 +33,14 @@ public class TrackicoTest {
     private TrackicoService trackicoService;
     @Autowired
     private ICO_trackico_itemRepository ico_trackico_itemDao;
+    @Autowired
+    private ICO_trackico_detail_blockTeamRepository ico_trackico_detail_blockTeamDao;
 
     @Test
     public void getICO_Trackico_detail() throws MethodNotSupportException {
         List<ICO_trackico_item> items = new ArrayList<>();
         //all
-       items = ico_trackico_itemDao.findAllByStatus("ini");
+        items = ico_trackico_itemDao.findAllByStatus("ini");
 
 //         items = ico_trackico_itemDao.findTop10ByStatus("ini");
 
@@ -67,4 +71,30 @@ public class TrackicoTest {
         }
 
     }
+
+    @Test
+    public void getTrackicoMemberSocialLinkManager() {
+        log.info("***** start getTrackicoMemberSocialLink task *****");
+        try {
+//            List<ICO_trackico_detail_blockTeam> memberList = new ArrayList<>();
+//            ICO_trackico_detail_blockTeam member1 = new ICO_trackico_detail_blockTeam();
+//            member1.setMember_url("https://www.trackico.io/member/nick-johnson-1/");
+//            member1.setPk_id(82746L);
+//            memberList.add(member1);
+            List<ICO_trackico_detail_blockTeam> memberList = ico_trackico_detail_blockTeamDao.findICO_trackico_detail_blockTeamWithNotIn();
+            if (CollectionUtils.isNotEmpty(memberList)) {
+                log.info("--- this time select from ICO_trackico_detail_blockTeam member num is :" + memberList.size());
+                for (int i = 0; i < memberList.size(); i++) {
+                    ICO_trackico_detail_blockTeam member = memberList.get(i);
+                    log.info("- will extra :" + i + " .member_url:" + member.getMember_url());
+                    trackicoService.extraMemberSocialLinks(member);
+                }
+            } else {
+                log.info("--- this time select has not find member from ICO_trackico_detail_blockTeam");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
 }

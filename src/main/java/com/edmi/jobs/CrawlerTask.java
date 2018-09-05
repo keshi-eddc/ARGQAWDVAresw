@@ -9,6 +9,7 @@ import com.edmi.dao.feixiaohao.ICO_Feixiaohao_Exchange_DetailsRepository;
 import com.edmi.dao.icodrops.ICO_icodrops_listRepository;
 import com.edmi.dao.icorating.ICO_icorating_funds_listRepository;
 import com.edmi.dao.icorating.ICO_icorating_listRepository;
+import com.edmi.dao.trackico.ICO_trackico_detail_blockTeamRepository;
 import com.edmi.dao.trackico.ICO_trackico_itemRepository;
 import com.edmi.entity.coinschedule.ICO_coinschedule_detail_member;
 import com.edmi.entity.coinschedule.Ico_coinschedule_List;
@@ -18,6 +19,7 @@ import com.edmi.entity.feixiaohao.ICO_Feixiaohao_Exchange_Currencies;
 import com.edmi.entity.icodrops.ICO_icodrops_list;
 import com.edmi.entity.icorating.ICO_icorating_funds_list;
 import com.edmi.entity.icorating.ICO_icorating_list;
+import com.edmi.entity.trackico.ICO_trackico_detail_blockTeam;
 import com.edmi.entity.trackico.ICO_trackico_item;
 import com.edmi.service.service.*;
 import com.edmi.utils.http.exception.MethodNotSupportException;
@@ -96,8 +98,12 @@ public class CrawlerTask {
 
     @Autowired
     private ICO_icorating_funds_listRepository foundsListDao;
+
     @Autowired
     private ICO_icodrops_listRepository icodropsItemDao;
+
+    @Autowired
+    private ICO_trackico_detail_blockTeamRepository ico_trackico_detail_blockTeamDao;
 
     /*@Scheduled(cron = "0 38 08 25 * ?")*/
     public void getICO_Etherscan_IO_Blocks() throws Exception {
@@ -338,6 +344,31 @@ public class CrawlerTask {
         }
     }
 
+//    @Scheduled(cron = "0 40 05 * * ?")
+    public void getTrackicoMemberSocialLinkManager() {
+        log.info("***** start getTrackicoMemberSocialLink task *****");
+        try {
+//            List<ICO_trackico_detail_blockTeam> memberList = new ArrayList<>();
+//            ICO_trackico_detail_blockTeam member1 = new ICO_trackico_detail_blockTeam();
+//            member1.setMember_url("https://www.trackico.io/member/nick-johnson-1/");
+//            member1.setPk_id(82746L);
+//            memberList.add(member1);
+            List<ICO_trackico_detail_blockTeam> memberList = ico_trackico_detail_blockTeamDao.findICO_trackico_detail_blockTeamWithNotIn();
+            if (CollectionUtils.isNotEmpty(memberList)) {
+                log.info("--- this time select from ICO_trackico_detail_blockTeam member num is :" + memberList.size());
+                for (int i = 0; i < memberList.size(); i++) {
+                    ICO_trackico_detail_blockTeam member = memberList.get(i);
+                    log.info("- will extra :" + i + " .member_url:" + member.getMember_url());
+                    trackicoService.extraMemberSocialLinks(member);
+                }
+            } else {
+                log.info("--- this time select has not find member from ICO_trackico_detail_blockTeam");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     // <===================== 下面是icorating的相关job ===================================>
     //每4小时 0 0 */4 * * ?
 //    每天早晨5点开始
@@ -426,7 +457,7 @@ public class CrawlerTask {
         log.info("***** getIcodropsListWithInput task over");
     }
 
-//    每天早晨10点开始（中国时间）
+    //    每天早晨10点开始（中国时间）
 //    @Scheduled(cron = "0 00 02 * * ?")
     public void icodropsDetailManager() {
         log.info("***** start icodropsDetailManager task *****");

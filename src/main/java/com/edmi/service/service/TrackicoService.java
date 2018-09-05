@@ -1,9 +1,9 @@
 package com.edmi.service.service;
 
 import com.alibaba.fastjson.JSONObject;
+import com.edmi.entity.trackico.ICO_trackico_detail_blockTeam;
 import com.edmi.entity.trackico.ICO_trackico_item;
 import com.edmi.utils.http.exception.MethodNotSupportException;
-import org.springframework.data.repository.query.Param;
 
 /**
  * @author keshi
@@ -47,5 +47,8 @@ public interface TrackicoService {
     public ICO_trackico_item getICO_trackico_listByItemUrl(String url);
 
     public JSONObject getICO_trackico_detailByItemUrl(String url);
+
+    //人员的社交链接
+    public void extraMemberSocialLinks(ICO_trackico_detail_blockTeam member);
 
 }

@@ -64,6 +64,8 @@ public class TrackicoServiceImp implements TrackicoService {
     private ICO_trackico_detail_blockMilestonesRepository detail_milestonesDao;
     @Autowired
     private ICO_trackico_detail_blockInfoRepository detail_InfoDao;
+    @Autowired
+    private ICO_trackico_detail_block_team_sociallinkRepository trackico_detail_block_team_sociallinkDao;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -835,6 +837,70 @@ public class TrackicoServiceImp implements TrackicoService {
         }
     }
 
+    //人员的社交链接
+    @Override
+    public void extraMemberSocialLinks(ICO_trackico_detail_blockTeam member) {
+        try {
+            String memberUrl = member.getMember_url();
+            //测试
+//            List<ICO_trackico_detail_block_team_sociallink> oldMemberSocialLinkList = new ArrayList<>();
+            List<ICO_trackico_detail_block_team_sociallink> oldMemberSocialLinkList = trackico_detail_block_team_sociallinkDao.findICO_trackico_detail_block_team_sociallinksByMemberUrl(memberUrl);
+            if (CollectionUtils.isEmpty(oldMemberSocialLinkList)) {
+                try {
+                    Request request = new Request(memberUrl, RequestMethod.GET);
+                    Response response = HttpClientUtil.doRequest(request);
+                    int code = response.getCode();
+                    //验证请求
+//                    log.info("----- request code:" + code);
+                    if (code == 200) {
+                        String content = response.getResponseText();
+                        // 验证页面
+                        if (StringUtils.isNotBlank(content)) {
+                            // 验证是否是正常页面
+                            if (content.contains("card-body")) {
+                                Document doc = Jsoup.parse(content);
+//                                log.info(doc.title());
+                                Elements socialseles = doc.select("div.card-body >div.flexbox >div.flex-grow >div.flex-row >a");
+                                if (socialseles != null && socialseles.size() > 0) {
+                                    List<ICO_trackico_detail_block_team_sociallink> sociallinkList = new ArrayList<>(10);
+                                    for (Element socialele : socialseles) {
+                                        String social_link_key = socialele.text();
+                                        String social_link_value = socialele.attr("href");
+                                        if (StringUtils.isNotEmpty(social_link_key) && StringUtils.isNotEmpty(social_link_value)) {
+//                                            log.info(social_link_key + " = " + social_link_value);
+                                            ICO_trackico_detail_block_team_sociallink sociallinkModel = new ICO_trackico_detail_block_team_sociallink();
+                                            sociallinkModel.setIco_trackico_detail_blockTeam(member);
+                                            sociallinkModel.setMemberUrl(memberUrl);
+                                            sociallinkModel.setSocial_link_key(social_link_key);
+                                            sociallinkModel.setSocial_link_value(social_link_value);
+                                            sociallinkModel.setInsert_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                            sociallinkModel.setUpdate_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                            sociallinkList.add(sociallinkModel);
+                                        }
+                                    }
+                                    //插入数据库，已经存入数据库的人，是不会解析的
+                                    trackico_detail_block_team_sociallinkDao.saveAll(sociallinkList);
+                                }
+                            } else {
+                                log.error("!!! not usually page");
+                            }
+                        } else {
+                            log.error("!!! page is null");
+                        }
+                    } else {
+                        log.error("!!! bad request,code:" + code);
+                    }
+                } catch (MethodNotSupportException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                log.info("this member has already extra,member url:" + memberUrl);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     //毫秒转到时分秒
     public static String formatDuring(long mss) {
         long hours = (mss % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60);
@@ -856,11 +922,16 @@ public class TrackicoServiceImp implements TrackicoService {
         // t.getNextPageLink(doc);
         // t.getCurrentPageNum(doc);
 
-        String url = "https://www.trackico.io/ico/zwoop/";
-        String content = t.getPageContent(url);
-        // System.out.println(content);
-        Document doc = Jsoup.parse(content);
-        t.extraDetailPageBlockTeam(null, null, doc);
+//        String url = "https://www.trackico.io/ico/zwoop/";
+//        String content = t.getPageContent(url);
+//        // System.out.println(content);
+//        Document doc = Jsoup.parse(content);
+//        t.extraDetailPageBlockTeam(null, null, doc);
+
+        ICO_trackico_detail_blockTeam member = new ICO_trackico_detail_blockTeam();
+        member.setMember_url("https://www.trackico.io/member/christian-junger/");
+        t.extraMemberSocialLinks(member);
+
     }
 
     @Override
