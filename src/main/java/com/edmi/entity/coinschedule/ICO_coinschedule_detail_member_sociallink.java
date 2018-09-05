@@ -14,7 +14,7 @@ public class ICO_coinschedule_detail_member_sociallink {
     private Long pk_id;
 
     @Column(nullable = false, name = "member_url")
-    private String member_url;
+    private String memberUrl;
 
     @Column(nullable = false, name = "social_link_key")
     private String social_link_key;
@@ -44,12 +44,12 @@ public class ICO_coinschedule_detail_member_sociallink {
         this.pk_id = pk_id;
     }
 
-    public String getMember_url() {
-        return member_url;
+    public String getMemberUrl() {
+        return memberUrl;
     }
 
-    public void setMember_url(String member_url) {
-        this.member_url = member_url;
+    public void setMemberUrl(String memberUrl) {
+        this.memberUrl = memberUrl;
     }
 
     public String getSocial_link_key() {

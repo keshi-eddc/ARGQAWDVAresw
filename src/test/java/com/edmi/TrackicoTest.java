@@ -88,6 +88,7 @@ public class TrackicoTest {
                     ICO_trackico_detail_blockTeam member = memberList.get(i);
                     log.info("- will extra :" + i + " .member_url:" + member.getMember_url());
                     trackicoService.extraMemberSocialLinks(member);
+
                 }
             } else {
                 log.info("--- this time select has not find member from ICO_trackico_detail_blockTeam");

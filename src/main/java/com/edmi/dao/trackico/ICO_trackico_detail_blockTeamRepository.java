@@ -34,7 +34,7 @@ public interface ICO_trackico_detail_blockTeamRepository extends JpaRepository<I
      * notin 增量的方式
      * @return
      */
-    @Query("select l from ICO_trackico_detail_blockTeam l where l.member_url not in (select d.memberUrl from ICO_trackico_detail_block_team_sociallink d)")
+    @Query("select l from ICO_trackico_detail_blockTeam l where member_url <> '' and l.member_url  not in (select d.memberUrl from ICO_trackico_detail_block_team_sociallink d)")
     List<ICO_trackico_detail_blockTeam> findICO_trackico_detail_blockTeamWithNotIn();
 
 }
