@@ -1351,9 +1351,11 @@ public class IcoratingServiceImp implements IcoratingService {
 
     @Override
     public JSONObject getICO_icorating_detailByItemUrl(String url) {
-        JSONObject json = new JSONObject();
+        JSONObject about_json = new JSONObject();
+        JSONObject detail_json = new JSONObject();
         ICO_icorating_detail detail = detailDao.getICO_icorating_detailByLink(url);
         if (null != detail) {
+            List<ICO_icorating_detail_detail> detail_details = ico_icorating_detail_detailDao.getICO_icorating_detail_detailsByFkid(detail.getPk_id());
             List<ICO_icorating_detail_block_development> developments = developmentDao.getICO_icorating_detail_block_developmentsByFkid(detail.getPk_id());
             List<ICO_icorating_detail_block_funds> funds = fundDao.getICO_icorating_detail_block_fundsByFkid(detail.getPk_id());
             List<ICO_icorating_detail_block_team> teams = teamDao.getICO_icorating_detail_block_teamsByFkid(detail.getPk_id());
@@ -1362,8 +1364,13 @@ public class IcoratingServiceImp implements IcoratingService {
             ICO_icorating_detailDto detailDto = new ICO_icorating_detailDto();
             try {
                 BeanUtils.copyProperties(detailDto, detail);
-                json.putAll(BeanUtils.describe(detailDto));
+                detail_json.putAll(BeanUtils.describe(detailDto));
 
+                if(CollectionUtils.isNotEmpty(detail_details)){
+                    for (ICO_icorating_detail_detail detail_detail : detail_details) {
+                        detail_json.put(detail_detail.getDetail_key(),detail_detail.getDetail_value());
+                    }
+                }
                 if (CollectionUtils.isNotEmpty(developments)) {
                     List<ICO_icorating_detail_block_developmentDto> developmentDtos = new ArrayList<>();
                     for (ICO_icorating_detail_block_development development : developments) {
@@ -1371,7 +1378,7 @@ public class IcoratingServiceImp implements IcoratingService {
                         BeanUtils.copyProperties(developmentDto, development);
                         developmentDtos.add(developmentDto);
                     }
-                    json.put("development", JSON.toJSON(developmentDtos));
+                    about_json.put("development", JSON.toJSON(developmentDtos));
                 }
                 if (CollectionUtils.isNotEmpty(funds)) {
                     List<ICO_icorating_detail_block_fundsDto> fundsDtos = new ArrayList<>();
@@ -1380,7 +1387,7 @@ public class IcoratingServiceImp implements IcoratingService {
                         BeanUtils.copyProperties(fundsDto, fund);
                         fundsDtos.add(fundsDto);
                     }
-                    json.put("funds", JSON.toJSON(fundsDtos));
+                    about_json.put("funds", JSON.toJSON(fundsDtos));
                 }
                 if (CollectionUtils.isNotEmpty(teams)) {
                     List<ICO_icorating_detail_block_teamDto> teamDtos = new ArrayList<>();
@@ -1389,41 +1396,73 @@ public class IcoratingServiceImp implements IcoratingService {
                         BeanUtils.copyProperties(teamDto, team);
                         teamDtos.add(teamDto);
                     }
-                    json.put("team", teamDtos);
+                    about_json.put("team", teamDtos);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            json.remove("class");
-            /*组装social信息*/
-            JSONObject social = new JSONObject();
-            social.put("facebook", json.getString("contacts_facebook"));
-            json.remove("contacts_facebook");
-            social.put("twitter", json.getString("contacts_twitter"));
-            json.remove("contacts_twitter");
-            social.put("reddit", json.getString("contacts_reddit_alien"));
-            json.remove("contacts_reddit_alien");
-            social.put("medium", json.getString("contacts_medium"));
-            json.remove("contacts_medium");
-            social.put("github", json.getString("contacts_github"));
-            json.remove("contacts_github");
-            social.put("instagram", json.getString("contacts_instagram"));
-            json.remove("contacts_instagram");
-            social.put("telegram", json.getString("contacts_telegram_plane"));
-            json.remove("contacts_telegram_plane");
-            social.put("youtube", json.getString("contacts_youtube"));
-            json.remove("contacts_youtube");
+            /*移除social信息*/
+            detail_json.remove("contacts_facebook");
+            detail_json.remove("contacts_twitter");
+            detail_json.remove("contacts_reddit_alien");
+            detail_json.remove("contacts_medium");
+            detail_json.remove("contacts_github");
+            detail_json.remove("contacts_instagram");
+            detail_json.remove("contacts_telegram_plane");
+            detail_json.remove("contacts_youtube");
 
-            json.put("social", social);
+            /*从ico_detail中提取出概况:name,whitePaperURL,tag,about,brief,description,prototype*/
+            if(detail_json.containsKey("block_name")){
+                about_json.put("name",detail_json.getString("block_name"));
+                detail_json.remove("block_name");
+            }else{
+                about_json.put("name","");
+            }
+
+            if(detail_json.containsKey("trading_whitepaper")){
+                about_json.put("whitePaperURL",detail_json.getString("trading_whitepaper"));
+                detail_json.remove("trading_whitepaper");
+            }else{
+                about_json.put("whitePaperURL","");
+            }
+
+            if(detail_json.containsKey("block_tag")){
+                about_json.put("tag",detail_json.getString("block_tag"));
+                detail_json.remove("block_tag");
+            }else{
+                about_json.put("tag","");
+            }
+
+            about_json.put("about","");
+            about_json.put("brief","");
+
+            if(detail_json.containsKey("block_overview")){
+                about_json.put("description",detail_json.getString("block_overview"));
+                detail_json.remove("block_overview");
+            }else{
+                about_json.put("description","");
+            }
+
+            about_json.put("prototype","");
+
             /*下面处理Block的logo*/
-            json.put("solution_photo_url", detail.getIco_icorating_list().getLogo());
+            detail_json.put("solution_photo_url", detail.getIco_icorating_list().getLogo());
+            /*移除重复的信息*/
+            detail_json.remove("Ticker");
+            detail_json.remove("ICO start date");
+            detail_json.remove("ICO end date");
+            detail_json.remove("Registration Country");
         }
-        return json;
+        detail_json.remove("class");
+        about_json.remove("class");
+        about_json.put("ico",detail_json);
+        return about_json;
     }
 
     @Override
     public JSONObject getICO_icorating_funds_detailByItemUrl(String url) {
-        JSONObject json = new JSONObject();
+        JSONObject about_json = new JSONObject();
+        JSONObject detail_json = new JSONObject();
         ICO_icorating_funds_detail detail = foundsDetailDao.findICO_icorating_funds_detailByLink(url);
         if (null != detail) {
 
@@ -1433,7 +1472,7 @@ public class IcoratingServiceImp implements IcoratingService {
             ICO_icorating_funds_detailDto detailDto = new ICO_icorating_funds_detailDto();
             try {
                 BeanUtils.copyProperties(detailDto, detail);
-                json.putAll(BeanUtils.describe(detailDto));
+                detail_json.putAll(BeanUtils.describe(detailDto));
 
 
                 if (CollectionUtils.isNotEmpty(teams)) {
@@ -1443,27 +1482,44 @@ public class IcoratingServiceImp implements IcoratingService {
                         BeanUtils.copyProperties(teamDto, team);
                         teamDtos.add(teamDto);
                     }
-                    json.put("member", teamDtos);
+                    about_json.put("member", teamDtos);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            json.remove("class");
-            /*组装social信息*/
-            JSONObject social = new JSONObject();
-            social.put("facebook", json.getString("facebook"));
-            json.remove("facebook");
-            social.put("twitter", json.getString("twitter"));
-            json.remove("twitter");
-            social.put("medium", json.getString("medium"));
-            json.remove("medium");
-            social.put("linkedin", json.getString("linkedin"));
-            json.remove("linkedin");
+            /*移除social信息*/
+            detail_json.remove("facebook");
+            detail_json.remove("twitter");
+            detail_json.remove("medium");
+            detail_json.remove("linkedin");
 
-            json.put("social", social);
             /*下面处理Block的logo*/
-            json.put("solution_photo_url", detail.getIco_icorating_funds_list().getLogo());
+            detail_json.put("solution_photo_url", detail.getIco_icorating_funds_list().getLogo());
+
+            /*从ico_detail中提取出概况:name,whitePaperURL,tag,about,brief,description,prototype*/
+            if(detail_json.containsKey("fund")){
+                about_json.put("name",detail_json.getString("fund"));
+                detail_json.remove("fund");
+            }else{
+                about_json.put("name","");
+            }
+
+            about_json.put("whitePaperURL","");
+
+            if(detail_json.containsKey("about")){
+                about_json.put("about",detail_json.getString("about"));
+                detail_json.remove("about");
+            }else{
+                about_json.put("about","");
+            }
+
+            about_json.put("brief","");
+            about_json.put("description","");
+            about_json.put("prototype","");
         }
-        return json;
+        about_json.remove("class");
+        detail_json.remove("class");
+        about_json.put("ico",detail_json);
+        return about_json;
     }
 }

@@ -173,7 +173,7 @@ public class LinkedinServiceImp implements LinkedinService {
         }
 
         String summary = "";//介绍不是很全，从json里面获取
-        String json_str = "{\"data\":{\"patentView\":"+StringUtils.substringBetween(doc.toString(),"{\"data\":{\"patentView\":","</code>");
+        /*String json_str = "{\"data\":{\"patentView\":"+StringUtils.substringBetween(doc.toString(),"{\"data\":{\"patentView\":","</code>");
         JSONObject json = JSONObject.parseObject(json_str);
         if(null!=json){
             JSONArray incluededs = json.getJSONArray("included");
@@ -186,7 +186,7 @@ public class LinkedinServiceImp implements LinkedinService {
                     }
                 }
             }
-        }
+        }*/
 
         /*会员信息*/
         ICO_Linkedin_Member member = new ICO_Linkedin_Member();
@@ -214,13 +214,14 @@ public class LinkedinServiceImp implements LinkedinService {
         Element experience_section = doc.getElementById("experience-section");
         List<ICO_Linkedin_Memberworkexperience> workexperiences = null;
         if (null != experience_section) {
-
+            Elements experiences = new Elements();
             Elements experiences_eles_1 = experience_section.getElementsByAttributeValueStarting("class", "pv-profile-section__sortable-item pv-profile-section__section-info-item");
-            Elements experiences_eles_2 = experience_section.getElementsByAttributeValueStarting("class", "pv-profile-section__card-item pv-position-entity");
-            experiences_eles_1.addAll(experiences_eles_2);
+            Elements experiences_eles_2 = experience_section.getElementsByAttributeValueStarting("class", "pv-profile-section__card-item-v2 pv-profile-section pv-position-entity");
+            experiences.addAll(experiences_eles_1);
+            experiences.addAll(experiences_eles_2);
 
             workexperiences = new ArrayList<ICO_Linkedin_Memberworkexperience>();
-            for (Element experience : experiences_eles_1) {
+            for (Element experience : experiences) {
                 Elements experience_position_ele = experience.getElementsByAttributeValue("class", "pv-entity__summary-info");
                 ICO_Linkedin_Memberworkexperience workexperience = new ICO_Linkedin_Memberworkexperience();
                 if (null != experience_position_ele&&experience_position_ele.size()>0) {//职位

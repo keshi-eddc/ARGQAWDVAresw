@@ -1142,12 +1142,28 @@ public class TrackicoServiceImp implements TrackicoService {
 
                     about_json.put("prototype","");
 
-                    detail_json.remove("class");
+                    /*移除social信息*/
+                    detail_json.remove("Telegram");
+                    detail_json.remove("Twitter");
+                    detail_json.remove("Facebook");
+                    detail_json.remove("Reddit");
+                    detail_json.remove("Instagram");
+                    detail_json.remove("BitcoinTalk");
+                    detail_json.remove("Blog");
+                    detail_json.remove("LinkedIn");
+                    detail_json.remove("GitHub");
+                    detail_json.remove("Bounty");
+                    detail_json.remove("Slack");
+                    detail_json.remove("Steemit");
+                    detail_json.remove("Discord");
+
                 } catch (Exception e) {
                    log.info(e.getMessage());
                 }
             }
         }
+        detail_json.remove("class");
+        about_json.remove("class");
         about_json.put("ico",detail_json);
         return about_json;
     }

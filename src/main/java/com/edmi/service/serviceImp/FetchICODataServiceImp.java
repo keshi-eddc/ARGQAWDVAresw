@@ -131,6 +131,15 @@ public class FetchICODataServiceImp implements FetchICODataService {
                             ico_detail.put("icoEnd","");
                         }
                         ico_detail.remove("icoDate");
+                        /*移除social信息*/
+                        ico_detail.remove("telegram");
+                        ico_detail.remove("twitter");
+                        ico_detail.remove("bitcointalk");
+                        ico_detail.remove("facebook");
+                        ico_detail.remove("gitHub");
+                        ico_detail.remove("medium");
+
+
                         ico_detail.remove("class");
 
                         ico_about.put("ico",ico_detail);
