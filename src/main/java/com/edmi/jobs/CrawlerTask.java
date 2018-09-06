@@ -297,7 +297,8 @@ public class CrawlerTask {
 
     // <===================== 下面是trackico的相关job ===================================>
     //每天早晨5点开始
-    @Scheduled(cron = "0 00 21 * * ?")
+//    @Scheduled(cron = "0 00 21 * * ?")
+//    @Scheduled(cron = "0 40 10 * * ?")
     public void getICO_Trackico_list() throws MethodNotSupportException {
         log.info("***** getICO_Trackico_list task start *****");
         trackicoService.getICO_trackico_list();
@@ -307,7 +308,7 @@ public class CrawlerTask {
     //all
 //    @Scheduled(cron = "0 30 03 * * ?")
     //每5分钟
-    @Scheduled(cron = "0 0/5 * * * ?")
+//    @Scheduled(cron = "0 0/5 * * * ?")
     public void getICO_Trackico_detail() throws MethodNotSupportException {
         log.info("***** getICO_Trackico_detail task start *****");
 
@@ -348,7 +349,7 @@ public class CrawlerTask {
     }
 
     //每天早晨10点开始（中国时间）
-    @Scheduled(cron = "0 00 02 * * ?")
+//    @Scheduled(cron = "0 00 02 * * ?")
     public void getTrackicoMemberSocialLinkManager() {
         log.info("***** start getTrackicoMemberSocialLink task *****");
         try {
