@@ -209,14 +209,28 @@ public class IcodropsServiceImp implements IcodropsService {
                                                     }
                                                 }
                                             }
-                                            icodropsListDao.save(listModel);
 
-//                                            ICO_icodrops_list oldlist = icodropsListDao.getICO_icodrops_listByIco_url(listModel.getIco_url());
-//                                            if (null == oldlist) {
-//                                                icodropsListDao.save(listModel);
-//                                            } else {
-//                                                log.info("---- this item is already existed, do not insert into icodrops_list table");
-//                                            }
+                                            List<ICO_icodrops_list> oldlist = icodropsListDao.getICO_icodrops_listByIco_url(listModel.getIco_url());
+                                            if (CollectionUtils.isEmpty(oldlist)) {
+                                                log.info("--- insert into ICO_icodrops_list object.");
+                                                icodropsListDao.save(listModel);
+                                            } else {
+                                                for (ICO_icodrops_list old : oldlist) {
+                                                    String oldInputType = old.getInput_type();
+                                                    String oldTableType = old.getTable_type();
+                                                    String oldIcoUrl = old.getIco_url();
+                                                    if (listModel.getInput_type().equals(oldInputType)) {
+                                                        if (listModel.getTable_type().equals(oldTableType)) {
+                                                            if (!listModel.getIco_url().equals(oldIcoUrl)) {
+                                                                log.info("---- in /" + oldInputType + "/" + oldTableType + " find new one");
+                                                                icodropsListDao.save(listModel);
+                                                            } else {
+                                                                log.info("---- this item is already existed, do not insert into icodrops_list table");
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -279,6 +293,12 @@ public class IcodropsServiceImp implements IcodropsService {
             }
         } else {
             log.info("--- this icodrops item has extraed already .");
+            String crawledStatu = item.getCrawledStatu();
+            if (crawledStatu.equals("ini")) {
+                log.info("--- and update it crawledStatu from ini to 200");
+                item.setCrawledStatu("200");
+                icodropsListDao.save(item);
+            }
         }
     }
 

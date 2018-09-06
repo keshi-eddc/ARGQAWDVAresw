@@ -1,17 +1,18 @@
 package com.edmi.service.serviceImp.trackico;
 
-import java.lang.reflect.InvocationTargetException;
-import java.sql.Timestamp;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
-
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.edmi.dao.trackico.*;
 import com.edmi.dto.trackico.*;
+import com.edmi.entity.trackico.*;
+import com.edmi.service.service.TrackicoService;
+import com.edmi.utils.http.HttpClientUtil;
+import com.edmi.utils.http.exception.MethodNotSupportException;
+import com.edmi.utils.http.request.Request;
+import com.edmi.utils.http.request.RequestMethod;
+import com.edmi.utils.http.response.Response;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -21,28 +22,17 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import com.edmi.dao.trackico.ICO_trackico_detailRepository;
-import com.edmi.dao.trackico.ICO_trackico_detail_blockFinancialRepository;
-import com.edmi.dao.trackico.ICO_trackico_detail_blockInfoRepository;
-import com.edmi.dao.trackico.ICO_trackico_detail_blockLabelRepository;
-import com.edmi.dao.trackico.ICO_trackico_detail_blockMilestonesRepository;
-import com.edmi.dao.trackico.ICO_trackico_detail_blockTeamRepository;
-import com.edmi.dao.trackico.ICO_trackico_itemRepository;
-import com.edmi.entity.trackico.ICO_trackico_detail;
-import com.edmi.entity.trackico.ICO_trackico_detail_blockFinancial;
-import com.edmi.entity.trackico.ICO_trackico_detail_blockLabel;
-import com.edmi.entity.trackico.ICO_trackico_detail_blockMilestones;
-import com.edmi.entity.trackico.ICO_trackico_detail_blockTeam;
-import com.edmi.entity.trackico.ICO_trackico_detail_block_info;
-import com.edmi.entity.trackico.ICO_trackico_item;
-import com.edmi.service.service.TrackicoService;
-import com.edmi.utils.http.HttpClientUtil;
-import com.edmi.utils.http.exception.MethodNotSupportException;
-import com.edmi.utils.http.request.Request;
-import com.edmi.utils.http.request.RequestMethod;
-import com.edmi.utils.http.response.Response;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author keshi
@@ -75,6 +65,8 @@ public class TrackicoServiceImp implements TrackicoService {
     private ICO_trackico_detail_blockMilestonesRepository detail_milestonesDao;
     @Autowired
     private ICO_trackico_detail_blockInfoRepository detail_InfoDao;
+    @Autowired
+    private ICO_trackico_detail_block_team_sociallinkRepository trackico_detail_block_team_sociallinkDao;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -96,33 +88,36 @@ public class TrackicoServiceImp implements TrackicoService {
         // 当前页码 在解析详情页时获得
         while (isNotLast) {
             try {
-                // kangkang的请求方法
-                // HttpRequestHeader header = new HttpRequestHeader();
-                // header.setUrl(url);
-                // String html = SomSiteRequest.getPageContent(header);
-                String html = getPageContent(url);
-                if (StringUtils.isNotBlank(html)) {
-                    // 验证页面是否正常
-                    if (html.contains("card-body") && html.contains("page-item")) {
-                        Document doc = Jsoup.parse(html);
-                        // 解析列表页
-                        extraOneListPage(doc);
-                        // 获得当前item总数
-                        int currentItemTotalNum = getCurrentItemTotalNum(doc);
-                        // 获得当前item数
-                        int currentItemNum = getCurrentItemNum(doc);
-                        // 判断是否是最后一页
-                        if (currentItemNum >= currentItemTotalNum) {
-                            isNotLast = false;
+                Request request = new Request(url, RequestMethod.GET);
+                Response response = HttpClientUtil.doRequest(request);
+                int code = response.getCode();
+                if (code == 200) {
+                    String html = response.getResponseText();
+                    if (StringUtils.isNotBlank(html)) {
+                        // 验证页面是否正常
+                        if (html.contains("card-body") && html.contains("page-item")) {
+                            Document doc = Jsoup.parse(html);
+                            // 解析列表页
+                            extraOneListPage(doc);
+                            // 获得当前item总数
+                            int currentItemTotalNum = getCurrentItemTotalNum(doc);
+                            // 获得当前item数
+                            int currentItemNum = getCurrentItemNum(doc);
+                            // 判断是否是最后一页
+                            if (currentItemNum >= currentItemTotalNum) {
+                                isNotLast = false;
+                            }
+                            // 获得下一页链接
+                            url = getNextPageLink(doc);
+                            // Thread.sleep(1000);
+                        } else {
+                            log.error("异常页面：" + url);
                         }
-                        // 获得下一页链接
-                        url = getNextPageLink(doc);
-                        // Thread.sleep(1000);
                     } else {
-                        log.error("异常页面：" + url);
+                        log.error("页面为空：" + url);
                     }
                 } else {
-                    log.error("页面为空：" + url);
+                    log.error("!!! bad request:" + url);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -322,7 +317,6 @@ public class TrackicoServiceImp implements TrackicoService {
             Response response = HttpClientUtil.doRequest(request);
             int code = response.getCode();
             // 500 Read timed out
-            System.out.println("code;" + code);
             // 验证请求
             if (code == 200) {
                 String content = response.getResponseText();
@@ -333,7 +327,7 @@ public class TrackicoServiceImp implements TrackicoService {
                         Document doc = Jsoup.parse(content);
                         // 模型
                         ICO_trackico_detail detailModel = new ICO_trackico_detail();
-                        //
+                        //有一次请求，可以用来更新。旧数据是否需要跟新
                         ICO_trackico_detail ico_trackico_detailList = ico_trackico_detailDao.getICO_trackico_detailsByFkid(item.getPk_id());
                         if (null == ico_trackico_detailList) {
                             // 解析详情页的-详情
@@ -349,27 +343,27 @@ public class TrackicoServiceImp implements TrackicoService {
                             // 解析详情页的-公司信息
                             extraDetailPageBlockInfo(item, detailModel, doc);
                         } else {
-                            log.info("-detailPageDetails is Already exist ,and delete details and others ,set status = ini.");
-                            deleteICO_trackico_detail_blockLabelByPk_id(ico_trackico_detailList.getPk_id());
-                            deleteICO_trackico_detai_blockTeamlByPk_id(ico_trackico_detailList.getPk_id());
-                            deleteICO_trackico_detail_blockFinancialByPk_id(ico_trackico_detailList.getPk_id());
-                            deleteICO_trackico_detai_blockMilestonesByPk_id(ico_trackico_detailList.getPk_id());
-                            deleteICO_trackico_detail_block_infoByPk_id(ico_trackico_detailList.getPk_id());
-                            deleteICO_trackico_detailByPk_id(item.getPk_id());
-
-                            // 发生了重复，先删除 从表 和 detail 表。进入下次抓取
-                            item.setStatus("ini");
-                            ico_trackico_itemDao.save(item);
+                            log.info("-detailPageDetails is Already exist ,do not extra");
+//                            log.info("-detailPageDetails is Already exist ,and delete details and others ,set status = ini.");
+//                            deleteICO_trackico_detail_blockLabelByPk_id(ico_trackico_detailList.getPk_id());
+//                            deleteICO_trackico_detai_blockTeamlByPk_id(ico_trackico_detailList.getPk_id());
+//                            deleteICO_trackico_detail_blockFinancialByPk_id(ico_trackico_detailList.getPk_id());
+//                            deleteICO_trackico_detai_blockMilestonesByPk_id(ico_trackico_detailList.getPk_id());
+//                            deleteICO_trackico_detail_block_infoByPk_id(ico_trackico_detailList.getPk_id());
+//                            deleteICO_trackico_detailByPk_id(item.getPk_id());
+//
+//                            // 发生了重复，先删除 从表 和 detail 表。进入下次抓取
+//                            item.setStatus("ini");
+//                            ico_trackico_itemDao.save(item);
                         }
-
                     } else {
                         log.error("page Exception：" + url);
                     }
                 } else {
                     log.error("page null：" + url);
                 }
-
             } else {
+                log.error("!!! bad request :" + url);
                 // 更新item对象的status -请求不正确，把status = 状态码
                 item.setStatus(String.valueOf(code));
                 ico_trackico_itemDao.save(item);
@@ -847,6 +841,76 @@ public class TrackicoServiceImp implements TrackicoService {
         }
     }
 
+    //人员的社交链接
+    @Override
+    @Async("myTaskAsyncPool")
+    public void extraMemberSocialLinks(ICO_trackico_detail_blockTeam member) {
+        String memberUrl = member.getMember_url();
+
+        try {
+            if (StringUtils.isNotEmpty(memberUrl)) {
+                //测试
+//            List<ICO_trackico_detail_block_team_sociallink> oldMemberSocialLinkList = new ArrayList<>();
+                List<ICO_trackico_detail_block_team_sociallink> oldMemberSocialLinkList = trackico_detail_block_team_sociallinkDao.findICO_trackico_detail_block_team_sociallinksByMemberUrl(memberUrl);
+                if (CollectionUtils.isEmpty(oldMemberSocialLinkList)) {
+                    try {
+                        Request request = new Request(memberUrl, RequestMethod.GET);
+                        Response response = HttpClientUtil.doRequest(request);
+                        int code = response.getCode();
+                        //验证请求
+//                    log.info("----- request code:" + code);
+                        if (code == 200) {
+                            String content = response.getResponseText();
+                            // 验证页面
+                            if (StringUtils.isNotBlank(content)) {
+                                // 验证是否是正常页面
+                                if (content.contains("card-body")) {
+                                    Document doc = Jsoup.parse(content);
+//                                log.info(doc.title());
+                                    Elements socialseles = doc.select("div.card-body >div.flexbox >div.flex-grow >div.flex-row >a");
+                                    if (socialseles != null && socialseles.size() > 0) {
+                                        List<ICO_trackico_detail_block_team_sociallink> sociallinkList = new ArrayList<>(10);
+                                        for (Element socialele : socialseles) {
+                                            String social_link_key = socialele.text();
+                                            String social_link_value = socialele.attr("href");
+                                            if (StringUtils.isNotEmpty(social_link_key) && StringUtils.isNotEmpty(social_link_value)) {
+//                                            log.info(social_link_key + " = " + social_link_value);
+                                                ICO_trackico_detail_block_team_sociallink sociallinkModel = new ICO_trackico_detail_block_team_sociallink();
+                                                sociallinkModel.setIco_trackico_detail_blockTeam(member);
+                                                sociallinkModel.setMemberUrl(memberUrl);
+                                                sociallinkModel.setSocial_link_key(social_link_key);
+                                                sociallinkModel.setSocial_link_value(social_link_value);
+                                                sociallinkModel.setInsert_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                                sociallinkModel.setUpdate_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                                sociallinkList.add(sociallinkModel);
+                                            }
+                                        }
+                                        //插入数据库，已经存入数据库的人，是不会解析的
+                                        trackico_detail_block_team_sociallinkDao.saveAll(sociallinkList);
+                                    }
+                                } else {
+                                    log.error("!!! not usually page");
+                                }
+                            } else {
+                                log.error("!!! page is null");
+                            }
+                        } else {
+                            log.error("!!! bad request,code:" + code);
+                        }
+                    } catch (MethodNotSupportException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    log.info("this member has already extra,member url:" + memberUrl);
+                }
+            } else {
+                log.info(" !! member url is null .");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     //毫秒转到时分秒
     public static String formatDuring(long mss) {
         long hours = (mss % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60);
@@ -868,11 +932,16 @@ public class TrackicoServiceImp implements TrackicoService {
         // t.getNextPageLink(doc);
         // t.getCurrentPageNum(doc);
 
-        String url = "https://www.trackico.io/ico/zwoop/";
-        String content = t.getPageContent(url);
-        // System.out.println(content);
-        Document doc = Jsoup.parse(content);
-        t.extraDetailPageBlockTeam(null, null, doc);
+//        String url = "https://www.trackico.io/ico/zwoop/";
+//        String content = t.getPageContent(url);
+//        // System.out.println(content);
+//        Document doc = Jsoup.parse(content);
+//        t.extraDetailPageBlockTeam(null, null, doc);
+
+        ICO_trackico_detail_blockTeam member = new ICO_trackico_detail_blockTeam();
+        member.setMember_url("https://www.trackico.io/member/christian-junger/");
+        t.extraMemberSocialLinks(member);
+
     }
 
     @Override

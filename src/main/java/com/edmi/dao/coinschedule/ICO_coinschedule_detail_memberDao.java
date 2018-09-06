@@ -16,7 +16,7 @@ public interface ICO_coinschedule_detail_memberDao extends JpaRepository<ICO_coi
      *
      * @return
      */
-    @Query("select l from ICO_coinschedule_detail_member l where l.member_url not in (select d.member_url from ICO_coinschedule_detail_member_sociallink d)")
+    @Query("select l from ICO_coinschedule_detail_member l where l.member_url not in (select d.memberUrl from ICO_coinschedule_detail_member_sociallink d)")
     List<ICO_coinschedule_detail_member> findICO_coinschedule_detail_memberWithNotIn();
 
     @Query("select info from ICO_coinschedule_detail_member info where info.ico_coinschedule_detail.pk_id = :pk_id ")

@@ -159,9 +159,10 @@ public class IcoratingServiceImp implements IcoratingService {
                                     log.info("insert into list table");
                                     listDao.save(item);
                                 } else {
-                                    log.info("the item is already existed.delete and insert new one");
-                                    deleteICO_icorating_listByLink(item.getLink());
-                                    listDao.save(item);
+                                    log.info("the item is already existed.do not insert");
+//                                    log.info("the item is already existed.delete and insert new one");
+//                                    deleteICO_icorating_listByLink(item.getLink());
+//                                    listDao.save(item);
                                 }
                             }
                             // 判断是否是最后一页
@@ -408,7 +409,6 @@ public class IcoratingServiceImp implements IcoratingService {
                     item.setCrawledStatu(String.valueOf(code));
                     listDao.save(item);
                 }
-
             } else {
                 //已经存在，如果状态还是ini，改200
                 log.info("---------- allread exist the detail URL ：" + itemUrl);
@@ -976,6 +976,8 @@ public class IcoratingServiceImp implements IcoratingService {
                                 String te = old.getTestnet();
                                 String mi = old.getMiannet();
                                 if (pre.equals(developmentModel.getPre_launch()) && la.equals(developmentModel.getLaunch()) && cu.equals(developmentModel.getCustom()) && te.equals(developmentModel.getTestnet()) && mi.equals(developmentModel.getMiannet())) {
+                                    log.info("--- this developmentModel is already existed .");
+                                } else {
                                     log.info("--- this developmentModel is already existed ,but find new developmentModel.");
                                     developmentList.add(developmentModel);
                                 }
@@ -1014,9 +1016,9 @@ public class IcoratingServiceImp implements IcoratingService {
                             if (jo != null) {
                                 List<ICO_icorating_funds_list> fundsList = new ArrayList<>(100);
                                 String lastPagestr = jo.getString("lastPage");
-                                if (lastPagestr.equalsIgnoreCase("false")) {
+                                if (lastPagestr.equals("false")) {
                                     log.info("----------current page is :" + page);
-                                } else {
+                                } else if (lastPagestr.equals("true")) {
                                     isNotLast = false;
                                     log.info("----- last page:" + page);
                                 }
@@ -1079,6 +1081,9 @@ public class IcoratingServiceImp implements IcoratingService {
                                     }
                                 }
                             }
+                        } else {
+                            log.error("!!! content do not contains funds  lastPage");
+                            isNotLast = false;
                         }
                     }
                 } else {
@@ -1090,6 +1095,7 @@ public class IcoratingServiceImp implements IcoratingService {
                 log.error("!!!icorating founds list Exception");
             }
         }
+        log.info("********** icorating funds list task over **********");
     }
 
     @Override

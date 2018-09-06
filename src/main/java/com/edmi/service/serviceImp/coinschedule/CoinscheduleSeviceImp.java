@@ -136,10 +136,10 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
                                         list.setIcoCoinscheduleUrl(icoCoinscheduleUrl);
                                     }
                                     Elements sp_logos = colum.getElementsByClass("sp-logo");
-                                    if(CollectionUtils.isNotEmpty(sp_logos)){
+                                    if (CollectionUtils.isNotEmpty(sp_logos)) {
                                         Element sp_logo = sp_logos.first();
                                         Elements imgs = sp_logo.getElementsByTag("img");
-                                        if(CollectionUtils.isNotEmpty(imgs)){
+                                        if (CollectionUtils.isNotEmpty(imgs)) {
                                             Element img = imgs.first();
                                             String src = img.attr("data-src");
                                             list.setBlockLogo(src);
@@ -209,10 +209,10 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
                                         list.setIcoCoinscheduleUrl(icoCoinscheduleUrl);
                                     }
                                     Elements sp_logos = colum.getElementsByClass("sp-logo");
-                                    if(CollectionUtils.isNotEmpty(sp_logos)){
+                                    if (CollectionUtils.isNotEmpty(sp_logos)) {
                                         Element sp_logo = sp_logos.first();
                                         Elements imgs = sp_logo.getElementsByTag("img");
-                                        if(CollectionUtils.isNotEmpty(imgs)){
+                                        if (CollectionUtils.isNotEmpty(imgs)) {
                                             Element img = imgs.first();
                                             String src = img.attr("data-src");
                                             list.setBlockLogo(src);
@@ -249,32 +249,38 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
     @Override
     public void getIco_coinschedule_detail(Ico_coinschedule_List item) {
         String url = item.getIcoCoinscheduleUrl();
-        try {
-            Request request = new Request(url, RequestMethod.GET);
-            Response response = HttpClientUtil.doRequest(request);
-            int code = response.getCode();
-            //验证请求
-            log.info("----- request code:" + code);
-            if (code == 200) {
-                String content = response.getResponseText();
-                // 验证页面
-                if (StringUtils.isNotBlank(content)) {
-                    // 验证是否是正常页面
-                    if (content.contains("prj-title")) {
-                        Document doc = Jsoup.parse(content);
-                        ICO_coinschedule_detail detailModel = extraDetails(doc, item);
-                        //解析ico信息
-                        extraIcoInfo(doc, detailModel);
-                        //解析社交链接
-                        extraSocialLink(doc, detailModel);
-                        //解析人员信息
-                        extraMember(doc, detailModel);
-
+        if (StringUtils.isNotEmpty(url)) {
+            ICO_coinschedule_detail oldDetail = ico_coinschedule_detailDao.findICO_coinschedule_detailByLink(url);
+            if (oldDetail == null) {
+                try {
+                    Request request = new Request(url, RequestMethod.GET);
+                    Response response = HttpClientUtil.doRequest(request);
+                    int code = response.getCode();
+                    //验证请求
+                    log.info("- request: " + url + " ,code:" + code);
+                    if (code == 200) {
+                        String content = response.getResponseText();
+                        // 验证页面
+                        if (StringUtils.isNotBlank(content)) {
+                            // 验证是否是正常页面
+                            if (content.contains("prj-title")) {
+                                Document doc = Jsoup.parse(content);
+                                ICO_coinschedule_detail detailModel = extraDetails(doc, item);
+                                //解析ico信息
+                                extraIcoInfo(doc, detailModel);
+                                //解析社交链接
+                                extraSocialLink(doc, detailModel);
+                                //解析人员信息
+                                extraMember(doc, detailModel);
+                            }
+                        }
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
+            } else {
+                log.info("- this Ico_coinschedule_List item has already extra.do not extra.");
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
@@ -669,15 +675,15 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
                                         if (oldicolistModel == null) {
                                             log.info("----- insert new date");
                                             icosLists.add(listModel);
-//                                            ico_coinschedule_icos_listDao.save(listModel);
                                         } else {
-                                            log.info("----- update old date");
-                                            oldicolistModel.setCategory(category);
-                                            oldicolistModel.setEnded_on(endedOn);
-                                            oldicolistModel.setTotal_raised(totalRaised);
-                                            oldicolistModel.setUpdate_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
-                                            icosLists.add(oldicolistModel);
-//                                            ico_coinschedule_icos_listDao.save(oldicolistModel);
+                                            log.info("- this ICO_coinschedule_icos_list is alreadt existed.do not insert.");
+                                            //更新的功能
+//                                            log.info("----- update old date");
+//                                            oldicolistModel.setCategory(category);
+//                                            oldicolistModel.setEnded_on(endedOn);
+//                                            oldicolistModel.setTotal_raised(totalRaised);
+//                                            oldicolistModel.setUpdate_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+//                                            icosLists.add(oldicolistModel);
                                         }
                                     }
                                 }
@@ -702,83 +708,92 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
     @Override
     public void getIcoCoinscheduleMemberSocialLink(ICO_coinschedule_detail_member member) {
 //        log.info("----- getIcoCoinscheduleMemberSocialLink");
-        try {
-            String url = member.getMember_url();
-            Request request = new Request(url, RequestMethod.GET);
-            Response response = HttpClientUtil.doRequest(request);
-            int code = response.getCode();
+        String url = member.getMember_url();
+        if (StringUtils.isNotEmpty(url)) {
+            List<ICO_coinschedule_detail_member_sociallink> oldMemberSocialLink = ico_coinschedule_detail_member_sociallinkDao.findICO_coinschedule_detail_member_sociallinksByMemberUrl(url);
+            if (CollectionUtils.isEmpty(oldMemberSocialLink)) {
+                try {
+                    Request request = new Request(url, RequestMethod.GET);
+                    Response response = HttpClientUtil.doRequest(request);
+                    int code = response.getCode();
 //            log.info("url: " + url + " = " + code);
-            //验证请求
-            if (code == 200) {
-                String content = response.getResponseText();
-                // 验证页面
-                if (StringUtils.isNotBlank(content)) {
-                    // 验证是否是正常页面
-                    if (content.contains("person-title")) {
-                        List<ICO_coinschedule_detail_member_sociallink> sociallinkList = new ArrayList<>(10);
-                        Document doc = Jsoup.parse(content);
-                        Elements sectionseles = doc.select("div.container >div.content-section > div.widget");
-                        if (sectionseles != null && sectionseles.size() > 0) {
-                            for (Element sectionele : sectionseles) {
-                                Elements titleles = sectionele.select("h3");
-                                if (titleles != null && titleles.size() > 0) {
-                                    String title = titleles.text().trim();
+                    //验证请求
+                    if (code == 200) {
+                        String content = response.getResponseText();
+                        // 验证页面
+                        if (StringUtils.isNotBlank(content)) {
+                            // 验证是否是正常页面
+                            if (content.contains("person-title")) {
+                                List<ICO_coinschedule_detail_member_sociallink> sociallinkList = new ArrayList<>(10);
+                                Document doc = Jsoup.parse(content);
+                                Elements sectionseles = doc.select("div.container >div.content-section > div.widget");
+                                if (sectionseles != null && sectionseles.size() > 0) {
+                                    for (Element sectionele : sectionseles) {
+                                        Elements titleles = sectionele.select("h3");
+                                        if (titleles != null && titleles.size() > 0) {
+                                            String title = titleles.text().trim();
 //                                    log.info("title:" + title);
-                                    if (title.equals("Social")) {
-                                        Elements socialseles = sectionele.select("a");
-                                        if (socialseles != null && socialseles.size() > 0) {
-                                            for (Element socialele : socialseles) {
-                                                log.info("socialele:" + socialele.toString());
-                                                String social_link_key = "";
-                                                String social_link_value = socialele.attr("href").trim();
-                                                Elements keyeles = socialele.select("img");
-                                                if (keyeles != null && keyeles.size() > 0) {
-                                                    social_link_key = keyeles.attr("alt").trim();
+                                            if (title.equals("Social")) {
+                                                Elements socialseles = sectionele.select("a");
+                                                if (socialseles != null && socialseles.size() > 0) {
+                                                    for (Element socialele : socialseles) {
+//                                                        log.info("socialele:" + socialele.toString());
+                                                        String social_link_key = "";
+                                                        String social_link_value = socialele.attr("href").trim();
+                                                        Elements keyeles = socialele.select("img");
+                                                        if (keyeles != null && keyeles.size() > 0) {
+                                                            social_link_key = keyeles.attr("alt").trim();
+                                                        } else {
+                                                            log.info("----- social_link_key is null : " + url);
+                                                        }
+                                                        log.info(social_link_key + " = " + social_link_value);
+                                                        if (StringUtils.isNotEmpty(social_link_key) && StringUtils.isNotEmpty(social_link_value)) {
+                                                            ICO_coinschedule_detail_member_sociallink sociallinkModel = new ICO_coinschedule_detail_member_sociallink();
+                                                            sociallinkModel.setIco_coinschedule_detail_member(member);
+                                                            sociallinkModel.setMemberUrl(member.getMember_url());
+                                                            sociallinkModel.setSocial_link_key(social_link_key);
+                                                            sociallinkModel.setSocial_link_value(social_link_value);
+                                                            sociallinkModel.setInsert_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                                            sociallinkModel.setUpdate_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                                            sociallinkList.add(sociallinkModel);
+                                                        }
+                                                    }
                                                 } else {
-                                                    log.info("----- social_link_key is null : " + url);
-                                                }
-                                                log.info(social_link_key + " = " + social_link_value);
-                                                if (StringUtils.isNotEmpty(social_link_key) && StringUtils.isNotEmpty(social_link_value)) {
-                                                    ICO_coinschedule_detail_member_sociallink sociallinkModel = new ICO_coinschedule_detail_member_sociallink();
-                                                    sociallinkModel.setIco_coinschedule_detail_member(member);
-                                                    sociallinkModel.setMember_url(member.getMember_url());
-                                                    sociallinkModel.setSocial_link_key(social_link_key);
-                                                    sociallinkModel.setSocial_link_value(social_link_value);
-                                                    sociallinkModel.setInsert_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
-                                                    sociallinkModel.setUpdate_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
-                                                    sociallinkList.add(sociallinkModel);
+                                                    log.info("----- has no Social :" + url);
                                                 }
                                             }
                                         } else {
-                                            log.info("----- has no Social :" + url);
+                                            log.info("----- has no title:" + url);
                                         }
                                     }
+                                    ico_coinschedule_detail_member_sociallinkDao.saveAll(sociallinkList);
                                 } else {
-                                    log.info("----- has no title:" + url);
+                                    log.info("----- has no sectionseles:" + url);
                                 }
+                            } else {
+                                log.info("un normal page !!!  " + url);
                             }
-                            ico_coinschedule_detail_member_sociallinkDao.saveAll(sociallinkList);
                         } else {
-                            log.info("----- has no sectionseles:" + url);
+                            log.error("!!! page is null : " + url);
                         }
                     } else {
-                        log.info("un normal page !!!  " + url);
+                        log.info("!!!bad request");
                     }
-                } else {
-                    log.error("!!! page is null : " + url);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             } else {
-                log.info("!!!bad request");
+                log.info("- this member has already extra,do not extra.");
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } else {
+            log.info("!!! ICO_coinschedule_detail_member getMember_url is null.");
         }
     }
 
     @Override
     public JSONObject getIco_coinschedule_index(String dataSourceNameLevel2) {
         JSONObject json = new JSONObject();
-        if(StringUtils.equalsIgnoreCase("all",dataSourceNameLevel2)){
+        if (StringUtils.equalsIgnoreCase("all", dataSourceNameLevel2)) {
             String indexes_sql = "select ifnull(ico_name,'') as ico_name," +
                     "ifnull(pk_id,'') as pk_id," +
                     "ifnull(ico_tag,'') as ico_tag," +
@@ -806,14 +821,14 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
                     }
                 }
             }
-            json.put("number",details.size());
+            json.put("number", details.size());
             JSONObject solution_data = new JSONObject();
-            for(Map<String, Object> detail:details){
+            for (Map<String, Object> detail : details) {
 
                 JSONObject solution_data_url = new JSONObject();
-                solution_data_url.put("name",detail.get("ico_name").toString());
-                solution_data_url.put("token_name",detail.get("ico_tag").toString());
-                solution_data_url.put("website",detail.get("website").toString());
+                solution_data_url.put("name", detail.get("ico_name").toString());
+                solution_data_url.put("token_name", detail.get("ico_tag").toString());
+                solution_data_url.put("website", detail.get("website").toString());
 
                 String pk_id = detail.get("pk_id").toString();
 
@@ -824,31 +839,31 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
                     for (Map.Entry<String, Object> entry : social_json.entrySet()) {
                         String key = entry.getKey();
                         String value = entry.getValue().toString();
-                        standardSocials.put(StringUtils.lowerCase(key),value);
+                        standardSocials.put(StringUtils.lowerCase(key), value);
                     }
                     solution_data_url.put("social", standardSocials);
                 }
-                solution_data.put(detail.get("link").toString(),solution_data_url);
+                solution_data.put(detail.get("link").toString(), solution_data_url);
             }
-            json.put("solution_data",solution_data);
-            json.put("source","coinschedule.com."+dataSourceNameLevel2);
-        }else if(StringUtils.equalsIgnoreCase("icos",dataSourceNameLevel2)){
+            json.put("solution_data", solution_data);
+            json.put("source", "coinschedule.com." + dataSourceNameLevel2);
+        } else if (StringUtils.equalsIgnoreCase("icos", dataSourceNameLevel2)) {
             String indexes_sql = "select ifnull(name,'') as name," +
                     "ifnull(category,'') as category," +
                     "ifnull(ended_on,'') as ended_on," +
                     "ifnull(total_raised,'') as total_raised from ico_coinschedule_icos_list";
             List<Map<String, Object>> details = jdbcTemplate.queryForList(indexes_sql);
-            json.put("number",details.size());
+            json.put("number", details.size());
             JSONObject solution_data = new JSONObject();
-            for(Map<String, Object> detail:details){
+            for (Map<String, Object> detail : details) {
 
                 JSONObject solution_data_url = new JSONObject();
                 solution_data_url.put("name", JSON.toJSON(detail));
 
-                solution_data.put(detail.get("name").toString(),solution_data_url);
+                solution_data.put(detail.get("name").toString(), solution_data_url);
             }
-            json.put("solution_data",solution_data);
-            json.put("source","icorating.com."+dataSourceNameLevel2);
+            json.put("solution_data", solution_data);
+            json.put("source", "icorating.com." + dataSourceNameLevel2);
         }
         return json;
     }
@@ -858,77 +873,76 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
 
         JSONObject json = new JSONObject();
         ICO_coinschedule_detail detail = ico_coinschedule_detailDao.findICO_coinschedule_detailByLink(url);
-        if(null!=detail){
+        if (null != detail) {
             List<ICO_coinschedule_detail_icoinfo> icoinfos = ico_coinschedule_detail_icoinfoDao.getICO_coinschedule_detail_icoinfosByFkid(detail.getPk_id());
             List<ICO_coinschedule_detail_member> members = ico_coinschedule_detail_memberDao.getICO_coinschedule_detail_membersByFkid(detail.getPk_id());
             /*开始组装ICO详细数据*/
             ICO_coinschedule_detailDto detailDto = new ICO_coinschedule_detailDto();
             JSONObject ico_detail = new JSONObject();//ico的所有详细信息
             try {
-                BeanUtils.copyProperties(detailDto,detail);
+                BeanUtils.copyProperties(detailDto, detail);
                 ico_detail.putAll(BeanUtils.describe(detailDto));
 
-                if(CollectionUtils.isNotEmpty(icoinfos)){
-                    for(ICO_coinschedule_detail_icoinfo icoinfo:icoinfos){
+                if (CollectionUtils.isNotEmpty(icoinfos)) {
+                    for (ICO_coinschedule_detail_icoinfo icoinfo : icoinfos) {
                         ico_detail.put(icoinfo.getIco_key(), icoinfo.getIco_value());
                     }
                 }
                 /*从ico_detail中提取出概况:name,whitePaperURL,tag,about,brief,description,prototype*/
                 JSONObject ico_about = new JSONObject();
-                if(ico_detail.containsKey("ico_name")){
-                    ico_about.put("name",ico_detail.getString("ico_name"));
+                if (ico_detail.containsKey("ico_name")) {
+                    ico_about.put("name", ico_detail.getString("ico_name"));
                     ico_detail.remove("ico_name");
                 }
-                if(ico_detail.containsKey("tags")){
-                    ico_about.put("tag",ico_detail.getString("tags"));
+                if (ico_detail.containsKey("tags")) {
+                    ico_about.put("tag", ico_detail.getString("tags"));
                     ico_detail.remove("tags");
                 }
-                if(ico_detail.containsKey("ico_description")){
-                    ico_about.put("description",ico_detail.getString("ico_description"));
+                if (ico_detail.containsKey("ico_description")) {
+                    ico_about.put("description", ico_detail.getString("ico_description"));
                     ico_detail.remove("ico_description");
                 }
-                if(ico_detail.containsKey("White Paper")){
-                    ico_about.put("whitePaperURL",ico_detail.getString("White Paper"));
+                if (ico_detail.containsKey("White Paper")) {
+                    ico_about.put("whitePaperURL", ico_detail.getString("White Paper"));
                     ico_detail.remove("White Paper");
                 }
-                ico_about.put("about","");
-                ico_about.put("brief","");
-                ico_about.put("prototype","");
+                ico_about.put("about", "");
+                ico_about.put("brief", "");
+                ico_about.put("prototype", "");
                 /*下面处理Block的logo*/
-                if(ico_detail.containsKey("logo_url")){
-                    ico_detail.put("solution_photo_url",ico_detail.getString("logo_url"));
+                if (ico_detail.containsKey("logo_url")) {
+                    ico_detail.put("solution_photo_url", ico_detail.getString("logo_url"));
                 }
 
                 json.putAll(ico_about);//把提取出来的概况添加进去
-                json.put("ico",ico_detail);//剩下的详细信息添加到ico里面
+                json.put("ico", ico_detail);//剩下的详细信息添加到ico里面
 
 
                 /*组装member信息*/
                 JSONArray members_json = new JSONArray();
-                if(CollectionUtils.isNotEmpty(members)){
-                    for(ICO_coinschedule_detail_member member:members){
+                if (CollectionUtils.isNotEmpty(members)) {
+                    for (ICO_coinschedule_detail_member member : members) {
                         JSONObject member_json = new JSONObject();
-                        member_json.put("memberURL",member.getMember_url());
-                        member_json.put("memberName",member.getMember_name());
-                        member_json.put("memberResponsibility",member.getMember_position());
-                        member_json.put("memberRole",member.getMember_type());
+                        member_json.put("memberURL", member.getMember_url());
+                        member_json.put("memberName", member.getMember_name());
+                        member_json.put("memberResponsibility", member.getMember_position());
+                        member_json.put("memberRole", member.getMember_type());
                         List<ICO_coinschedule_detail_member_sociallink> member_sociallinks = member.getMemberSociallinkList();
-                        if(CollectionUtils.isNotEmpty(member_sociallinks)){
-                            for(ICO_coinschedule_detail_member_sociallink member_sociallink:member_sociallinks){
-                                if(StringUtils.isNotEmpty(member_sociallink.getSocial_link_key())){
-                                    member_json.put(StringUtils.lowerCase(member_sociallink.getSocial_link_key()),member_sociallink.getSocial_link_value());
+                        if (CollectionUtils.isNotEmpty(member_sociallinks)) {
+                            for (ICO_coinschedule_detail_member_sociallink member_sociallink : member_sociallinks) {
+                                if (StringUtils.isNotEmpty(member_sociallink.getSocial_link_key())) {
+                                    member_json.put(StringUtils.lowerCase(member_sociallink.getSocial_link_key()), member_sociallink.getSocial_link_value());
                                 }
                             }
                         }
                         members_json.add(member_json);
                     }
                 }
-                json.put("member",members_json);
+                json.put("member", members_json);
             } catch (Exception e) {
                 e.printStackTrace();
             }
             json.remove("class");
-
 
 
         }

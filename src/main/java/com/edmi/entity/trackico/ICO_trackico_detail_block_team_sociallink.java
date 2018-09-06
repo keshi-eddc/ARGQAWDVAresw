@@ -1,14 +1,14 @@
-package com.edmi.entity.coinschedule;
+package com.edmi.entity.trackico;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
 
 /**
- * 人员 社交链接
+ * trackico 人员社交链接
  */
 @Entity
-@Table(name = "ico_coinschedule_detail_member_sociallink")
-public class ICO_coinschedule_detail_member_sociallink {
+@Table(name = "ico_trackico_detail_block_team_sociallink")
+public class ICO_trackico_detail_block_team_sociallink {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long pk_id;
@@ -29,12 +29,12 @@ public class ICO_coinschedule_detail_member_sociallink {
     private Timestamp update_Time;
 
     /**
-     * 本表和detail_member表是多对一的关系
-     * 本表的fk_id是外键，指向detail_member的pk_id
+     * 本表和ICO_trackico_detail_blockTeam表是多对一的关系
+     * 本表的fk_id是外键，指向ICO_trackico_detail_blockTeam的pk_id
      */
     @ManyToOne
     @JoinColumn(name = "fk_id")
-    private ICO_coinschedule_detail_member ico_coinschedule_detail_member;
+    private ICO_trackico_detail_blockTeam ico_trackico_detail_blockTeam;
 
     public Long getPk_id() {
         return pk_id;
@@ -84,11 +84,11 @@ public class ICO_coinschedule_detail_member_sociallink {
         this.update_Time = update_Time;
     }
 
-    public ICO_coinschedule_detail_member getIco_coinschedule_detail_member() {
-        return ico_coinschedule_detail_member;
+    public ICO_trackico_detail_blockTeam getIco_trackico_detail_blockTeam() {
+        return ico_trackico_detail_blockTeam;
     }
 
-    public void setIco_coinschedule_detail_member(ICO_coinschedule_detail_member ico_coinschedule_detail_member) {
-        this.ico_coinschedule_detail_member = ico_coinschedule_detail_member;
+    public void setIco_trackico_detail_blockTeam(ICO_trackico_detail_blockTeam ico_trackico_detail_blockTeam) {
+        this.ico_trackico_detail_blockTeam = ico_trackico_detail_blockTeam;
     }
 }
