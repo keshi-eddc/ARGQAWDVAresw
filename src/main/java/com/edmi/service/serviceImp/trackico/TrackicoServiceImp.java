@@ -89,6 +89,7 @@ public class TrackicoServiceImp implements TrackicoService {
         while (isNotLast) {
             try {
                 Request request = new Request(url, RequestMethod.GET);
+                request.setUseSSL(true);
                 Response response = HttpClientUtil.doRequest(request);
                 int code = response.getCode();
                 if (code == 200) {
@@ -242,6 +243,7 @@ public class TrackicoServiceImp implements TrackicoService {
         do {
             try {
                 request = new Request(url, RequestMethod.GET);
+                request.setUseSSL(true);
                 Response response = HttpClientUtil.doRequest(request);
                 // response code
                 int code = response.getCode();
@@ -256,6 +258,7 @@ public class TrackicoServiceImp implements TrackicoService {
                     } else {
                         log.error("网络请求，返回码 不是 200 ，重试：" + i);
                         request = new Request(url, RequestMethod.GET);
+                        request.setUseSSL(true);
                         response = HttpClientUtil.doRequest(request);
                     }
                 }
@@ -314,6 +317,7 @@ public class TrackicoServiceImp implements TrackicoService {
             // https://www.trackico.io/ico/ubcoin/
             // 请求页面
             Request request = new Request(url, RequestMethod.GET);
+            request.setUseSSL(true);
             Response response = HttpClientUtil.doRequest(request);
             int code = response.getCode();
             // 500 Read timed out
@@ -363,7 +367,7 @@ public class TrackicoServiceImp implements TrackicoService {
                     log.error("page null：" + url);
                 }
             } else {
-                log.error("!!! bad request :" + url);
+                log.error("!!! bad request :" + code + " - " + url);
                 // 更新item对象的status -请求不正确，把status = 状态码
                 item.setStatus(String.valueOf(code));
                 ico_trackico_itemDao.save(item);
@@ -855,6 +859,7 @@ public class TrackicoServiceImp implements TrackicoService {
                 if (CollectionUtils.isEmpty(oldMemberSocialLinkList)) {
                     try {
                         Request request = new Request(memberUrl, RequestMethod.GET);
+                        request.setUseSSL(true);
                         Response response = HttpClientUtil.doRequest(request);
                         int code = response.getCode();
                         //验证请求

@@ -38,7 +38,7 @@ import java.util.Map;
 public class IcoratingServiceImp implements IcoratingService {
     static Logger log = Logger.getLogger(IcoratingServiceImp.class);
     // 列表页，断点抓
-    static Boolean ListPageBreakPointCrawl = true;
+    static Boolean ListPageBreakPointCrawl = false;
     @Autowired
     private ICO_icorating_listRepository listDao;
     @Autowired
@@ -61,6 +61,7 @@ public class IcoratingServiceImp implements IcoratingService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+
     public static void main(String[] args) {
         IcoratingServiceImp t = new IcoratingServiceImp();
         // String url = "https://icorating.com/ico/bitclave/";
@@ -81,6 +82,7 @@ public class IcoratingServiceImp implements IcoratingService {
 
     @Override
     public void getIcotatingList() {
+        int itemCount = 0;
         log.info("Start getIcotatingList ");
         /**
          * https://icorating.com/ico/latest/load/?page=2&all=false&search=&sort=added&direction=desc
@@ -133,8 +135,9 @@ public class IcoratingServiceImp implements IcoratingService {
         }
         // page = 16;
         while (isNotLast) {
-            String url = "https://icorating.com/ico/all/load/?page=" + page + "&all=false&search=";
-            log.info("===Upcoming visit to:" + page + " : " + url);
+            String url = "https://icorating.com/ico/all/load/?page=" + page + "&all=false&search=&sort=investment_rating&direction=desc";
+//            String url = "https://icorating.com/ico/all/load/?page=" + page + "&all=false&search=";
+            log.info("--- will visit to:" + page + " : " + url);
             try {
                 Request request = new Request(url, RequestMethod.GET);
                 Response response = HttpClientUtil.doRequest(request);
@@ -151,6 +154,8 @@ public class IcoratingServiceImp implements IcoratingService {
                             // 插入数据库前验证是否已经存在
                             // 插入数据库
                             for (ICO_icorating_list item : itemList) {
+                                itemCount++;
+                                log.info("--------------- itemCount:" + itemCount);
                                 item.setCrawledTimes(maxCrawledTimes + 1);
                                 item.setCrawledStatu("ini");
                                 ICO_icorating_list itemOld = listDao.getICO_icorating_listByLink(item.getLink());

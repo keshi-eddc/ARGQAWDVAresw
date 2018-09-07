@@ -298,24 +298,23 @@ public class CrawlerTask {
     // <===================== 下面是trackico的相关job ===================================>
     //每天早晨5点开始
 //    @Scheduled(cron = "0 00 21 * * ?")
-//    @Scheduled(cron = "0 40 10 * * ?")
     public void getICO_Trackico_list() throws MethodNotSupportException {
         log.info("***** getICO_Trackico_list task start *****");
         trackicoService.getICO_trackico_list();
         log.info("***** getICO_Trackico_list task over *****");
     }
 
-    //all
-//    @Scheduled(cron = "0 30 03 * * ?")
     //每5分钟
 //    @Scheduled(cron = "0 0/5 * * * ?")
+    //all
+//    @Scheduled(cron = "0 55 17 * * ?")
     public void getICO_Trackico_detail() throws MethodNotSupportException {
         log.info("***** getICO_Trackico_detail task start *****");
 
         //all
-//        List<ICO_trackico_item> items = ico_trackico_itemDao.findAllByStatus("ini");
+        List<ICO_trackico_item> items = ico_trackico_itemDao.findAllByStatus("ini");
 
-        List<ICO_trackico_item> items = ico_trackico_itemDao.findTop10ByStatus("ini");
+//        List<ICO_trackico_item> items = ico_trackico_itemDao.findTop10ByStatus("ini");
 
         // List<ICO_trackico_item> items =
         // ico_trackico_itemDao.findOneByItemUrl("https://www.trackico.io/ico/w12/");
@@ -374,22 +373,24 @@ public class CrawlerTask {
     //每4小时 0 0 */4 * * ?
 //    每天早晨5点开始
 //    @Scheduled(cron = "0 00 21 * * ?")
+//    @Scheduled(cron = "0 10 17 * * ?")
     public void getICO_icorating_list() throws MethodNotSupportException {
         log.info("***** getICO_icorating_list task start *****");
         icoratingService.getIcotatingList();
         log.info("***** getICO_icorating_list task over *****");
     }
 
-    //    @Scheduled(cron = "0 10 09 * * ?")
+
     //每5分钟
 //    @Scheduled(cron = "0 0/5 * * * ?")
+//    @Scheduled(cron = "0 09 18 * * ?")
     public void icoratingDetailManager() {
         // 获取开始时间
         long startTime = System.currentTimeMillis();
         log.info("******** start icotatingDetail task ********");
-        List<ICO_icorating_list> listItems = ico_icorating_listDao.findTop10ByCrawledStatu("ini");
+//        List<ICO_icorating_list> listItems = ico_icorating_listDao.findTop10ByCrawledStatu("ini");
         //all
-//        List<ICO_icorating_list> listItems = ico_icorating_listDao.findAllByCrawledStatu("ini");
+        List<ICO_icorating_list> listItems = ico_icorating_listDao.findAllByCrawledStatu("ini");
 
         log.info("get items num : " + listItems.size() + "  ,from list table");
         if (CollectionUtils.isNotEmpty(listItems)) {
