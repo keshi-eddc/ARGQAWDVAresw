@@ -395,19 +395,40 @@ public class TrackicoServiceImp implements TrackicoService {
             // block_name
             // block_tag
             String block_name = "";
-            String block_tag = "";
+            String block_token = "";
             Elements block_nameles = doc.select("div.flexbox > div.flex-grow > div.align-items-baseline > h1");
             if (block_nameles != null && block_nameles.size() > 0) {
                 String temp = block_nameles.text();
                 if (temp.contains("(") && temp.contains(")")) {
                     block_name = StringUtils.substringBefore(temp, "(").trim();
-                    block_tag = StringUtils.substringBetween(temp, "(", ")").trim();
+                    block_token = StringUtils.substringBetween(temp, "(", ")").trim();
                 } else {
                     block_name = temp.trim();
                 }
                 detailModel.setBlock_name(block_name);
-                detailModel.setBlock_tag(block_tag);
+                detailModel.setBlock_token(block_token);
             }
+            //2018年9月7日17:23:20 新增加
+            //block_tag
+            //block_status
+            Elements blockaddseles = doc.select("div.row > div.col-md-8 >div.row > div.col-12 > div.card.mb-3 >div.card-body.p-3 > ol.breadcrumb >li");
+            if (blockaddseles != null && blockaddseles.size() > 0) {
+                if (blockaddseles.size() == 4) {
+                    String block_tag = blockaddseles.get(1).text().trim();
+                    String block_status = blockaddseles.get(2).text().trim();
+                    if (StringUtils.isNotEmpty(block_tag)) {
+                        detailModel.setBlock_tag(block_tag);
+                    }
+                    if (StringUtils.isNotEmpty(block_status)) {
+                        detailModel.setBlock_status(block_status);
+                    }
+                } else {
+                    log.error("!!! blockaddseles size is not 4");
+                }
+            } else {
+                log.error("!!! blockaddseles do not exist");
+            }
+
             // block_description
             Elements block_descriptioneles = doc.select("div.card-body > div.row > div.col-12  p");
             if (block_descriptioneles != null && block_descriptioneles.size() > 0) {
@@ -847,10 +868,9 @@ public class TrackicoServiceImp implements TrackicoService {
 
     //人员的社交链接
     @Override
-    @Async("myTaskAsyncPool")
+//    @Async("myTaskAsyncPool")
     public void extraMemberSocialLinks(ICO_trackico_detail_blockTeam member) {
         String memberUrl = member.getMember_url();
-
         try {
             if (StringUtils.isNotEmpty(memberUrl)) {
                 //测试
@@ -1139,82 +1159,82 @@ public class TrackicoServiceImp implements TrackicoService {
                     detail_json.putAll(BeanUtils.describe(itemDto));
                     detail_json.putAll(BeanUtils.describe(detailDto));
                     detail_json.putAll(BeanUtils.describe(infoDto));
-                    for(ICO_trackico_detail_blockLabelDto labelDto:labelDtos){
-                        detail_json.put(labelDto.getBlock_lable_name(),labelDto.getBlock_lable_url());
+                    for (ICO_trackico_detail_blockLabelDto labelDto : labelDtos) {
+                        detail_json.put(labelDto.getBlock_lable_name(), labelDto.getBlock_lable_url());
                     }
-                    for(ICO_trackico_detail_blockFinancialDto financialDto:financialDtos){
-                        detail_json.put(financialDto.getName(),financialDto.getValue());
+                    for (ICO_trackico_detail_blockFinancialDto financialDto : financialDtos) {
+                        detail_json.put(financialDto.getName(), financialDto.getValue());
                     }
-                    about_json.put("milestones",JSON.toJSON(milestonesDtos));
-                    about_json.put("members",JSON.toJSON(teamDtos));
+                    about_json.put("milestones", JSON.toJSON(milestonesDtos));
+                    about_json.put("members", JSON.toJSON(teamDtos));
 
-                    detail_json.put("solution_photo_url",detail_json.getString("logo_url"));
+                    detail_json.put("solution_photo_url", detail_json.getString("logo_url"));
                     detail_json.remove("logo_url");
                     /*拆分pre_sale开始结束时间*/
                     String pre_sale = detail_json.getString("pre_sale");
-                    if(StringUtils.isNotEmpty(pre_sale)){
+                    if (StringUtils.isNotEmpty(pre_sale)) {
                         String[] pre_sales = StringUtils.split(pre_sale, "-");
-                        if(ArrayUtils.isNotEmpty(pre_sales)&&pre_sales.length==2){
-                            detail_json.put("preicoStart",pre_sales[0]);
-                            detail_json.put("preicoEnd",pre_sales[1]);
-                        }else{
-                            detail_json.put("preicoStart","");
-                            detail_json.put("preicoEnd","");
+                        if (ArrayUtils.isNotEmpty(pre_sales) && pre_sales.length == 2) {
+                            detail_json.put("preicoStart", pre_sales[0]);
+                            detail_json.put("preicoEnd", pre_sales[1]);
+                        } else {
+                            detail_json.put("preicoStart", "");
+                            detail_json.put("preicoEnd", "");
                         }
-                    }else{
-                        detail_json.put("preicoStart","");
-                        detail_json.put("preicoEnd","");
+                    } else {
+                        detail_json.put("preicoStart", "");
+                        detail_json.put("preicoEnd", "");
                     }
                     detail_json.remove("pre_sale");
                     /*拆分pre_sale开始结束时间*/
                     String token_sale = detail_json.getString("token_sale");
-                    if(StringUtils.isNotEmpty(token_sale)){
+                    if (StringUtils.isNotEmpty(token_sale)) {
                         String[] token_sales = StringUtils.split(token_sale, "-");
-                        if(ArrayUtils.isNotEmpty(token_sales)&&token_sales.length==2){
-                            detail_json.put("icoStart",token_sales[0]);
-                            detail_json.put("icoEnd",token_sales[1]);
-                        }else{
-                            detail_json.put("icoStart","");
-                            detail_json.put("icoEnd","");
+                        if (ArrayUtils.isNotEmpty(token_sales) && token_sales.length == 2) {
+                            detail_json.put("icoStart", token_sales[0]);
+                            detail_json.put("icoEnd", token_sales[1]);
+                        } else {
+                            detail_json.put("icoStart", "");
+                            detail_json.put("icoEnd", "");
                         }
-                    }else{
-                        detail_json.put("icoStart","");
-                        detail_json.put("icoEnd","");
+                    } else {
+                        detail_json.put("icoStart", "");
+                        detail_json.put("icoEnd", "");
                     }
                     detail_json.remove("token_sale");
                     /*从ico_detail中提取出概况:name,whitePaperURL,tag,about,brief,description,prototype*/
-                    if(detail_json.containsKey("block_name")){
-                        about_json.put("name",detail_json.getString("block_name"));
-                    }else{
-                        about_json.put("name","");
+                    if (detail_json.containsKey("block_name")) {
+                        about_json.put("name", detail_json.getString("block_name"));
+                    } else {
+                        about_json.put("name", "");
                     }
                     detail_json.remove("block_name");
 
-                    if(detail_json.containsKey("Whitepaper")){
-                        about_json.put("whitePaperURL",detail_json.getString("Whitepaper"));
-                    }else{
-                        about_json.put("whitePaperURL","");
+                    if (detail_json.containsKey("Whitepaper")) {
+                        about_json.put("whitePaperURL", detail_json.getString("Whitepaper"));
+                    } else {
+                        about_json.put("whitePaperURL", "");
                     }
                     detail_json.remove("Whitepaper");
 
-                    if(detail_json.containsKey("block_tag")){
-                        about_json.put("tag",detail_json.getString("block_tag"));
-                    }else{
-                        about_json.put("tag","");
+                    if (detail_json.containsKey("block_tag")) {
+                        about_json.put("tag", detail_json.getString("block_tag"));
+                    } else {
+                        about_json.put("tag", "");
                     }
                     detail_json.remove("block_tag");
 
-                    about_json.put("about","");
-                    about_json.put("brief","");
+                    about_json.put("about", "");
+                    about_json.put("brief", "");
 
-                    if(detail_json.containsKey("block_description")){
-                        about_json.put("description",detail_json.getString("block_description"));
-                    }else{
-                        about_json.put("description","");
+                    if (detail_json.containsKey("block_description")) {
+                        about_json.put("description", detail_json.getString("block_description"));
+                    } else {
+                        about_json.put("description", "");
                     }
                     detail_json.remove("block_description");
 
-                    about_json.put("prototype","");
+                    about_json.put("prototype", "");
 
                     /*移除social信息*/
                     detail_json.remove("Telegram");
@@ -1232,13 +1252,13 @@ public class TrackicoServiceImp implements TrackicoService {
                     detail_json.remove("Discord");
 
                 } catch (Exception e) {
-                   log.info(e.getMessage());
+                    log.info(e.getMessage());
                 }
             }
         }
         detail_json.remove("class");
         about_json.remove("class");
-        about_json.put("ico",detail_json);
+        about_json.put("ico", detail_json);
         return about_json;
     }
 }

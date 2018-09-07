@@ -746,7 +746,7 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
                                                         } else {
                                                             log.info("----- social_link_key is null : " + url);
                                                         }
-                                                        log.info(social_link_key + " = " + social_link_value);
+//                                                        log.info(social_link_key + " = " + social_link_value);
                                                         if (StringUtils.isNotEmpty(social_link_key) && StringUtils.isNotEmpty(social_link_value)) {
                                                             ICO_coinschedule_detail_member_sociallink sociallinkModel = new ICO_coinschedule_detail_member_sociallink();
                                                             sociallinkModel.setIco_coinschedule_detail_member(member);

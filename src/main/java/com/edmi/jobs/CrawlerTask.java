@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-/*@Component*/
+@Component
 public class CrawlerTask {
 
     Logger log = Logger.getLogger(CrawlerTask.class);
@@ -304,17 +304,17 @@ public class CrawlerTask {
         log.info("***** getICO_Trackico_list task over *****");
     }
 
+    //all
+//    @Scheduled(cron = "0 02 14 * * ?")
     //每5分钟
 //    @Scheduled(cron = "0 0/5 * * * ?")
-    //all
-//    @Scheduled(cron = "0 55 17 * * ?")
     public void getICO_Trackico_detail() throws MethodNotSupportException {
         log.info("***** getICO_Trackico_detail task start *****");
 
         //all
-        List<ICO_trackico_item> items = ico_trackico_itemDao.findAllByStatus("ini");
+//        List<ICO_trackico_item> items = ico_trackico_itemDao.findAllByStatus("ini");
 
-//        List<ICO_trackico_item> items = ico_trackico_itemDao.findTop10ByStatus("ini");
+        List<ICO_trackico_item> items = ico_trackico_itemDao.findTop10ByStatus("ini");
 
         // List<ICO_trackico_item> items =
         // ico_trackico_itemDao.findOneByItemUrl("https://www.trackico.io/ico/w12/");
@@ -487,24 +487,24 @@ public class CrawlerTask {
 
     // <===================== 下面是coinschedule的相关job ===================================>
 
-    //每天下午4点开始（中国时间）
-//    @Scheduled(cron = "0 00 08 * * ?")
+    //每天上午5点开始（中国时间）
+//    @Scheduled(cron = "0 00 21 * * ?")
     public void getIco_coinschedule_List() throws MethodNotSupportException {
         log.info("***** getIco_coinschedule_List task start");
         coinscheduleService.getIco_coinschedule_List();
         log.info("***** getIco_coinschedule_List task over");
     }
 
-    //每天下午6点开始（中国时间）
-//    @Scheduled(cron = "0 00 10 * * ?")
+    //每天上午7点开始（中国时间）
+//    @Scheduled(cron = "0 00 23 * * ?")
     public void getIco_coinschedule_ICOsList() throws MethodNotSupportException {
         log.info("***** getIcoCoinscheduleICOsList task start");
         coinscheduleService.getIcoCoinscheduleICOsList();
         log.info("***** getIcoCoinscheduleICOsList task over");
     }
 
-    //每天下午10点开始（中国时间）
-//    @Scheduled(cron = "0 00 14 * * ?")
+    //每天上午10点开始（中国时间）
+//    @Scheduled(cron = "0 00 02 * * ?")
     public void getCoinscheduleDetail() throws MethodNotSupportException {
         //216
         log.info("***** start Coinschedule detail task *****");
@@ -518,8 +518,8 @@ public class CrawlerTask {
         log.info("***** Coinschedule detail task  over *****");
     }
 
-    //每天早晨4点开始（中国时间）
-//    @Scheduled(cron = "0 00 20 * * ?")
+    //每天下午3点开始（中国时间）
+//    @Scheduled(cron = "0 00 07 * * ?")
     public void getCoinscheduleMemberSocialLinks() {
         log.info("***** start getMemberSocialLinks task *****");
         List<ICO_coinschedule_detail_member> memberList = ico_coinschedule_detail_memberDao.findICO_coinschedule_detail_memberWithNotIn();

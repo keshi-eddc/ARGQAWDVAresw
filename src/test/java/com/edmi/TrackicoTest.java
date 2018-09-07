@@ -37,6 +37,13 @@ public class TrackicoTest {
     private ICO_trackico_detail_blockTeamRepository ico_trackico_detail_blockTeamDao;
 
     @Test
+    public void getICO_Trackico_list() throws MethodNotSupportException {
+        log.info("***** getICO_Trackico_list task start *****");
+        trackicoService.getICO_trackico_list();
+        log.info("***** getICO_Trackico_list task over *****");
+    }
+
+    @Test
     public void getICO_Trackico_detail() throws MethodNotSupportException {
         List<ICO_trackico_item> items = new ArrayList<>();
         //all
