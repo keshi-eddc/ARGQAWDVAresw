@@ -51,7 +51,7 @@ public class TrackicoTest {
 
 //         items = ico_trackico_itemDao.findTop10ByStatus("ini");
 
-//        items = ico_trackico_itemDao.findOneByItemUrl("https://www.trackico.io/ico/remiit/");
+//        items = ico_trackico_itemDao.findOneByItemUrl("https://www.trackico.io/ico/goodgamecenter/");
         log.info("get items num ：" + items.size());
         if (items.size() != 0) {
             // 获取开始时间
