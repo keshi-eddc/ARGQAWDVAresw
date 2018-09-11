@@ -298,7 +298,6 @@ public class CrawlerTask {
     // <===================== 下面是trackico的相关job ===================================>
     //每天早晨5点开始
 //    @Scheduled(cron = "0 00 21 * * ?")
-//    @Scheduled(cron = "0 00 09 * * ?")
     public void getICO_Trackico_list() throws MethodNotSupportException {
         log.info("***** getICO_Trackico_list task start *****");
         trackicoService.getICO_trackico_list();
@@ -306,17 +305,17 @@ public class CrawlerTask {
     }
 
 
-    //每5分钟
-//    @Scheduled(cron = "0 0/5 * * * ?")
     //all
 //    @Scheduled(cron = "0 40 09 * * ?")
+    //每5分钟
+//    @Scheduled(cron = "0 0/5 * * * ?")
     public void getICO_Trackico_detail() throws MethodNotSupportException {
         log.info("***** getICO_Trackico_detail task start *****");
 
         //all
-        List<ICO_trackico_item> items = ico_trackico_itemDao.findAllByStatus("ini");
+//        List<ICO_trackico_item> items = ico_trackico_itemDao.findAllByStatus("ini");
 
-//        List<ICO_trackico_item> items = ico_trackico_itemDao.findTop10ByStatus("ini");
+        List<ICO_trackico_item> items = ico_trackico_itemDao.findTop10ByStatus("ini");
 
         // List<ICO_trackico_item> items =
         // ico_trackico_itemDao.findOneByItemUrl("https://www.trackico.io/ico/w12/");
@@ -351,7 +350,6 @@ public class CrawlerTask {
 
     //每天早晨10点开始（中国时间）
 //    @Scheduled(cron = "0 00 02 * * ?")
-//    @Scheduled(cron = "0 30 11 * * ?")
     public void getTrackicoMemberSocialLinkManager() {
         log.info("***** start getTrackicoMemberSocialLink task *****");
         try {
@@ -364,6 +362,7 @@ public class CrawlerTask {
                     trackicoService.extraMemberSocialLinks(member);
                     Thread.sleep(1 * 1000);
                 }
+                log.info("***** getTrackicoMemberSocialLink task  over *****");
             } else {
                 log.info("--- this time select has not find member from ICO_trackico_detail_blockTeam");
             }
@@ -492,6 +491,7 @@ public class CrawlerTask {
 
     //每天上午5点开始（中国时间）
 //    @Scheduled(cron = "0 00 21 * * ?")
+//    @Scheduled(cron = "0 00 07 * * ?")
     public void getIco_coinschedule_List() throws MethodNotSupportException {
         log.info("***** getIco_coinschedule_List task start");
         coinscheduleService.getIco_coinschedule_List();
@@ -500,6 +500,7 @@ public class CrawlerTask {
 
     //每天上午7点开始（中国时间）
 //    @Scheduled(cron = "0 00 23 * * ?")
+//    @Scheduled(cron = "0 20 07 * * ?")
     public void getIco_coinschedule_ICOsList() throws MethodNotSupportException {
         log.info("***** getIcoCoinscheduleICOsList task start");
         coinscheduleService.getIcoCoinscheduleICOsList();
@@ -508,21 +509,27 @@ public class CrawlerTask {
 
     //每天上午10点开始（中国时间）
 //    @Scheduled(cron = "0 00 02 * * ?")
+//    @Scheduled(cron = "0 30 07 * * ?")
     public void getCoinscheduleDetail() throws MethodNotSupportException {
         //216
         log.info("***** start Coinschedule detail task *****");
         List<Ico_coinschedule_List> itemlist = ico_coinschedule_listDao.findIco_coinschedule_ListWithNotIn();
         log.info("--- get coinschedule items num is :" + itemlist.size());
-        for (int i = 0; i < itemlist.size(); i++) {
-            log.info("----- will extra :" + i);
-            Ico_coinschedule_List item = itemlist.get(i);
-            coinscheduleService.getIco_coinschedule_detail(item);
+        if (CollectionUtils.isNotEmpty(itemlist)) {
+            for (int i = 0; i < itemlist.size(); i++) {
+                log.info("----- will extra :" + i);
+                Ico_coinschedule_List item = itemlist.get(i);
+                coinscheduleService.getIco_coinschedule_detail(item);
+            }
+            log.info("***** Coinschedule detail task  over *****");
+        } else {
+            log.info("-  getCoinscheduleDetail has no  coinschedule items ");
         }
-        log.info("***** Coinschedule detail task  over *****");
     }
 
     //每天下午3点开始（中国时间）
 //    @Scheduled(cron = "0 00 07 * * ?")
+//    @Scheduled(cron = "0 30 08 * * ?")
     public void getCoinscheduleMemberSocialLinks() {
         log.info("***** start getMemberSocialLinks task *****");
         List<ICO_coinschedule_detail_member> memberList = ico_coinschedule_detail_memberDao.findICO_coinschedule_detail_memberWithNotIn();
