@@ -1396,13 +1396,30 @@ public class IcoratingServiceImp implements IcoratingService {
                     about_json.put("funds", JSON.toJSON(fundsDtos));
                 }
                 if (CollectionUtils.isNotEmpty(teams)) {
-                    List<ICO_icorating_detail_block_teamDto> teamDtos = new ArrayList<>();
+                    JSONArray teams_json = new JSONArray();
                     for (ICO_icorating_detail_block_team team : teams) {
+                        JSONObject team_json = new JSONObject();
                         ICO_icorating_detail_block_teamDto teamDto = new ICO_icorating_detail_block_teamDto();
                         BeanUtils.copyProperties(teamDto, team);
-                        teamDtos.add(teamDto);
+                        team_json.putAll(BeanUtils.describe(teamDto));
+                        team_json.remove("class");
+                        /*提取成员的social信息*/
+                        JSONObject team_social_json = new JSONObject();
+
+                        team_social_json.put("linkedin",team_json.getString("member_social_linkedin"));
+                        team_json.remove("member_social_linkedin");
+
+                        team_social_json.put("facebook",team_json.getString("member_social_facebook"));
+                        team_json.remove("member_social_facebook");
+
+                        team_social_json.put("twitter",team_json.getString("member_social_twitter"));
+                        team_json.remove("member_social_twitter");
+
+                        team_json.put("member_social",team_social_json);
+
+                        teams_json.add(team_json);
                     }
-                    about_json.put("team", teamDtos);
+                    about_json.put("team", teams_json);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1453,11 +1470,7 @@ public class IcoratingServiceImp implements IcoratingService {
 
             /*下面处理Block的logo*/
             detail_json.put("solution_photo_url", detail.getIco_icorating_list().getLogo());
-            /*移除重复的信息*/
-            detail_json.remove("Ticker");
-            detail_json.remove("ICO start date");
-            detail_json.remove("ICO end date");
-            detail_json.remove("Registration Country");
+
         }
         detail_json.remove("class");
         about_json.remove("class");
@@ -1480,15 +1493,34 @@ public class IcoratingServiceImp implements IcoratingService {
                 BeanUtils.copyProperties(detailDto, detail);
                 detail_json.putAll(BeanUtils.describe(detailDto));
 
-
                 if (CollectionUtils.isNotEmpty(teams)) {
-                    List<ICO_icorating_funds_detail_memberDto> teamDtos = new ArrayList<>();
+                    JSONArray teams_json = new JSONArray();
                     for (ICO_icorating_funds_detail_member team : teams) {
+                        JSONObject team_json = new JSONObject();
                         ICO_icorating_funds_detail_memberDto teamDto = new ICO_icorating_funds_detail_memberDto();
                         BeanUtils.copyProperties(teamDto, team);
-                        teamDtos.add(teamDto);
+                        team_json.putAll(BeanUtils.describe(teamDto));
+                        team_json.remove("class");
+                        /*提取成员的social信息*/
+                        JSONObject team_social_json = new JSONObject();
+
+                        team_social_json.put("facebook",team_json.getString("facebook"));
+                        team_json.remove("facebook");
+
+                        team_social_json.put("twitter",team_json.getString("twitter"));
+                        team_json.remove("twitter");
+
+                        team_social_json.put("medium",team_json.getString("medium"));
+                        team_json.remove("medium");
+
+                        team_social_json.put("linkedin",team_json.getString("linkedin"));
+                        team_json.remove("linkedin");
+
+                        team_json.put("member_social",team_social_json);
+
+                        teams_json.add(team_json);
                     }
-                    about_json.put("member", teamDtos);
+                    about_json.put("member", teams_json);
                 }
             } catch (Exception e) {
                 e.printStackTrace();

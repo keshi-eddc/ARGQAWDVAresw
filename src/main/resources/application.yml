@@ -10,9 +10,9 @@ spring:
     username: root
     password: Earlydata168!
     driverClassName: com.mysql.cj.jdbc.Driver
-    initialSize: 30
-    minIdle: 20
-    maxActive: 50
+    initialSize: 15
+    minIdle: 10
+    maxActive: 20
     maxWait: 60000 # 配置获取连接等待超时的时间
     timeBetweenEvictionRunsMillis: 60000 # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
     minEvictableIdleTimeMillis: 300000 # 配置一个连接在池中最小生存的时间，单位是毫秒

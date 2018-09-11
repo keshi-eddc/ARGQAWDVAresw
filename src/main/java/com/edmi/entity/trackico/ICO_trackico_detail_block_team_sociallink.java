@@ -1,5 +1,7 @@
 package com.edmi.entity.trackico;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import javax.persistence.*;
 import java.sql.Timestamp;
 
@@ -32,7 +34,7 @@ public class ICO_trackico_detail_block_team_sociallink {
      * 本表和ICO_trackico_detail_blockTeam表是多对一的关系
      * 本表的fk_id是外键，指向ICO_trackico_detail_blockTeam的pk_id
      */
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fk_id")
     private ICO_trackico_detail_blockTeam ico_trackico_detail_blockTeam;
 

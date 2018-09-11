@@ -37,10 +37,6 @@ public class ICO_icorating_detailDto {
 
 	private String contacts_website;
 
-	private String trading_start_ico;
-
-	private String trading_end_ico;
-
 	private String trading_token;
 
 	private String trading_price;
@@ -49,39 +45,7 @@ public class ICO_icorating_detailDto {
 
 	private String trading_registration;
 
-	private String trading_whitepaper;
 
-	private String trading_basicReview;
-
-	private String detail_tokenSale_icoStartDate;
-
-	private String detail_tokenSale_icoEndDate;
-
-	private String detail_tokenSale_raised;
-
-	private String detail_tokenSale_ICOTokenSupply;
-
-	private String detail_tokenSale_softCap;
-
-	private String detail_legal_IcoPlatform;
-
-	private String detail_legal_registrationCountry;
-
-	private String detail_legal_countryLimitations;
-
-	private String detail_legal_registrationYear;
-
-	private String detail_tokenDetails_ticker;
-
-	private String detail_tokenDetails_AdditionalTokenEmissionv;
-
-	private String detail_tokenDetails_AcceptedCurrencies;
-
-	private String detail_tokenDetails_TokenDistribution;
-
-	private String detail_tokenDetails_type;
-
-	private String detail_tokenDetails_bonusProgram;
 
 	public String getLink() {
 		return link;
@@ -187,22 +151,6 @@ public class ICO_icorating_detailDto {
 		this.contacts_website = contacts_website;
 	}
 
-	public String getTrading_start_ico() {
-		return trading_start_ico;
-	}
-
-	public void setTrading_start_ico(String trading_start_ico) {
-		this.trading_start_ico = trading_start_ico;
-	}
-
-	public String getTrading_end_ico() {
-		return trading_end_ico;
-	}
-
-	public void setTrading_end_ico(String trading_end_ico) {
-		this.trading_end_ico = trading_end_ico;
-	}
-
 	public String getTrading_token() {
 		return trading_token;
 	}
@@ -233,141 +181,5 @@ public class ICO_icorating_detailDto {
 
 	public void setTrading_registration(String trading_registration) {
 		this.trading_registration = trading_registration;
-	}
-
-	public String getTrading_whitepaper() {
-		return trading_whitepaper;
-	}
-
-	public void setTrading_whitepaper(String trading_whitepaper) {
-		this.trading_whitepaper = trading_whitepaper;
-	}
-
-	public String getTrading_basicReview() {
-		return trading_basicReview;
-	}
-
-	public void setTrading_basicReview(String trading_basicReview) {
-		this.trading_basicReview = trading_basicReview;
-	}
-
-	public String getDetail_tokenSale_icoStartDate() {
-		return detail_tokenSale_icoStartDate;
-	}
-
-	public void setDetail_tokenSale_icoStartDate(String detail_tokenSale_icoStartDate) {
-		this.detail_tokenSale_icoStartDate = detail_tokenSale_icoStartDate;
-	}
-
-	public String getDetail_tokenSale_icoEndDate() {
-		return detail_tokenSale_icoEndDate;
-	}
-
-	public void setDetail_tokenSale_icoEndDate(String detail_tokenSale_icoEndDate) {
-		this.detail_tokenSale_icoEndDate = detail_tokenSale_icoEndDate;
-	}
-
-	public String getDetail_tokenSale_raised() {
-		return detail_tokenSale_raised;
-	}
-
-	public void setDetail_tokenSale_raised(String detail_tokenSale_raised) {
-		this.detail_tokenSale_raised = detail_tokenSale_raised;
-	}
-
-	public String getDetail_tokenSale_ICOTokenSupply() {
-		return detail_tokenSale_ICOTokenSupply;
-	}
-
-	public void setDetail_tokenSale_ICOTokenSupply(String detail_tokenSale_ICOTokenSupply) {
-		this.detail_tokenSale_ICOTokenSupply = detail_tokenSale_ICOTokenSupply;
-	}
-
-	public String getDetail_tokenSale_softCap() {
-		return detail_tokenSale_softCap;
-	}
-
-	public void setDetail_tokenSale_softCap(String detail_tokenSale_softCap) {
-		this.detail_tokenSale_softCap = detail_tokenSale_softCap;
-	}
-
-	public String getDetail_legal_IcoPlatform() {
-		return detail_legal_IcoPlatform;
-	}
-
-	public void setDetail_legal_IcoPlatform(String detail_legal_IcoPlatform) {
-		this.detail_legal_IcoPlatform = detail_legal_IcoPlatform;
-	}
-
-	public String getDetail_legal_registrationCountry() {
-		return detail_legal_registrationCountry;
-	}
-
-	public void setDetail_legal_registrationCountry(String detail_legal_registrationCountry) {
-		this.detail_legal_registrationCountry = detail_legal_registrationCountry;
-	}
-
-	public String getDetail_legal_countryLimitations() {
-		return detail_legal_countryLimitations;
-	}
-
-	public void setDetail_legal_countryLimitations(String detail_legal_countryLimitations) {
-		this.detail_legal_countryLimitations = detail_legal_countryLimitations;
-	}
-
-	public String getDetail_legal_registrationYear() {
-		return detail_legal_registrationYear;
-	}
-
-	public void setDetail_legal_registrationYear(String detail_legal_registrationYear) {
-		this.detail_legal_registrationYear = detail_legal_registrationYear;
-	}
-
-	public String getDetail_tokenDetails_ticker() {
-		return detail_tokenDetails_ticker;
-	}
-
-	public void setDetail_tokenDetails_ticker(String detail_tokenDetails_ticker) {
-		this.detail_tokenDetails_ticker = detail_tokenDetails_ticker;
-	}
-
-	public String getDetail_tokenDetails_AdditionalTokenEmissionv() {
-		return detail_tokenDetails_AdditionalTokenEmissionv;
-	}
-
-	public void setDetail_tokenDetails_AdditionalTokenEmissionv(String detail_tokenDetails_AdditionalTokenEmissionv) {
-		this.detail_tokenDetails_AdditionalTokenEmissionv = detail_tokenDetails_AdditionalTokenEmissionv;
-	}
-
-	public String getDetail_tokenDetails_AcceptedCurrencies() {
-		return detail_tokenDetails_AcceptedCurrencies;
-	}
-
-	public void setDetail_tokenDetails_AcceptedCurrencies(String detail_tokenDetails_AcceptedCurrencies) {
-		this.detail_tokenDetails_AcceptedCurrencies = detail_tokenDetails_AcceptedCurrencies;
-	}
-
-	public String getDetail_tokenDetails_TokenDistribution() {
-		return detail_tokenDetails_TokenDistribution;
-	}
-
-	public void setDetail_tokenDetails_TokenDistribution(String detail_tokenDetails_TokenDistribution) {
-		this.detail_tokenDetails_TokenDistribution = detail_tokenDetails_TokenDistribution;
-	}
-
-	public String getDetail_tokenDetails_type() {
-		return detail_tokenDetails_type;
-	}
-
-	public void setDetail_tokenDetails_type(String detail_tokenDetails_type) {
-		this.detail_tokenDetails_type = detail_tokenDetails_type;
-	}
-
-	public String getDetail_tokenDetails_bonusProgram() {
-		return detail_tokenDetails_bonusProgram;
-	}
-
-	public void setDetail_tokenDetails_bonusProgram(String detail_tokenDetails_bonusProgram) {
-		this.detail_tokenDetails_bonusProgram = detail_tokenDetails_bonusProgram;
 	}
 }

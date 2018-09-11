@@ -832,14 +832,21 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
 
                 String pk_id = detail.get("pk_id").toString();
 
-                /*socials*/
+                /*添加socials*/
                 if (socials_json.containsKey(pk_id)) {
                     JSONObject social_json = socials_json.getJSONObject(pk_id);
                     JSONObject standardSocials = new JSONObject();
                     for (Map.Entry<String, Object> entry : social_json.entrySet()) {
                         String key = entry.getKey();
                         String value = entry.getValue().toString();
-                        standardSocials.put(StringUtils.lowerCase(key), value);
+                        if(StringUtils.equalsIgnoreCase("Paper",key)){
+                            solution_data_url.put("white_paper",value);
+                        }else if(StringUtils.equalsIgnoreCase("Website",key)){
+                            solution_data_url.put("website",value);
+                        }else{
+                            standardSocials.put(StringUtils.lowerCase(key), value);
+                        }
+
                     }
                     solution_data_url.put("social", standardSocials);
                 }
@@ -911,9 +918,15 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
                 ico_about.put("prototype", "");
                 /*下面处理Block的logo*/
                 if (ico_detail.containsKey("logo_url")) {
-                    ico_detail.put("solution_photo_url", ico_detail.getString("logo_url"));
+                    ico_detail.put("solution_photo_url", detail.getIco_coinschedule_list().getBlockLogo());
+                    ico_detail.remove("logo_url");
+                }else{
+                    ico_detail.put("solution_photo_url","");
                 }
-
+                if(ico_detail.containsKey("Bitcoin Talk")){
+                    ico_detail.remove("Bitcoin Talk");
+                }
+                ico_detail.remove("class");
                 json.putAll(ico_about);//把提取出来的概况添加进去
                 json.put("ico", ico_detail);//剩下的详细信息添加到ico里面
 
@@ -928,13 +941,19 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
                         member_json.put("memberResponsibility", member.getMember_position());
                         member_json.put("memberRole", member.getMember_type());
                         List<ICO_coinschedule_detail_member_sociallink> member_sociallinks = member.getMemberSociallinkList();
-                        if (CollectionUtils.isNotEmpty(member_sociallinks)) {
-                            for (ICO_coinschedule_detail_member_sociallink member_sociallink : member_sociallinks) {
-                                if (StringUtils.isNotEmpty(member_sociallink.getSocial_link_key())) {
-                                    member_json.put(StringUtils.lowerCase(member_sociallink.getSocial_link_key()), member_sociallink.getSocial_link_value());
-                                }
+                        JSONObject member_social = new JSONObject();
+                        for(ICO_coinschedule_detail_member_sociallink sociallink:member_sociallinks){
+                            String key = sociallink.getSocial_link_key();
+                            String value = sociallink.getSocial_link_value();
+                            if(StringUtils.equalsIgnoreCase("LinkedIn",key)){
+                                member_social.put("linkedin",value);
+                            }else if(StringUtils.equalsIgnoreCase("Facebook",key)){
+                                member_social.put("facebook",value);
+                            }else if(StringUtils.equalsIgnoreCase("Twitter",key)){
+                                member_social.put("twitter",value);
                             }
                         }
+                        member_json.put("member_social",member_social);
                         members_json.add(member_json);
                     }
                 }

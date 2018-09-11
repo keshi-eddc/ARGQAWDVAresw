@@ -1,6 +1,7 @@
 package com.edmi.service.serviceImp.trackico;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.edmi.dao.trackico.*;
 import com.edmi.dto.trackico.*;
@@ -1137,11 +1138,36 @@ public class TrackicoServiceImp implements TrackicoService {
                     for(ICO_trackico_detail_blockLabelDto labelDto:labelDtos){
                         detail_json.put(labelDto.getBlock_lable_name(),labelDto.getBlock_lable_url());
                     }
-                    for(ICO_trackico_detail_blockFinancialDto financialDto:financialDtos){
-                        detail_json.put(financialDto.getName(),financialDto.getValue());
+                    for(ICO_trackico_detail_blockFinancialDto financialDto:financialDtos) {
+                        detail_json.put(financialDto.getName(), financialDto.getValue());
                     }
                     about_json.put("milestones",JSON.toJSON(milestonesDtos));
-                    about_json.put("members",JSON.toJSON(teamDtos));
+
+                   // 组装成员的social信息
+                    JSONArray members = new JSONArray();
+                    for(ICO_trackico_detail_blockTeamDto teamDto:teamDtos){
+                        JSONObject member = new JSONObject();
+                        member.putAll(BeanUtils.describe(teamDto));
+
+                        JSONObject member_social = new JSONObject();
+                        List<ICO_trackico_detail_block_team_sociallink> sociallinkList = teamDto.getTeamSociallinkList();
+                        for(ICO_trackico_detail_block_team_sociallink sociallink:sociallinkList){
+                            String key = sociallink.getSocial_link_key();
+                            String value = sociallink.getSocial_link_value();
+                            if(StringUtils.equalsIgnoreCase("LinkedIn",key)){
+                                member_social.put("linkedin",value);
+                            }else if(StringUtils.equalsIgnoreCase("Facebook",key)){
+                                member_social.put("facebook",value);
+                            }else if(StringUtils.equalsIgnoreCase("Twitter",key)){
+                                member_social.put("twitter",value);
+                            }
+                        }
+                        member.put("member_social",member_social);
+                        member.remove("class");
+                        member.remove("teamSociallinkList");
+                        members.add(member);
+                    }
+                    about_json.put("members",members);
 
                     detail_json.put("solution_photo_url",detail_json.getString("logo_url"));
                     detail_json.remove("logo_url");

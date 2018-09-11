@@ -46,7 +46,7 @@ public class GithubServiceImp implements GithubService {
 
     @Override
     public void importICO_Github_Links(String file) {
-       // String fileURL = "E:\\ICO\\github-list.xlsx";
+        //String fileURL = "E:\\ICO\\github\\github_list.xlsx";
         List<String[]> list = excelUtilForPOI.getData(file);
         if(list != null&&list.size() != 0){
             List<ICO_Github_Links> ico_github_links = new ArrayList<>();
@@ -86,7 +86,7 @@ public class GithubServiceImp implements GithubService {
         for(ICO_Github_Links link:links){
             String url = "https://api.github.com/orgs/"+link.getGithub_community();
             Request request = new Request(url, RequestMethod.GET);
-            request.addUrlParam("access_token","d1bd5a365c66c3c237f0746ff747077da64bdc21");
+            request.addUrlParam("access_token","567c857e18b725aab9f8b73d7d23d04cd74641d4");
             Response response = HttpClientUtil.doRequest(request);
 
             int code = response.getCode(); //response code

@@ -45,7 +45,7 @@ public class IcocrunchSeviceImp implements IcocrunchSevice {
     /*
      * show值分别为 ICO、 PreICO
      * */
-    public void getIco_icocrunch_list(String show,int currentPage,long serialNumber) throws MethodNotSupportException {
+    public void getIco_icocrunch_list(String show,int currentPage) throws MethodNotSupportException {
         String url = "https://icocrunch.io/page/"+currentPage+"/";
         Request request = new Request(url, RequestMethod.GET);
         request.addUrlParam("reviewed","no");
@@ -97,7 +97,6 @@ public class IcocrunchSeviceImp implements IcocrunchSevice {
                         ico_icocrunch_list.setDetailsStatus("ini");
                         ico_icocrunch_list.setCurrentPage(currentPage);
                         ico_icocrunch_list.setTotalPage(totalPage);
-                        ico_icocrunch_list.setSerialNumber(serialNumber);
 
                         Ico_icocrunch_list flag = ico_icocrunch_listDao.findIco_icocrunch_listByBlockUrlAndBlockType(ico_icocrunch_list.getBlockUrl(), ico_icocrunch_list.getBlockType());
                         if(null==flag){
@@ -107,11 +106,11 @@ public class IcocrunchSeviceImp implements IcocrunchSevice {
                         }
                     }
                     List<Ico_icocrunch_list> ico = ico_icocrunch_listDao.saveAll(ico_icocrunch_lists);
-                    log.info("icocrunch,show:"+show+",serialNumber:"+serialNumber+",第"+totalPage+"-"+currentPage+"页保存成功，本次共计保存："+ico.size());
+                    log.info("icocrunch,show:"+show+",第"+totalPage+"-"+currentPage+"页保存成功，本次共计保存："+ico.size());
                 }
             }
         }else{
-            log.info("icocrunch,show:"+show+",serialNumber:"+serialNumber+",第"+currentPage+"请求失败，errorCode："+code);
+            log.info("icocrunch,show:"+show+",第"+currentPage+"请求失败，errorCode："+code);
         }
     }
     @Transactional
@@ -317,6 +316,39 @@ public class IcocrunchSeviceImp implements IcocrunchSevice {
         result.put("solution_data",solution_data);
         result.put("source","icocrunch.io");
         return result;
+    }
+
+    @Override
+    public int getIco_icocrunch_list_total_pages(String show) throws MethodNotSupportException {
+        String url = "https://icocrunch.io/page/"+1+"/";
+        Request request = new Request(url, RequestMethod.GET);
+        request.addUrlParam("reviewed","no");
+        request.addUrlParam("show",show);
+        Response response = HttpClientUtil.doRequest(request);
+        int code = response.getCode(); //response code
+        log.info(url);
+
+        int totalPage = 0;
+        if(200 ==code) {
+            String content = response.getResponseText(); //response text
+            Document doc = Jsoup.parse(content);
+            /*分页信息*/
+            Elements navigation = doc.getElementsByClass("navigation");
+            if (null != navigation && navigation.size() > 0) {
+                Element nav = navigation.first();
+                Elements pages = nav.getElementsByClass("pages");//获取当前页和总页数
+                if (null != pages && pages.size() > 0) {
+                    Element page = pages.first();
+                    String page_text = page.text();
+                    String totalPage_text = StringUtils.trim(StringUtils.substringAfterLast(page_text, "of"));
+                    if (NumberUtils.isDigits(totalPage_text)) {
+                        log.info("总页数解析成功：" + totalPage_text);
+                        totalPage = NumberUtils.toInt(totalPage_text);
+                    }
+                }
+            }
+        }
+        return totalPage;
     }
 
     @Override

@@ -642,8 +642,8 @@ public class IcodropsServiceImp implements IcodropsService {
                     String token_sale = detail_json.getString("title Token Sale");
                     String[] token_sales = StringUtils.split(token_sale, "–");
                     if(null!=token_sales&&token_sales.length==2){
-                        detail_json.put("icoStart",tag_one_ky[0]);
-                        detail_json.put("icoEnd",tag_one_ky[1]);
+                        detail_json.put("icoStart",token_sales[0]);
+                        detail_json.put("icoEnd",token_sales[1]);
                     }
                 }
                 /*处理Total Tokens 、 Available for Token Sale*/
@@ -670,30 +670,37 @@ public class IcodropsServiceImp implements IcodropsService {
                 BigDecimal token_for_sale = BigDecimal.valueOf(total.longValue()).multiply(BigDecimal.valueOf(available.doubleValue()));
                 detail_json.put("Token for sale",token_for_sale.toString());
 
+
                 /*从ico_detail中提取出概况:name,whitePaperURL,tag,about,brief,description,prototype*/
                 if(detail_json.containsKey("ico_name")){
                     about_json.put("name",detail_json.getString("ico_name"));
+                    detail_json.remove("ico_name");
                 }else{
                     about_json.put("name","");
                 }
-                detail_json.remove("ico_name");
 
                 if(detail_json.containsKey("WHITEPAPER")){
                     about_json.put("whitePaperURL",detail_json.getString("WHITEPAPER"));
+                    detail_json.remove("WHITEPAPER");
                 }else{
                     about_json.put("whitePaperURL","");
                 }
-                detail_json.remove("WHITEPAPER");
 
-                about_json.put("tag","");
+                if(detail_json.containsKey("categ_type")){
+                    about_json.put("tag",detail_json.getString("categ_type"));
+                    detail_json.remove("categ_type");
+                }else{
+                    about_json.put("tag","");
+                }
+
                 about_json.put("about","");
 
                 if(detail_json.containsKey("ico_description")){
                     about_json.put("description",detail_json.getString("ico_description"));
+                    detail_json.remove("ico_description");
                 }else{
                     about_json.put("description","");
                 }
-                detail_json.remove("ico_description");
 
                 about_json.put("prototype","");
 

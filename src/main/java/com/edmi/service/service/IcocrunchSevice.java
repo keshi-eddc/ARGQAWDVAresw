@@ -9,7 +9,9 @@ import java.util.List;
 
 public interface IcocrunchSevice {
 
-    public void getIco_icocrunch_list(String show,int currentPage,long serialNumber) throws MethodNotSupportException;
+    public int getIco_icocrunch_list_total_pages(String show) throws MethodNotSupportException;
+
+    public void getIco_icocrunch_list(String show,int currentPage) throws MethodNotSupportException;
 
     public Long getIco_icocrunch_listMaxSerialNumber(String show);
 

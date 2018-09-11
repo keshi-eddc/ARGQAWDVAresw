@@ -1,6 +1,10 @@
 package com.edmi.entity.trackico;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.sql.Timestamp;
+import java.util.List;
 import javax.persistence.*;
 
 /** 
@@ -40,6 +44,9 @@ public class ICO_trackico_detail_blockTeam {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "fk_id")
 	private ICO_trackico_detail ico_trackico_detail;
+
+	@OneToMany(mappedBy = "ico_trackico_detail_blockTeam")
+	private List<ICO_trackico_detail_block_team_sociallink> teamSociallinkList;
 	
 	
 
@@ -149,7 +156,13 @@ public class ICO_trackico_detail_blockTeam {
 		this.ico_trackico_detail = ico_trackico_detail;
 	}
 
+	public List<ICO_trackico_detail_block_team_sociallink> getTeamSociallinkList() {
+		return teamSociallinkList;
+	}
 
+	public void setTeamSociallinkList(List<ICO_trackico_detail_block_team_sociallink> teamSociallinkList) {
+		this.teamSociallinkList = teamSociallinkList;
+	}
 
 	@Override
 	public String toString() {

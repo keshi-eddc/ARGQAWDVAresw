@@ -24,19 +24,12 @@ public class IcocrunchTest {
 
     @Test
     public void getIco_icocrunch_list() throws MethodNotSupportException {
-        String[] shows = new String[]{"ICO","PreICO"};
+        String[] shows = new String[]{"PreICO","ICO"};
         for(String show:shows){
             log.info("正在抓取show："+show+"类型的block数据");
-            Long serialNumber =  icocrunchSevice.getIco_icocrunch_listMaxSerialNumber(show);
-            if(null==serialNumber){//第一次抓取icocrunch数据
-                log.info("第一次抓取icocrunch数据");
-                serialNumber = Calendar.getInstance().getTime().getTime();
-                icocrunchSevice.getIco_icocrunch_list(show,1,serialNumber);
-            }
-            Ico_icocrunch_list ico_icocrunch_list = icocrunchSevice.getNextPageIco_icocrunch_list(show,serialNumber);
-            while(ico_icocrunch_list.getCurrentPage()<=ico_icocrunch_list.getTotalPage()){
-                icocrunchSevice.getIco_icocrunch_list(show,ico_icocrunch_list.getCurrentPage(),serialNumber);
-                ico_icocrunch_list = icocrunchSevice.getNextPageIco_icocrunch_list(show,serialNumber);
+            int totalPages = icocrunchSevice.getIco_icocrunch_list_total_pages(show);
+            for(int i=1;i<=totalPages;i++){
+                icocrunchSevice.getIco_icocrunch_list(show,i);
             }
         }
     }

@@ -1,6 +1,10 @@
 package com.edmi.dto.trackico;
 
 
+import com.edmi.entity.trackico.ICO_trackico_detail_block_team_sociallink;
+
+import java.util.List;
+
 public class ICO_trackico_detail_blockTeamDto {
 
 	private String member_name;
@@ -8,6 +12,8 @@ public class ICO_trackico_detail_blockTeamDto {
 	private String member_position;
 	private String member_type;
 	private String member_photo_url;
+
+	private List<ICO_trackico_detail_block_team_sociallink> teamSociallinkList;
 
 	public String getMember_name() {
 		return member_name;
@@ -47,5 +53,13 @@ public class ICO_trackico_detail_blockTeamDto {
 
 	public void setMember_photo_url(String member_photo_url) {
 		this.member_photo_url = member_photo_url;
+	}
+
+	public List<ICO_trackico_detail_block_team_sociallink> getTeamSociallinkList() {
+		return teamSociallinkList;
+	}
+
+	public void setTeamSociallinkList(List<ICO_trackico_detail_block_team_sociallink> teamSociallinkList) {
+		this.teamSociallinkList = teamSociallinkList;
 	}
 }

@@ -61,7 +61,6 @@ public class FetchICODataServiceImp implements FetchICODataService {
 
             if(StringUtils.containsIgnoreCase("icocrunch.io",dataSourceNameLevel1)&&StringUtils.containsIgnoreCase(dataSourceName,dataSourceNameLevel1)){
                 Ico_icocrunch_detail detail = icocrunchSevice.getIco_icocrunch_detailByICOCrunchUrl(key);
-                JSONObject solution_url = new JSONObject();
                 if(null!=detail){
                     Ico_icocrunch_detailDto detailDto = new Ico_icocrunch_detailDto();
                     try {
@@ -84,7 +83,8 @@ public class FetchICODataServiceImp implements FetchICODataService {
                             ico_about.put("whitePaperURL",ico_detail.getString("whitepaper"));
                             ico_detail.remove("whitepaper");
                         }
-                        ico_about.put("tag","");
+                        ico_about.put("tag",ico_detail.getString("categories"));
+                        ico_detail.remove("categories");
                         if(ico_detail.containsKey("shortDescription")){
                             ico_about.put("about",ico_detail.getString("shortDescription"));
                             ico_detail.remove("shortDescription");
@@ -143,9 +143,17 @@ public class FetchICODataServiceImp implements FetchICODataService {
                         ico_detail.remove("class");
 
                         ico_about.put("ico",ico_detail);
-                        solution_url.put(key,ico_about);
-                        number+=1;
-                        solution_id.put(value,solution_url);
+
+                        if(null!=ico_about){
+                            number+=1;
+                            if(solution_id.containsKey(value)){
+                                solution_id.getJSONObject(value).put(key,detail);
+                            }else{
+                                JSONObject solution_url = new JSONObject();
+                                solution_url.put(key,ico_about);
+                                solution_id.put(value,solution_url);
+                            }
+                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -154,24 +162,28 @@ public class FetchICODataServiceImp implements FetchICODataService {
                 JSONObject detail = trackicoService.getICO_trackico_detailByItemUrl(key);
                 if(null!=detail){
                     number+=1;
-                    JSONObject solution_url = new JSONObject();
-                    solution_url.put(key,detail);
-                    solution_id.put(value,solution_url);
-                }
-            }else if(StringUtils.containsIgnoreCase("icorating.com",dataSourceNameLevel1)&&StringUtils.containsIgnoreCase(dataSourceName,dataSourceNameLevel1)){
-
-                if(StringUtils.equalsIgnoreCase("all",dataSourceNameLevel2)){
-                    JSONObject detail = icoratingService.getICO_icorating_detailByItemUrl(key);
-                    if(null!=detail){
-                        number+=1;
+                    if(solution_id.containsKey(value)){
+                        solution_id.getJSONObject(value).put(key,detail);
+                    }else{
                         JSONObject solution_url = new JSONObject();
                         solution_url.put(key,detail);
                         solution_id.put(value,solution_url);
                     }
+                }
+            }else if(StringUtils.containsIgnoreCase("icorating.com",dataSourceNameLevel1)&&StringUtils.containsIgnoreCase(dataSourceName,dataSourceNameLevel1)){
+                JSONObject detail = null;
+                if(StringUtils.equalsIgnoreCase("all",dataSourceNameLevel2)){
+                    detail = icoratingService.getICO_icorating_detailByItemUrl(key);
+
                 }else if(StringUtils.equalsIgnoreCase("funds",dataSourceNameLevel2)){
-                    JSONObject detail = icoratingService.getICO_icorating_funds_detailByItemUrl(key);
-                    if(null!=detail){
-                        number+=1;
+                    detail = icoratingService.getICO_icorating_funds_detailByItemUrl(key);
+
+                }
+                if(null!=detail){
+                    number+=1;
+                    if(solution_id.containsKey(value)){
+                        solution_id.getJSONObject(value).put(key,detail);
+                    }else{
                         JSONObject solution_url = new JSONObject();
                         solution_url.put(key,detail);
                         solution_id.put(value,solution_url);
@@ -179,28 +191,31 @@ public class FetchICODataServiceImp implements FetchICODataService {
                 }
             }else if(StringUtils.containsIgnoreCase("icodrops.com",dataSourceNameLevel1)&&StringUtils.containsIgnoreCase(dataSourceName,dataSourceNameLevel1)) {
 
-                    JSONObject detail = icodropsService.getICO_icodrops_detailByItemUrl(key);
-                    if (null != detail) {
-                        number += 1;
-                        JSONObject solution_url = new JSONObject();
-                        solution_url.put(key, detail);
-                        solution_id.put(value, solution_url);
-                    }
-
-            }else if(StringUtils.containsIgnoreCase("coinschedule.com",dataSourceNameLevel1)&&StringUtils.containsIgnoreCase(dataSourceName,dataSourceNameLevel1)){
-
-                if(StringUtils.equalsIgnoreCase("all",dataSourceNameLevel2)){
-                    JSONObject detail = coinscheduleService.getICO_coinschedule_detailByItemUrl(key);
-                    if(null!=detail){
-                        number+=1;
+                JSONObject detail = icodropsService.getICO_icodrops_detailByItemUrl(key);
+                if(null!=detail){
+                    number+=1;
+                    if(solution_id.containsKey(value)){
+                        solution_id.getJSONObject(value).put(key,detail);
+                    }else{
                         JSONObject solution_url = new JSONObject();
                         solution_url.put(key,detail);
                         solution_id.put(value,solution_url);
                     }
+                }
+
+            }else if(StringUtils.containsIgnoreCase("coinschedule.com",dataSourceNameLevel1)&&StringUtils.containsIgnoreCase(dataSourceName,dataSourceNameLevel1)){
+                JSONObject detail = null;
+                if(StringUtils.equalsIgnoreCase("all",dataSourceNameLevel2)){
+                     detail = coinscheduleService.getICO_coinschedule_detailByItemUrl(key);
+
                 }else if(StringUtils.equalsIgnoreCase("funds",dataSourceNameLevel2)){
-                    JSONObject detail = icoratingService.getICO_icorating_funds_detailByItemUrl(key);
-                    if(null!=detail){
-                        number+=1;
+                     detail = icoratingService.getICO_icorating_funds_detailByItemUrl(key);
+                }
+                if(null!=detail){
+                    number+=1;
+                    if(solution_id.containsKey(value)){
+                        solution_id.getJSONObject(value).put(key,detail);
+                    }else{
                         JSONObject solution_url = new JSONObject();
                         solution_url.put(key,detail);
                         solution_id.put(value,solution_url);
