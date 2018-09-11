@@ -298,23 +298,25 @@ public class CrawlerTask {
     // <===================== 下面是trackico的相关job ===================================>
     //每天早晨5点开始
 //    @Scheduled(cron = "0 00 21 * * ?")
+//    @Scheduled(cron = "0 00 09 * * ?")
     public void getICO_Trackico_list() throws MethodNotSupportException {
         log.info("***** getICO_Trackico_list task start *****");
         trackicoService.getICO_trackico_list();
         log.info("***** getICO_Trackico_list task over *****");
     }
 
-    //all
-//    @Scheduled(cron = "0 02 14 * * ?")
+
     //每5分钟
 //    @Scheduled(cron = "0 0/5 * * * ?")
+    //all
+//    @Scheduled(cron = "0 40 09 * * ?")
     public void getICO_Trackico_detail() throws MethodNotSupportException {
         log.info("***** getICO_Trackico_detail task start *****");
 
         //all
-//        List<ICO_trackico_item> items = ico_trackico_itemDao.findAllByStatus("ini");
+        List<ICO_trackico_item> items = ico_trackico_itemDao.findAllByStatus("ini");
 
-        List<ICO_trackico_item> items = ico_trackico_itemDao.findTop10ByStatus("ini");
+//        List<ICO_trackico_item> items = ico_trackico_itemDao.findTop10ByStatus("ini");
 
         // List<ICO_trackico_item> items =
         // ico_trackico_itemDao.findOneByItemUrl("https://www.trackico.io/ico/w12/");
@@ -349,6 +351,7 @@ public class CrawlerTask {
 
     //每天早晨10点开始（中国时间）
 //    @Scheduled(cron = "0 00 02 * * ?")
+//    @Scheduled(cron = "0 30 11 * * ?")
     public void getTrackicoMemberSocialLinkManager() {
         log.info("***** start getTrackicoMemberSocialLink task *****");
         try {

@@ -426,8 +426,13 @@ public class TrackicoServiceImp implements TrackicoService {
                     if (StringUtils.isNotEmpty(block_status)) {
                         detailModel.setBlock_status(block_status);
                     }
+                } else if (blockaddseles.size() == 3) {
+                    String block_tag = blockaddseles.get(1).text().trim();
+                    if (StringUtils.isNotEmpty(block_tag)) {
+                        detailModel.setBlock_tag(block_tag);
+                    }
                 } else {
-                    log.error("!!! blockaddseles size is not 4");
+                    log.error("!!! blockaddseles size is not 4 or 3");
                 }
             } else {
                 log.error("!!! blockaddseles do not exist");
@@ -969,13 +974,13 @@ public class TrackicoServiceImp implements TrackicoService {
                                     cardTitle = cardTitleles.text().trim();
                                 }
                                 if (StringUtils.isNotEmpty(cardTitle)) {
-                                    log.info("-------------------- cardTitle:" + cardTitle);
+//                                    log.info("-------------------- cardTitle:" + cardTitle);
                                     Elements bountyTypeseles = partele.select("div.media-list.media-list-hover.media-list-divided > a.media-single");
                                     if (bountyTypeseles != null && bountyTypeseles.size() > 0) {
                                         for (Element bountyTypesele : bountyTypeseles) {
                                             String val = bountyTypesele.attr("href");
                                             String key = bountyTypesele.text().trim();
-                                            log.info(key + " = " + val);
+//                                            log.info(key + " = " + val);
                                             if (StringUtils.isNotEmpty(key)) {
                                                 ICO_trackico_detail_block_bounty bountyModel = new ICO_trackico_detail_block_bounty();
                                                 bountyModel.setIco_trackico_detail(detail);
@@ -994,7 +999,7 @@ public class TrackicoServiceImp implements TrackicoService {
                                         for (Element lineele : tableseles) {
                                             String key = lineele.select("th").text().trim();
                                             String val = lineele.select("td").text().trim();
-                                            log.info(key + " = " + val);
+//                                            log.info(key + " = " + val);
                                             if (StringUtils.isNotEmpty(key)) {
                                                 ICO_trackico_detail_block_bounty bountyModel = new ICO_trackico_detail_block_bounty();
                                                 bountyModel.setIco_trackico_detail(detail);
