@@ -47,6 +47,8 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
     @Autowired
     private ICO_coinschedule_detail_member_sociallinkDao ico_coinschedule_detail_member_sociallinkDao;
     @Autowired
+    private ICO_coinschedule_detail_milestoneDao ico_coinschedule_detail_milestoneDao;
+    @Autowired
     private JdbcTemplate jdbcTemplate;
 
     /*
@@ -266,14 +268,11 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
                             if (content.contains("prj-title")) {
                                 Document doc = Jsoup.parse(content);
                                 ICO_coinschedule_detail detailModel = extraDetails(doc, item);
-                                //解析ico信息
-                                extraIcoInfo(doc, detailModel);
-                                //解析社交链接
-                                extraSocialLink(doc, detailModel);
-                                //解析人员信息
-                                extraMember(doc, detailModel);
+
                             }
                         }
+                    } else {
+                        log.error("!!! bad request," + code + " - " + url);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -291,8 +290,8 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
      * @param item
      */
     public ICO_coinschedule_detail extraDetails(Document doc, Ico_coinschedule_List item) {
+        log.info("- extraDetails");
         ICO_coinschedule_detail detailModel = new ICO_coinschedule_detail();
-
         try {
             detailModel.setIco_coinschedule_list(item);
             detailModel.setLink(item.getIcoCoinscheduleUrl());
@@ -459,6 +458,15 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
             ICO_coinschedule_detail oldDetail = ico_coinschedule_detailDao.findICO_coinschedule_detailByLink(detailModel.getLink());
             if (null == oldDetail) {
                 ico_coinschedule_detailDao.save(detailModel);
+                //解析ico信息
+                extraIcoInfo(doc, detailModel);
+                //解析社交链接
+                extraSocialLink(doc, detailModel);
+                //解析人员信息
+                extraMember(doc, detailModel);
+                //解析milestone
+                extraMilestone(doc, detailModel);
+
             } else {
                 log.info("--- this coinschedule_detail is already existed ");
             }
@@ -477,6 +485,7 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
      */
     //detail 模型存入数据库，才会有 pkid
     public void extraIcoInfo(Document doc, ICO_coinschedule_detail detailModel) {
+        log.info("- extraIcoInfo");
         List<ICO_coinschedule_detail_icoinfo> infoList = new ArrayList<>(50);
         try {
             Elements infoeles = doc.select("div.container>div.content-section >div.widget:nth-child(1)>ul.characteristics-list>li");
@@ -516,6 +525,7 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
      * //解析社交链接
      */
     public void extraSocialLink(Document doc, ICO_coinschedule_detail detailModel) {
+        log.info("- extraSocialLink");
         try {
             Elements sociallinkeles = doc.select("div.container>div.content-section >div.widget");
             if (sociallinkeles != null && sociallinkeles.size() > 0) {
@@ -553,12 +563,68 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
     }
 
     /**
+     * 2018年9月11日11:54:19
+     * 增加解析milestone
+     *
+     * @param doc
+     * @param detailModel
+     */
+    public void extraMilestone(Document doc, ICO_coinschedule_detail detailModel) {
+        log.info("- extraMilestone");
+        try {
+            Elements sectionseles = doc.select("div.container>div.content-section >div.widget");
+            if (sectionseles != null && sectionseles.size() > 0) {
+                for (Element sectionele : sectionseles) {
+                    Elements titleles = sectionele.select("h3");
+                    if (titleles != null && titleles.size() > 0) {
+                        String title = titleles.text().trim();
+                        if (title.equals("Milestones") || title.equals("Milestone")) {
+                            List<ICO_coinschedule_detail_milestone> milestonesList = new ArrayList<>(50);
+                            //解析 Milestones
+                            Elements lineseles = sectionele.select("ul.ul-milestones > li");
+                            if (lineseles != null && lineseles.size() > 0) {
+                                String key = "";
+                                String val = "";
+                                for (Element linele : lineseles) {
+                                    Elements keyeles = linele.select("span.title");
+                                    if (keyeles != null && keyeles.size() > 0) {
+                                        key = keyeles.text().trim();
+                                    }
+                                    Elements valeles = linele.select("p.text");
+                                    if (valeles != null && valeles.size() > 0) {
+                                        val = valeles.text().trim();
+                                    }
+//                                    log.info(key + " = " + val);
+                                    if (StringUtils.isNotEmpty(key)) {
+                                        ICO_coinschedule_detail_milestone milestoneModel = new ICO_coinschedule_detail_milestone();
+                                        milestoneModel.setIco_coinschedule_detail(detailModel);
+                                        milestoneModel.setMilestone_key(key);
+                                        milestoneModel.setMilestone_value(val);
+                                        milestoneModel.setInsert_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                        milestoneModel.setUpdate_Time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+
+                                        milestonesList.add(milestoneModel);
+                                    }
+                                }
+                            }
+                            ico_coinschedule_detail_milestoneDao.saveAll(milestonesList);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * 解析人员信息
      *
      * @param doc
      * @param detailModel
      */
     public void extraMember(Document doc, ICO_coinschedule_detail detailModel) {
+        log.info("- extraMember");
         try {
             Elements membersectioneles = doc.select("div.container>div.content-section >div.widget");
             if (membersectioneles != null && membersectioneles.size() > 0) {
@@ -746,7 +812,7 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
                                                         } else {
                                                             log.info("----- social_link_key is null : " + url);
                                                         }
-                                                        log.info(social_link_key + " = " + social_link_value);
+//                                                        log.info(social_link_key + " = " + social_link_value);
                                                         if (StringUtils.isNotEmpty(social_link_key) && StringUtils.isNotEmpty(social_link_value)) {
                                                             ICO_coinschedule_detail_member_sociallink sociallinkModel = new ICO_coinschedule_detail_member_sociallink();
                                                             sociallinkModel.setIco_coinschedule_detail_member(member);
@@ -973,10 +1039,24 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
         Ico_coinschedule_List item = new Ico_coinschedule_List();
         item.setIcoCoinscheduleUrl("https://www.coinschedule.com/ico/mibcoin");
 //        item.setIcoCoinscheduleUrl("https://www.coinschedule.com/ico/kimex-token#event4542");
-        t.getIco_coinschedule_detail(item);
+//        t.getIco_coinschedule_detail(item);
 //        t.getIcoCoinscheduleICOsList();
 //        ICO_coinschedule_detail_member member = new ICO_coinschedule_detail_member();
 //        member.setMember_url("https://www.coinschedule.com/p/13194/tuomo-tiito");
 //        t.getIcoCoinscheduleMemberSocialLink(member);
+
+        String url = "https://www.coinschedule.com/ico/b66#event4859";
+        try {
+            Request request = new Request(url, RequestMethod.GET);
+            Response response = HttpClientUtil.doRequest(request);
+            int code = response.getCode();
+            System.out.println("code:" + code);
+            String content = response.getResponseText();
+            Document doc = Jsoup.parse(content);
+            t.extraMilestone(doc, null);
+        } catch (MethodNotSupportException e) {
+            e.printStackTrace();
+        }
+
     }
 }

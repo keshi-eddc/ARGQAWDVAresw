@@ -38,7 +38,7 @@ import java.util.Map;
 public class IcoratingServiceImp implements IcoratingService {
     static Logger log = Logger.getLogger(IcoratingServiceImp.class);
     // 列表页，断点抓
-    static Boolean ListPageBreakPointCrawl = true;
+    static Boolean ListPageBreakPointCrawl = false;
     @Autowired
     private ICO_icorating_listRepository listDao;
     @Autowired
@@ -61,6 +61,7 @@ public class IcoratingServiceImp implements IcoratingService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+
     public static void main(String[] args) {
         IcoratingServiceImp t = new IcoratingServiceImp();
         // String url = "https://icorating.com/ico/bitclave/";
@@ -81,6 +82,7 @@ public class IcoratingServiceImp implements IcoratingService {
 
     @Override
     public void getIcotatingList() {
+        int itemCount = 0;
         log.info("Start getIcotatingList ");
         /**
          * https://icorating.com/ico/latest/load/?page=2&all=false&search=&sort=added&direction=desc
@@ -133,8 +135,9 @@ public class IcoratingServiceImp implements IcoratingService {
         }
         // page = 16;
         while (isNotLast) {
-            String url = "https://icorating.com/ico/all/load/?page=" + page + "&all=false&search=";
-            log.info("===Upcoming visit to:" + page + " : " + url);
+            String url = "https://icorating.com/ico/all/load/?page=" + page + "&all=false&search=&sort=investment_rating&direction=desc";
+//            String url = "https://icorating.com/ico/all/load/?page=" + page + "&all=false&search=";
+            log.info("--- will visit to:" + page + " : " + url);
             try {
                 Request request = new Request(url, RequestMethod.GET);
                 Response response = HttpClientUtil.doRequest(request);
@@ -151,6 +154,8 @@ public class IcoratingServiceImp implements IcoratingService {
                             // 插入数据库前验证是否已经存在
                             // 插入数据库
                             for (ICO_icorating_list item : itemList) {
+                                itemCount++;
+                                log.info("--------------- itemCount:" + itemCount);
                                 item.setCrawledTimes(maxCrawledTimes + 1);
                                 item.setCrawledStatu("ini");
                                 ICO_icorating_list itemOld = listDao.getICO_icorating_listByLink(item.getLink());
@@ -1034,7 +1039,7 @@ public class IcoratingServiceImp implements IcoratingService {
                                         String status = linejo.getString("currentStatus");
                                         foundsModel.setStatus(status);
                                         long aum = linejo.getLongValue("aum");
-                                        if (aum != 0) {
+                                        if (aum != 0L) {
                                             foundsModel.setAum(aum);
                                         }
                                         JSONArray strategiesjoarr = linejo.getJSONArray("strategies");
@@ -1064,6 +1069,15 @@ public class IcoratingServiceImp implements IcoratingService {
                                         } else if (analytics_reservedint == 1) {
                                             icorating_analytics = "Provided";
                                         }
+                                        //logo
+                                        String logo = linejo.getString("logoFile");
+                                        if (StringUtils.isNotEmpty(logo)) {
+                                            if (!logo.contains("https://icorating.com")) {
+                                                logo = "https://icorating.com" + logo;
+                                            }
+                                            foundsModel.setLogo(logo);
+                                        }
+
                                         foundsModel.setIcorating_analyticsv(icorating_analytics);
                                         String link = linejo.getString("link");
                                         foundsModel.setLink(link);
@@ -1146,7 +1160,17 @@ public class IcoratingServiceImp implements IcoratingService {
                             }
                         }
 
-                        foundsDetailModel.setAum(foundsitem.getAum());
+                        //2018年9月11日11:08:42,aum 没有单位
+                        Elements aumseles = doc.select("div.c-card-info.c-card-info--teal.mb20 > table.c-card-table > tbody >tr:nth-child(2)");
+                        if (aumseles != null && aumseles.size() > 0) {
+                            Elements aumeles = aumseles.select("th");
+                            if (aumeles != null && aumeles.size() > 0) {
+                                String aum = aumeles.text().trim();
+                                if (StringUtils.isNotEmpty(aum)) {
+                                    foundsDetailModel.setAum(aum);
+                                }
+                            }
+                        }
                         foundsDetailModel.setAvgIcoEthRoi(foundsitem.getAvgIcoEthRoi());
 
                         Elements table2eles = doc.select("div.o-grid__cell.o-grid__cell--width-100> div.c-card-info.c-card-info--white.mb20 > table.c-card-info__table > tbody > tr");
@@ -1195,6 +1219,8 @@ public class IcoratingServiceImp implements IcoratingService {
                             foundsDetailDao.save(foundsDetailModel);
                             //解析founds 人员
                             extraIcoratingFoundsDetailMember(doc, foundsDetailModel);
+                            //解析founds - Portfolio
+
                         } else {
                             log.info("----- already existed ,icorating founds detail,the link:" + foundsDetailModel.getLink());
                         }
@@ -1372,9 +1398,9 @@ public class IcoratingServiceImp implements IcoratingService {
                 BeanUtils.copyProperties(detailDto, detail);
                 detail_json.putAll(BeanUtils.describe(detailDto));
 
-                if(CollectionUtils.isNotEmpty(detail_details)){
+                if (CollectionUtils.isNotEmpty(detail_details)) {
                     for (ICO_icorating_detail_detail detail_detail : detail_details) {
-                        detail_json.put(detail_detail.getDetail_key(),detail_detail.getDetail_value());
+                        detail_json.put(detail_detail.getDetail_key(), detail_detail.getDetail_value());
                     }
                 }
                 if (CollectionUtils.isNotEmpty(developments)) {
@@ -1435,38 +1461,38 @@ public class IcoratingServiceImp implements IcoratingService {
             detail_json.remove("contacts_youtube");
 
             /*从ico_detail中提取出概况:name,whitePaperURL,tag,about,brief,description,prototype*/
-            if(detail_json.containsKey("block_name")){
-                about_json.put("name",detail_json.getString("block_name"));
+            if (detail_json.containsKey("block_name")) {
+                about_json.put("name", detail_json.getString("block_name"));
                 detail_json.remove("block_name");
-            }else{
-                about_json.put("name","");
+            } else {
+                about_json.put("name", "");
             }
 
-            if(detail_json.containsKey("trading_whitepaper")){
-                about_json.put("whitePaperURL",detail_json.getString("trading_whitepaper"));
+            if (detail_json.containsKey("trading_whitepaper")) {
+                about_json.put("whitePaperURL", detail_json.getString("trading_whitepaper"));
                 detail_json.remove("trading_whitepaper");
-            }else{
-                about_json.put("whitePaperURL","");
+            } else {
+                about_json.put("whitePaperURL", "");
             }
 
-            if(detail_json.containsKey("block_tag")){
-                about_json.put("tag",detail_json.getString("block_tag"));
+            if (detail_json.containsKey("block_tag")) {
+                about_json.put("tag", detail_json.getString("block_tag"));
                 detail_json.remove("block_tag");
-            }else{
-                about_json.put("tag","");
+            } else {
+                about_json.put("tag", "");
             }
 
-            about_json.put("about","");
-            about_json.put("brief","");
+            about_json.put("about", "");
+            about_json.put("brief", "");
 
-            if(detail_json.containsKey("block_overview")){
-                about_json.put("description",detail_json.getString("block_overview"));
+            if (detail_json.containsKey("block_overview")) {
+                about_json.put("description", detail_json.getString("block_overview"));
                 detail_json.remove("block_overview");
-            }else{
-                about_json.put("description","");
+            } else {
+                about_json.put("description", "");
             }
 
-            about_json.put("prototype","");
+            about_json.put("prototype", "");
 
             /*下面处理Block的logo*/
             detail_json.put("solution_photo_url", detail.getIco_icorating_list().getLogo());
@@ -1474,7 +1500,7 @@ public class IcoratingServiceImp implements IcoratingService {
         }
         detail_json.remove("class");
         about_json.remove("class");
-        about_json.put("ico",detail_json);
+        about_json.put("ico", detail_json);
         return about_json;
     }
 
@@ -1535,29 +1561,29 @@ public class IcoratingServiceImp implements IcoratingService {
             detail_json.put("solution_photo_url", detail.getIco_icorating_funds_list().getLogo());
 
             /*从ico_detail中提取出概况:name,whitePaperURL,tag,about,brief,description,prototype*/
-            if(detail_json.containsKey("fund")){
-                about_json.put("name",detail_json.getString("fund"));
+            if (detail_json.containsKey("fund")) {
+                about_json.put("name", detail_json.getString("fund"));
                 detail_json.remove("fund");
-            }else{
-                about_json.put("name","");
+            } else {
+                about_json.put("name", "");
             }
 
-            about_json.put("whitePaperURL","");
+            about_json.put("whitePaperURL", "");
 
-            if(detail_json.containsKey("about")){
-                about_json.put("about",detail_json.getString("about"));
+            if (detail_json.containsKey("about")) {
+                about_json.put("about", detail_json.getString("about"));
                 detail_json.remove("about");
-            }else{
-                about_json.put("about","");
+            } else {
+                about_json.put("about", "");
             }
 
-            about_json.put("brief","");
-            about_json.put("description","");
-            about_json.put("prototype","");
+            about_json.put("brief", "");
+            about_json.put("description", "");
+            about_json.put("prototype", "");
         }
         about_json.remove("class");
         detail_json.remove("class");
-        about_json.put("ico",detail_json);
+        about_json.put("ico", detail_json);
         return about_json;
     }
 }

@@ -35,7 +35,7 @@ public class ICO_icorating_funds_detail {
     private String target;
 
     @Column(nullable = false, name = "aum")
-    private long aum;
+    private String aum;
 
     @Column(nullable = false, name = "avgIcoEthRoi")
     private float avgIcoEthRoi;
@@ -140,11 +140,11 @@ public class ICO_icorating_funds_detail {
         this.target = target;
     }
 
-    public long getAum() {
+    public String getAum() {
         return aum;
     }
 
-    public void setAum(long aum) {
+    public void setAum(String aum) {
         this.aum = aum;
     }
 

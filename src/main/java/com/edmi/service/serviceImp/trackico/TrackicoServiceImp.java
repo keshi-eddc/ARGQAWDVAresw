@@ -23,7 +23,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -68,6 +67,8 @@ public class TrackicoServiceImp implements TrackicoService {
     private ICO_trackico_detail_blockInfoRepository detail_InfoDao;
     @Autowired
     private ICO_trackico_detail_block_team_sociallinkRepository trackico_detail_block_team_sociallinkDao;
+    @Autowired
+    private ICO_trackico_detail_block_bountyRepository trackico_detail_block_bountyDao;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -77,7 +78,7 @@ public class TrackicoServiceImp implements TrackicoService {
     public void getICO_trackico_list() throws MethodNotSupportException {
 
         // 起始页
-        // String url = "https://www.trackico.io/";
+//        String url = "https://www.trackico.io/";
         // 按时间排序
         String url = "https://www.trackico.io/?order=recent";
         // 如果有抓取过程中有中断，接着上次最大的位置抓取
@@ -90,6 +91,7 @@ public class TrackicoServiceImp implements TrackicoService {
         while (isNotLast) {
             try {
                 Request request = new Request(url, RequestMethod.GET);
+                request.setUseSSL(true);
                 Response response = HttpClientUtil.doRequest(request);
                 int code = response.getCode();
                 if (code == 200) {
@@ -118,7 +120,7 @@ public class TrackicoServiceImp implements TrackicoService {
                         log.error("页面为空：" + url);
                     }
                 } else {
-                    log.error("!!! bad request:" + url);
+                    log.error("!!! bad request: " + code + " ,url:" + url);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -243,6 +245,7 @@ public class TrackicoServiceImp implements TrackicoService {
         do {
             try {
                 request = new Request(url, RequestMethod.GET);
+                request.setUseSSL(true);
                 Response response = HttpClientUtil.doRequest(request);
                 // response code
                 int code = response.getCode();
@@ -255,8 +258,9 @@ public class TrackicoServiceImp implements TrackicoService {
                         isright = false;
                         break;
                     } else {
-                        log.error("网络请求，返回码 不是 200 ，重试：" + i);
+                        log.error("网络请求，返回码: " + code + " ，重试：" + i);
                         request = new Request(url, RequestMethod.GET);
+                        request.setUseSSL(true);
                         response = HttpClientUtil.doRequest(request);
                     }
                 }
@@ -315,6 +319,7 @@ public class TrackicoServiceImp implements TrackicoService {
             // https://www.trackico.io/ico/ubcoin/
             // 请求页面
             Request request = new Request(url, RequestMethod.GET);
+            request.setUseSSL(true);
             Response response = HttpClientUtil.doRequest(request);
             int code = response.getCode();
             // 500 Read timed out
@@ -343,6 +348,9 @@ public class TrackicoServiceImp implements TrackicoService {
                             extraDetailPageBlockMilestones(item, detailModel, doc);
                             // 解析详情页的-公司信息
                             extraDetailPageBlockInfo(item, detailModel, doc);
+                            // 解析详情页的-Bounty
+                            extraDetailPageBlockBounty(item, detailModel, doc);
+
                         } else {
                             log.info("-detailPageDetails is Already exist ,do not extra");
 //                            log.info("-detailPageDetails is Already exist ,and delete details and others ,set status = ini.");
@@ -364,7 +372,7 @@ public class TrackicoServiceImp implements TrackicoService {
                     log.error("page null：" + url);
                 }
             } else {
-                log.error("!!! bad request :" + url);
+                log.error("!!! bad request :" + code + " - " + url);
                 // 更新item对象的status -请求不正确，把status = 状态码
                 item.setStatus(String.valueOf(code));
                 ico_trackico_itemDao.save(item);
@@ -392,19 +400,45 @@ public class TrackicoServiceImp implements TrackicoService {
             // block_name
             // block_tag
             String block_name = "";
-            String block_tag = "";
+            String block_token = "";
             Elements block_nameles = doc.select("div.flexbox > div.flex-grow > div.align-items-baseline > h1");
             if (block_nameles != null && block_nameles.size() > 0) {
                 String temp = block_nameles.text();
                 if (temp.contains("(") && temp.contains(")")) {
                     block_name = StringUtils.substringBefore(temp, "(").trim();
-                    block_tag = StringUtils.substringBetween(temp, "(", ")").trim();
+                    block_token = StringUtils.substringBetween(temp, "(", ")").trim();
                 } else {
                     block_name = temp.trim();
                 }
                 detailModel.setBlock_name(block_name);
-                detailModel.setBlock_tag(block_tag);
+                detailModel.setBlock_token(block_token);
             }
+            //2018年9月7日17:23:20 新增加
+            //block_tag
+            //block_status
+            Elements blockaddseles = doc.select("div.row > div.col-md-8 >div.row > div.col-12 > div.card.mb-3 >div.card-body.p-3 > ol.breadcrumb >li");
+            if (blockaddseles != null && blockaddseles.size() > 0) {
+                if (blockaddseles.size() == 4) {
+                    String block_tag = blockaddseles.get(1).text().trim();
+                    String block_status = blockaddseles.get(2).text().trim();
+                    if (StringUtils.isNotEmpty(block_tag)) {
+                        detailModel.setBlock_tag(block_tag);
+                    }
+                    if (StringUtils.isNotEmpty(block_status)) {
+                        detailModel.setBlock_status(block_status);
+                    }
+                } else if (blockaddseles.size() == 3) {
+                    String block_tag = blockaddseles.get(1).text().trim();
+                    if (StringUtils.isNotEmpty(block_tag)) {
+                        detailModel.setBlock_tag(block_tag);
+                    }
+                } else {
+                    log.error("!!! blockaddseles size is not 4 or 3");
+                }
+            } else {
+                log.error("!!! blockaddseles do not exist");
+            }
+
             // block_description
             Elements block_descriptioneles = doc.select("div.card-body > div.row > div.col-12  p");
             if (block_descriptioneles != null && block_descriptioneles.size() > 0) {
@@ -844,10 +878,9 @@ public class TrackicoServiceImp implements TrackicoService {
 
     //人员的社交链接
     @Override
-    @Async("myTaskAsyncPool")
+//    @Async("myTaskAsyncPool")
     public void extraMemberSocialLinks(ICO_trackico_detail_blockTeam member) {
         String memberUrl = member.getMember_url();
-
         try {
             if (StringUtils.isNotEmpty(memberUrl)) {
                 //测试
@@ -856,6 +889,7 @@ public class TrackicoServiceImp implements TrackicoService {
                 if (CollectionUtils.isEmpty(oldMemberSocialLinkList)) {
                     try {
                         Request request = new Request(memberUrl, RequestMethod.GET);
+                        request.setUseSSL(true);
                         Response response = HttpClientUtil.doRequest(request);
                         int code = response.getCode();
                         //验证请求
@@ -912,6 +946,86 @@ public class TrackicoServiceImp implements TrackicoService {
         }
     }
 
+    /**
+     * 2018年9月10日
+     * 新增加需求
+     * https://www.trackico.io/ico/get-achieve/#bounty
+     * 以后再增加，以此为模板
+     *
+     * @param item
+     * @param detail
+     * @param doc
+     */
+    public void extraDetailPageBlockBounty(ICO_trackico_item item, ICO_trackico_detail detail, Document doc) {
+        log.info("- extraDetailPageBlockBounty");
+        try {
+            Elements sectionseles = doc.select("div.row > div.col-12 > div.tab-content >div.tab-pane");
+            if (sectionseles != null && sectionseles.size() > 0) {
+                for (Element sectionele : sectionseles) {
+                    String sectionName = sectionele.attr("id");
+//                    log.info("sectionName:" + sectionName);
+                    if (sectionName.equalsIgnoreCase("tab-bounty")) {
+                        List<ICO_trackico_detail_block_bounty> bountyList = new ArrayList<>(100);
+                        Elements partseles = sectionele.select("div.col-md-6");
+                        if (partseles != null && partseles.size() > 0) {
+                            for (Element partele : partseles) {
+                                String cardTitle = "";
+                                Elements cardTitleles = partele.select("h4.card-title");
+                                if (cardTitleles != null && cardTitleles.size() > 0) {
+                                    cardTitle = cardTitleles.text().trim();
+                                }
+                                if (StringUtils.isNotEmpty(cardTitle)) {
+//                                    log.info("-------------------- cardTitle:" + cardTitle);
+                                    Elements bountyTypeseles = partele.select("div.media-list.media-list-hover.media-list-divided > a.media-single");
+                                    if (bountyTypeseles != null && bountyTypeseles.size() > 0) {
+                                        for (Element bountyTypesele : bountyTypeseles) {
+                                            String val = bountyTypesele.attr("href");
+                                            String key = bountyTypesele.text().trim();
+//                                            log.info(key + " = " + val);
+                                            if (StringUtils.isNotEmpty(key)) {
+                                                ICO_trackico_detail_block_bounty bountyModel = new ICO_trackico_detail_block_bounty();
+                                                bountyModel.setIco_trackico_detail(detail);
+                                                bountyModel.setBounty_key(key);
+                                                bountyModel.setBounty_value(val);
+                                                bountyModel.setBounty_type(cardTitle);
+                                                bountyModel.setInsert_time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                                bountyModel.setUpdate_time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                                bountyList.add(bountyModel);
+                                            }
+                                        }
+                                    }
+
+                                    Elements tableseles = partele.select("table.table.table-striped.table-hover > tbody > tr");
+                                    if (tableseles != null && tableseles.size() > 0) {
+                                        for (Element lineele : tableseles) {
+                                            String key = lineele.select("th").text().trim();
+                                            String val = lineele.select("td").text().trim();
+//                                            log.info(key + " = " + val);
+                                            if (StringUtils.isNotEmpty(key)) {
+                                                ICO_trackico_detail_block_bounty bountyModel = new ICO_trackico_detail_block_bounty();
+                                                bountyModel.setIco_trackico_detail(detail);
+                                                bountyModel.setBounty_key(key);
+                                                bountyModel.setBounty_value(val);
+                                                bountyModel.setBounty_type(cardTitle);
+                                                bountyModel.setInsert_time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                                bountyModel.setUpdate_time(new Timestamp(Calendar.getInstance().getTime().getTime()));
+                                                bountyList.add(bountyModel);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        trackico_detail_block_bountyDao.saveAll(bountyList);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
     //毫秒转到时分秒
     public static String formatDuring(long mss) {
         long hours = (mss % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60);
@@ -934,14 +1048,16 @@ public class TrackicoServiceImp implements TrackicoService {
         // t.getCurrentPageNum(doc);
 
 //        String url = "https://www.trackico.io/ico/zwoop/";
-//        String content = t.getPageContent(url);
-//        // System.out.println(content);
-//        Document doc = Jsoup.parse(content);
+        String url = "https://www.trackico.io/ico/goodgamecenter/";
+        String content = t.getPageContent(url);
+        // System.out.println(content);
+        Document doc = Jsoup.parse(content);
 //        t.extraDetailPageBlockTeam(null, null, doc);
+        t.extraDetailPageBlockBounty(null, null, doc);
 
-        ICO_trackico_detail_blockTeam member = new ICO_trackico_detail_blockTeam();
-        member.setMember_url("https://www.trackico.io/member/christian-junger/");
-        t.extraMemberSocialLinks(member);
+//        ICO_trackico_detail_blockTeam member = new ICO_trackico_detail_blockTeam();
+//        member.setMember_url("https://www.trackico.io/member/christian-junger/");
+//        t.extraMemberSocialLinks(member);
 
     }
 
