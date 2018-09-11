@@ -1039,7 +1039,7 @@ public class IcoratingServiceImp implements IcoratingService {
                                         String status = linejo.getString("currentStatus");
                                         foundsModel.setStatus(status);
                                         long aum = linejo.getLongValue("aum");
-                                        if (aum != 0) {
+                                        if (aum != 0L) {
                                             foundsModel.setAum(aum);
                                         }
                                         JSONArray strategiesjoarr = linejo.getJSONArray("strategies");
@@ -1069,6 +1069,15 @@ public class IcoratingServiceImp implements IcoratingService {
                                         } else if (analytics_reservedint == 1) {
                                             icorating_analytics = "Provided";
                                         }
+                                        //logo
+                                        String logo = linejo.getString("logoFile");
+                                        if (StringUtils.isNotEmpty(logo)) {
+                                            if (!logo.contains("https://icorating.com")) {
+                                                logo = "https://icorating.com" + logo;
+                                            }
+                                            foundsModel.setLogo(logo);
+                                        }
+
                                         foundsModel.setIcorating_analyticsv(icorating_analytics);
                                         String link = linejo.getString("link");
                                         foundsModel.setLink(link);
