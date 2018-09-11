@@ -755,7 +755,7 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
                                 }
                             }
                             ico_coinschedule_icos_listDao.saveAll(icosLists);
-                            log.info("***** getIcoCoinscheduleICOsList task over");
+//                            log.info("***** getIcoCoinscheduleICOsList task over");
                         }
                     } else {
                         log.error("un normal");
@@ -843,7 +843,7 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
                             log.error("!!! page is null : " + url);
                         }
                     } else {
-                        log.info("!!!bad request");
+                        log.info("!!!bad request, " + code + " - " + url);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
