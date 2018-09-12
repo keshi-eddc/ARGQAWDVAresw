@@ -60,7 +60,7 @@ public class IcoratingTest {
 
     @Test
     public void getIcoratingFoundsList() {
-
+        //268
         icoratingService.getIcoratingFundsList();
     }
 
@@ -70,7 +70,7 @@ public class IcoratingTest {
         List<ICO_icorating_funds_list> foundslist = new ArrayList<>();
         foundslist = foundsListDao.getAllByCrawledStatus("ini");
         //测试
-//        ICO_icorating_funds_list one = foundsListDao.findICO_icorating_funds_listByLink("https://icorating.com/funds/blocktrade-investments/");
+//        ICO_icorating_funds_list one = foundsListDao.findICO_icorating_funds_listByLink("https://icorating.com/funds/iconiq-lab-fund/");
 //        foundslist.add(one);
         log.info("********** Start icorating founds detail task **********");
         log.info("--- get from icorating_funds_list ,items num:" + foundslist.size());

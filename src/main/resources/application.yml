@@ -24,19 +24,19 @@ spring:
     logSlowSql: true
   jpa:
     database: mysql
-#    show-sql: true
+    #    show-sql: true
     hibernate:
       #      ddl-auto : update
       naming:
-        physical-strategy :  org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-#    org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+        physical-strategy:  org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+      #    org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
 
       #    properties:
       #      hibernate:
       #        dialect : org.hibernate.dialect
   task:
     pool:
-      corePoolSize : 50
-      maxPoolSize : 60
-      keepAliveSeconds : 60
-      queueCapacity : 50
+      corePoolSize: 50
+      maxPoolSize: 60
+      keepAliveSeconds: 60
+      queueCapacity: 50
