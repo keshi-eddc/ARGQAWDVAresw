@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-@Component
+/*@Component*/
 public class CrawlerTask {
 
     Logger log = Logger.getLogger(CrawlerTask.class);

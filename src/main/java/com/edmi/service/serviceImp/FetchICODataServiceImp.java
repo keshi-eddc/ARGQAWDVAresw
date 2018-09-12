@@ -147,7 +147,7 @@ public class FetchICODataServiceImp implements FetchICODataService {
                         if(null!=ico_about){
                             number+=1;
                             if(solution_id.containsKey(value)){
-                                solution_id.getJSONObject(value).put(key,detail);
+                                solution_id.getJSONObject(value).put(key,ico_about);
                             }else{
                                 JSONObject solution_url = new JSONObject();
                                 solution_url.put(key,ico_about);

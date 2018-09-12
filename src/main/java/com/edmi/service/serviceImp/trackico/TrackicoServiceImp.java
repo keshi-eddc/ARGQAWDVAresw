@@ -1101,7 +1101,7 @@ public class TrackicoServiceImp implements TrackicoService {
     @Override
     public JSONObject getIco_trackico_detail_index() {
         String indexes_sql = "select detail.block_name,\n" +
-                "       detail.block_tag,\n" +
+                "       detail.block_token,\n" +
                 "       list.itemUrl\n" +
                 "       from ico_trackico_detail detail\n" +
                 "       left join ico_trackico_list list on detail.fk_id = list.pk_id";
@@ -1115,7 +1115,6 @@ public class TrackicoServiceImp implements TrackicoService {
 
         List<Map<String, Object>> indexes = jdbcTemplate.queryForList(indexes_sql);
         List<Map<String, Object>> socials = jdbcTemplate.queryForList(index_socials);
-
 
         JSONObject socials_json = new JSONObject();//组装social信息
         for (Map<String, Object> social : socials) {
@@ -1141,7 +1140,7 @@ public class TrackicoServiceImp implements TrackicoService {
 
             JSONObject block = new JSONObject();
             block.put("name", index.get("block_name").toString());
-            block.put("token_name", index.get("block_tag").toString());
+            block.put("token_name", index.get("block_token").toString());
             if (socials_json.containsKey(index.get("itemUrl").toString())) {
                 JSONObject social_json = socials_json.getJSONObject(index.get("itemUrl").toString());
                 JSONObject standardSocials = new JSONObject();
@@ -1207,6 +1206,7 @@ public class TrackicoServiceImp implements TrackicoService {
                 List<ICO_trackico_detail_blockLabel> blockLabels = detail_blockLabelDao.getICO_trackico_detail_blockLabelByFkId(detail.getPk_id());
                 List<ICO_trackico_detail_blockMilestones> blockMilestones = detail_milestonesDao.getICO_trackico_detail_blockMilestonesByFkid(detail.getPk_id());
                 List<ICO_trackico_detail_blockTeam> blockTeams = detail_blockTeamDao.getICO_trackico_detail_blockTeamsByFkid(detail.getPk_id());
+                List<ICO_trackico_detail_block_bounty> bounties = trackico_detail_block_bountyDao.getICO_trackico_detail_block_bountysByFkid(detail.getPk_id());
                 /*下面开始组装数据*/
                 ICO_trackico_itemDto itemDto = new ICO_trackico_itemDto();
                 ICO_trackico_detailDto detailDto = new ICO_trackico_detailDto();
@@ -1256,6 +1256,11 @@ public class TrackicoServiceImp implements TrackicoService {
                     }
                     for(ICO_trackico_detail_blockFinancialDto financialDto:financialDtos) {
                         detail_json.put(financialDto.getName(), financialDto.getValue());
+                    }
+                    for(ICO_trackico_detail_block_bounty bounty:bounties){
+                        if(StringUtils.equalsIgnoreCase("Bounty campaign information",bounty.getBounty_type())){
+                            detail_json.put(bounty.getBounty_key(),bounty.getBounty_value());
+                        }
                     }
                     about_json.put("milestones",JSON.toJSON(milestonesDtos));
 
