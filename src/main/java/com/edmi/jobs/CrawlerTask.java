@@ -491,25 +491,22 @@ public class CrawlerTask {
 
     //每天上午5点开始（中国时间）
 //    @Scheduled(cron = "0 00 21 * * ?")
-//    @Scheduled(cron = "0 00 07 * * ?")
     public void getIco_coinschedule_List() throws MethodNotSupportException {
         log.info("***** getIco_coinschedule_List task start");
         coinscheduleService.getIco_coinschedule_List();
         log.info("***** getIco_coinschedule_List task over");
     }
 
-    //每天上午7点开始（中国时间）
-//    @Scheduled(cron = "0 00 23 * * ?")
-//    @Scheduled(cron = "0 20 07 * * ?")
+    //每天上午6点开始（中国时间）
+//    @Scheduled(cron = "0 00 22 * * ?")
     public void getIco_coinschedule_ICOsList() throws MethodNotSupportException {
         log.info("***** getIcoCoinscheduleICOsList task start");
         coinscheduleService.getIcoCoinscheduleICOsList();
         log.info("***** getIcoCoinscheduleICOsList task over");
     }
 
-    //每天上午10点开始（中国时间）
-//    @Scheduled(cron = "0 00 02 * * ?")
-//    @Scheduled(cron = "0 30 07 * * ?")
+    //每天上午7点开始（中国时间）
+//    @Scheduled(cron = "0 00 23 * * ?")
     public void getCoinscheduleDetail() throws MethodNotSupportException {
         //216
         log.info("***** start Coinschedule detail task *****");
@@ -527,9 +524,8 @@ public class CrawlerTask {
         }
     }
 
-    //每天下午3点开始（中国时间）
-//    @Scheduled(cron = "0 00 07 * * ?")
-//    @Scheduled(cron = "0 30 08 * * ?")
+    //每天上午9点开始（中国时间）
+//    @Scheduled(cron = "0 00 01 * * ?")
     public void getCoinscheduleMemberSocialLinks() {
         log.info("***** start getMemberSocialLinks task *****");
         List<ICO_coinschedule_detail_member> memberList = ico_coinschedule_detail_memberDao.findICO_coinschedule_detail_memberWithNotIn();
