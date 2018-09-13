@@ -207,9 +207,6 @@ public class FetchICODataServiceImp implements FetchICODataService {
                 JSONObject detail = null;
                 if(StringUtils.equalsIgnoreCase("all",dataSourceNameLevel2)){
                      detail = coinscheduleService.getICO_coinschedule_detailByItemUrl(key);
-
-                }else if(StringUtils.equalsIgnoreCase("funds",dataSourceNameLevel2)){
-                     detail = icoratingService.getICO_icorating_funds_detailByItemUrl(key);
                 }
                 if(null!=detail){
                     number+=1;

@@ -22,6 +22,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
@@ -949,6 +950,7 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
         if (null != detail) {
             List<ICO_coinschedule_detail_icoinfo> icoinfos = ico_coinschedule_detail_icoinfoDao.getICO_coinschedule_detail_icoinfosByFkid(detail.getPk_id());
             List<ICO_coinschedule_detail_member> members = ico_coinschedule_detail_memberDao.getICO_coinschedule_detail_membersByFkid(detail.getPk_id());
+            List<ICO_coinschedule_detail_milestone> milestons = ico_coinschedule_detail_milestoneDao.getICO_coinschedule_detail_milestonesByFkid(detail.getPk_id());
             /*开始组装ICO详细数据*/
             ICO_coinschedule_detailDto detailDto = new ICO_coinschedule_detailDto();
             JSONObject ico_detail = new JSONObject();//ico的所有详细信息
@@ -1023,6 +1025,18 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
                         members_json.add(member_json);
                     }
                 }
+                /*组装milestons信息*/
+                JSONArray milestons_json = new JSONArray();
+                for(int i=0;i<milestons.size();i++){
+                    ICO_coinschedule_detail_milestone mileston = milestons.get(i);
+                    JSONObject mileston_json = new JSONObject();
+                    mileston_json.put("milestones_index",i+1);
+                    mileston_json.put("milestones_date",mileston.getMilestone_key());
+                    mileston_json.put("content",mileston.getMilestone_value());
+                    milestons_json.add(mileston_json);
+                }
+                json.put("milestones",milestons_json);
+
                 json.put("member", members_json);
             } catch (Exception e) {
                 e.printStackTrace();
