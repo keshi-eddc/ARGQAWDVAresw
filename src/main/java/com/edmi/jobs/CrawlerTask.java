@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
-/*@Component*/
+@Component
 public class CrawlerTask {
 
     Logger log = Logger.getLogger(CrawlerTask.class);
@@ -305,17 +305,17 @@ public class CrawlerTask {
     }
 
 
-    //all
-//    @Scheduled(cron = "0 40 09 * * ?")
     //每5分钟
 //    @Scheduled(cron = "0 0/5 * * * ?")
+    //all 每天早晨7点开始
+//    @Scheduled(cron = "0 00 23 * * ?")
     public void getICO_Trackico_detail() throws MethodNotSupportException {
         log.info("***** getICO_Trackico_detail task start *****");
 
         //all
-//        List<ICO_trackico_item> items = ico_trackico_itemDao.findAllByStatus("ini");
+        List<ICO_trackico_item> items = ico_trackico_itemDao.findAllByStatus("ini");
 
-        List<ICO_trackico_item> items = ico_trackico_itemDao.findTop10ByStatus("ini");
+//        List<ICO_trackico_item> items = ico_trackico_itemDao.findTop10ByStatus("ini");
 
         // List<ICO_trackico_item> items =
         // ico_trackico_itemDao.findOneByItemUrl("https://www.trackico.io/ico/w12/");
@@ -373,9 +373,8 @@ public class CrawlerTask {
 
     // <===================== 下面是icorating的相关job ===================================>
     //每4小时 0 0 */4 * * ?
-//    每天早晨5点开始
+//    每天早晨5点开始（中国时间）
 //    @Scheduled(cron = "0 00 21 * * ?")
-//    @Scheduled(cron = "0 10 17 * * ?")
     public void getICO_icorating_list() throws MethodNotSupportException {
         log.info("***** getICO_icorating_list task start *****");
         icoratingService.getIcotatingList();
@@ -385,7 +384,8 @@ public class CrawlerTask {
 
     //每5分钟
 //    @Scheduled(cron = "0 0/5 * * * ?")
-//    @Scheduled(cron = "0 09 18 * * ?")
+//    每天早晨7点开始（中国时间）
+//    @Scheduled(cron = "0 00 23 * * ?")
     public void icoratingDetailManager() {
         // 获取开始时间
         long startTime = System.currentTimeMillis();
@@ -416,16 +416,16 @@ public class CrawlerTask {
         log.info(">>>>>>>>>> this time crawled," + "items num:" + listItems.size() + ".cost:" + timestr);
     }
 
-    //每天早晨7点
-//    @Scheduled(cron = "0 00 23 * * ?")
+    //每天早晨9点（中国时间）
+//    @Scheduled(cron = "0 00 01 * * ?")
     public void getIcoratingFoundsList() {
         log.info("***** getIcoratingFoundsList task start *****");
         icoratingService.getIcoratingFundsList();
         log.info("***** getIcoratingFoundsList task over *****");
     }
 
-    //每天下午2点
-//    @Scheduled(cron = "0 00 06 * * ?")
+    //每天上午10点（中国时间）
+//    @Scheduled(cron = "0 00 02 * * ?")
     public void icoratingFoundsDetailManager() {
         //查出所有的item，因为列表页已经判断，此处不会有重复
         List<ICO_icorating_funds_list> foundslist = new ArrayList<>();
