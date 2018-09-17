@@ -1470,9 +1470,7 @@ public class IcoratingServiceImp implements IcoratingService {
 
                 JSONObject solution_data_url = new JSONObject();
                 solution_data_url.put("name", detail.get("fund").toString());
-                solution_data_url.put("token_name", "");
                 solution_data_url.put("website", detail.get("site").toString());
-                solution_data_url.put("white_paper", "");
 
                 JSONObject social = new JSONObject();
                 social.put("facebook", detail.get("facebook").toString());
@@ -1620,7 +1618,7 @@ public class IcoratingServiceImp implements IcoratingService {
         if (null != detail) {
 
             List<ICO_icorating_funds_detail_member> teams = foundsMemberDao.getICO_icorating_funds_detail_membersByFkid(detail.getPk_id());
-
+            List<ICO_icorating_funds_detail_portfolio> portfolios = fundsDetailPortfolioDao.getICO_icorating_funds_detail_portfoliosByFkid(detail.getPk_id());
             /*开始组装数据*/
             ICO_icorating_funds_detailDto detailDto = new ICO_icorating_funds_detailDto();
             try {
@@ -1656,6 +1654,19 @@ public class IcoratingServiceImp implements IcoratingService {
                     }
                     about_json.put("member", teams_json);
                 }
+                if(CollectionUtils.isNotEmpty(portfolios)){
+                    JSONArray portifolios_json = new JSONArray();
+                    for(ICO_icorating_funds_detail_portfolio portfolio:portfolios){
+                        JSONObject portifolio_json = new JSONObject();
+                        portifolio_json.put("portfolio_link",portfolio.getProject_link());
+                        portifolio_json.put("portfolio_name",portfolio.getProject_name());
+                        portifolio_json.put("portfolio_industry",portfolio.getIndustries());
+                        portifolio_json.put("portfolio_eth_return",portfolio.getEth_return());
+                        portifolio_json.put("portfolio_money_raised",portfolio.getMoney_raised());
+                        portifolios_json.add(portifolio_json);
+                    }
+                    about_json.put("portfolio",portifolios_json);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -1668,30 +1679,12 @@ public class IcoratingServiceImp implements IcoratingService {
             /*下面处理Block的logo*/
             detail_json.put("solution_photo_url", detail.getIco_icorating_funds_list().getLogo());
 
-            /*从ico_detail中提取出概况:name,whitePaperURL,tag,about,brief,description,prototype*/
-            if (detail_json.containsKey("fund")) {
-                about_json.put("name", detail_json.getString("fund"));
-                detail_json.remove("fund");
-            } else {
-                about_json.put("name", "");
-            }
 
-            about_json.put("whitePaperURL", "");
-
-            if (detail_json.containsKey("about")) {
-                about_json.put("about", detail_json.getString("about"));
-                detail_json.remove("about");
-            } else {
-                about_json.put("about", "");
-            }
-
-            about_json.put("brief", "");
-            about_json.put("description", "");
-            about_json.put("prototype", "");
+            detail_json.put("status",detail.getIco_icorating_funds_list().getStatus());
         }
         about_json.remove("class");
         detail_json.remove("class");
-        about_json.put("ico", detail_json);
+        about_json.put("fund", detail_json);
         return about_json;
     }
 }

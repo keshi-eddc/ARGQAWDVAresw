@@ -13,8 +13,8 @@ public class ICO_icorating_funds_detailDto {
     private String date_of_foundation;
     private String strategy;
     private String target;
-    private long aum;
-    private float avgIcoEthRoi;
+    private String aum;
+    private String avgIcoEthRoi;
     private String email;
     private String site;
     private String based;
@@ -79,19 +79,19 @@ public class ICO_icorating_funds_detailDto {
         this.target = target;
     }
 
-    public long getAum() {
+    public String getAum() {
         return aum;
     }
 
-    public void setAum(long aum) {
+    public void setAum(String aum) {
         this.aum = aum;
     }
 
-    public float getAvgIcoEthRoi() {
+    public String getAvgIcoEthRoi() {
         return avgIcoEthRoi;
     }
 
-    public void setAvgIcoEthRoi(float avgIcoEthRoi) {
+    public void setAvgIcoEthRoi(String avgIcoEthRoi) {
         this.avgIcoEthRoi = avgIcoEthRoi;
     }
 

@@ -1007,6 +1007,7 @@ public class CoinscheduleSeviceImp implements CoinscheduleService {
                         member_json.put("memberName", member.getMember_name());
                         member_json.put("memberResponsibility", member.getMember_position());
                         member_json.put("memberRole", member.getMember_type());
+                        member_json.put("member_photo_url",member.getMember_photo_url());
                         List<ICO_coinschedule_detail_member_sociallink> member_sociallinks = member.getMemberSociallinkList();
                         JSONObject member_social = new JSONObject();
                         for (ICO_coinschedule_detail_member_sociallink sociallink : member_sociallinks) {
